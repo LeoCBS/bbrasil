@@ -47,6 +47,8 @@ const categories = [
 
 export default async function Home() {
   const products = await getProducts();
+  const heroProducts = products.filter((product) => product.image_src).slice(0, 3);
+  const heroImageSizes = ["h-80 w-56", "h-60 w-36", "h-56 w-32"];
 
   return (
     <main className="min-h-screen bg-white">
@@ -81,9 +83,14 @@ export default async function Home() {
               <div className="absolute right-12 top-28 h-32 w-16 rounded-[100%_0] bg-brand-green/75 -rotate-12" />
             </div>
             <div className="relative z-10 flex items-end gap-5">
-              <ProductVisual name="Detergente" size="5L" className="h-80 w-56" />
-              <ProductVisual name="Limpeza Geral" size="750ml" className="h-60 w-36" />
-              <ProductVisual name="Desinfetante" size="1L" className="h-56 w-32" />
+              {heroProducts.map((product, index) => (
+                <ProductVisual
+                  key={product.id}
+                  name={product.name}
+                  imageSrc={product.image_src}
+                  className={heroImageSizes[index]}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -122,17 +129,19 @@ export default async function Home() {
         </div>
         <div className="grid gap-5 md:grid-cols-3">
           {products.slice(0, 3).map((product) => (
-            <Card key={product.id} className="overflow-hidden shadow-soft">
-              <CardContent className="grid h-full grid-cols-[120px_1fr] gap-5 p-5">
-                <ProductVisual name={product.name} size={product.size} compact />
-                <div className="flex flex-col py-2">
-                  <span className="text-sm font-semibold text-brand-green">{product.category}</span>
-                  <h3 className="mt-2 text-xl font-bold text-brand-ink">{product.name}</h3>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">{product.description}</p>
-                  <span className="mt-auto pt-4 text-sm font-semibold text-brand-blue">{product.size}</span>
-                </div>
-              </CardContent>
-            </Card>
+            <Link key={product.id} href={`/produtos/${product.id}`} className="block h-full">
+              <Card className="h-full overflow-hidden shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
+                <CardContent className="grid h-full grid-cols-[120px_1fr] gap-5 p-5">
+                  <ProductVisual name={product.name} imageSrc={product.image_src} compact />
+                  <div className="flex flex-col py-2">
+                    <span className="text-sm font-semibold text-brand-green">{product.category}</span>
+                    <h3 className="mt-2 text-xl font-bold text-brand-ink">{product.name}</h3>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">{product.description}</p>
+                    <span className="mt-auto pt-4 text-sm font-semibold text-brand-blue">{product.size}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </section>

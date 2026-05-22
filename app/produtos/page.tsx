@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ProductVisual } from "@/components/site/product-visual";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,20 +26,25 @@ export default async function ProductsPage() {
         <p className="mt-3 text-slate-600">Confira as solucoes profissionais da B.Brasil.</p>
         <div className="mt-8 grid gap-5 md:grid-cols-3">
           {products.map((product) => (
-            <Card key={product.id} className="shadow-soft">
-              <CardContent className="p-6">
-                <div className="flex justify-center">
-                  <ProductVisual name={product.name} size={product.size} compact />
-                </div>
-                <span className="mt-5 block text-sm font-semibold text-brand-green">{product.category}</span>
-                <h2 className="mt-2 text-xl font-bold text-brand-ink">{product.name}</h2>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{product.description}</p>
-                <div className="mt-5 flex items-center justify-between">
-                  <span className="font-semibold text-brand-blue">{product.size}</span>
-                  {product.price ? <span className="font-bold text-brand-ink">R$ {product.price.toFixed(2)}</span> : null}
-                </div>
-              </CardContent>
-            </Card>
+            <Link key={product.id} href={`/produtos/${product.id}`} className="block h-full">
+              <Card id={product.id} className="h-full scroll-mt-28 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
+                <CardContent className="flex h-full flex-col p-6">
+                  <div className="flex justify-center">
+                    <ProductVisual name={product.name} imageSrc={product.image_src} compact />
+                  </div>
+                  <span className="mt-5 block text-sm font-semibold text-brand-green">{product.category}</span>
+                  <h2 className="mt-2 text-xl font-bold text-brand-ink">{product.name}</h2>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">{product.description}</p>
+                  <div className="mt-auto flex items-center justify-between pt-5">
+                    <span className="font-semibold text-brand-blue">{product.size}</span>
+                    {product.price ? <span className="font-bold text-brand-ink">R$ {product.price.toFixed(2)}</span> : null}
+                  </div>
+                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand-green">
+                    Ver detalhes <ArrowRight className="h-4 w-4" />
+                  </span>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </section>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/site/logo";
+import { ProductVisual } from "@/components/site/product-visual";
 
 const categories = ["Limpeza Geral", "Higienizacao", "Desinfeccao", "Equipamentos", "Descartaveis"];
 
@@ -99,7 +100,7 @@ function ProductForm({
   submitIcon: React.ReactNode;
 }) {
   return (
-    <form action={action} className="grid gap-4">
+    <form action={action} encType="multipart/form-data" className="grid gap-4">
       {product ? <input type="hidden" name="id" value={product.id} /> : null}
       <div className="grid gap-2">
         <Label htmlFor={`name-${product?.id ?? "new"}`}>Nome</Label>
@@ -142,8 +143,13 @@ function ProductForm({
         </div>
       </div>
       <div className="grid gap-2">
-        <Label htmlFor={`image-${product?.id ?? "new"}`}>URL da imagem</Label>
-        <Input id={`image-${product?.id ?? "new"}`} name="image_url" defaultValue={product?.image_url ?? ""} placeholder="https://..." />
+        <Label htmlFor={`image-${product?.id ?? "new"}`}>Imagem do produto</Label>
+        {product?.image_src ? (
+          <div className="flex justify-center rounded-md border border-dashed bg-white p-3">
+            <ProductVisual name={product.name} imageSrc={product.image_src} compact />
+          </div>
+        ) : null}
+        <Input id={`image-${product?.id ?? "new"}`} name="image_blob" type="file" accept="image/*" />
       </div>
       <label className="flex items-center gap-3 text-sm font-medium">
         <input

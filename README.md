@@ -34,7 +34,8 @@ create table public.products (
   description text not null,
   size text not null,
   price numeric(10, 2),
-  image_url text,
+  image_blob bytea,
+  image_mime_type text,
   active boolean not null default true,
   created_at timestamptz not null default now()
 );
@@ -47,3 +48,12 @@ using (active = true);
 ```
 
 O admin usa `SUPABASE_SERVICE_ROLE_KEY` em server actions. Nao exponha essa chave no navegador.
+
+Se voce ja criou a tabela com `image_url`, rode esta migracao:
+
+```sql
+alter table public.products
+  drop column if exists image_url,
+  add column if not exists image_blob bytea,
+  add column if not exists image_mime_type text;
+```

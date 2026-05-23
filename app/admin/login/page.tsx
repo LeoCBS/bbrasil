@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Logo } from "@/components/site/logo";
 
 type LoginPageProps = {
@@ -59,9 +60,9 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
                   {errorMessage}
                 </p>
               ) : null}
-              <Button type="submit" className="w-full">
+              <SubmitButton pendingLabel="Entrando..." className="w-full">
                 <LogIn className="h-4 w-4" /> Entrar
-              </Button>
+              </SubmitButton>
             </form>
           </CardContent>
         </Card>

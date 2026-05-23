@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireAdminUser } from "@/auth";
 import { createProduct, deleteProduct, updateProduct, type ProductMutationInput } from "@/lib/products";
 
 async function parseProduct(formData: FormData): Promise<ProductMutationInput> {
@@ -34,6 +35,7 @@ async function parseProduct(formData: FormData): Promise<ProductMutationInput> {
 }
 
 export async function createProductAction(formData: FormData) {
+  await requireAdminUser();
   await createProduct(await parseProduct(formData));
   revalidatePath("/");
   revalidatePath("/produtos");
@@ -42,6 +44,7 @@ export async function createProductAction(formData: FormData) {
 }
 
 export async function updateProductAction(formData: FormData) {
+  await requireAdminUser();
   const id = String(formData.get("id") ?? "");
   await updateProduct(id, await parseProduct(formData));
   revalidatePath("/");
@@ -51,6 +54,7 @@ export async function updateProductAction(formData: FormData) {
 }
 
 export async function deleteProductAction(formData: FormData) {
+  await requireAdminUser();
   const id = String(formData.get("id") ?? "");
   await deleteProduct(id);
   revalidatePath("/");

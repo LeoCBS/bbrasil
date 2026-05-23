@@ -12,6 +12,7 @@ npm run dev
 Acesse:
 
 - Site: `http://localhost:3000`
+- Login do admin: `http://localhost:3000/admin/login`
 - Admin de produtos: `http://localhost:3000/admin/produtos`
 
 ## Supabase
@@ -48,6 +49,8 @@ using (active = true);
 ```
 
 O admin usa `SUPABASE_SERVICE_ROLE_KEY` em server actions. Nao exponha essa chave no navegador.
+
+Para acessar o admin, crie um usuario em **Supabase Auth > Users** com e-mail e senha. O login usa Supabase Auth nativo, sem providers externos.
 
 Se voce ja criou a tabela com `image_url`, rode esta migracao:
 

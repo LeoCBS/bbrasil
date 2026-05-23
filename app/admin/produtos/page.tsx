@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, Database, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Database, LogOut, Plus, Save, Trash2 } from "lucide-react";
+import { logoutAction, requireAdminUser } from "@/auth";
 import { createProductAction, deleteProductAction, updateProductAction } from "@/lib/actions";
 import { getProducts, type Product } from "@/lib/products";
 import { Button } from "@/components/ui/button";
@@ -13,19 +14,28 @@ import { ProductVisual } from "@/components/site/product-visual";
 const categories = ["Limpeza Geral", "Higienizacao", "Desinfeccao", "Equipamentos", "Descartaveis"];
 
 export default async function AdminProductsPage() {
+  const user = await requireAdminUser();
   const products = await getProducts({ includeInactive: true });
   const isConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   return (
     <main className="min-h-screen bg-slate-50">
       <header className="border-b bg-white">
-        <div className="container flex h-24 items-center justify-between">
+        <div className="container flex h-24 items-center justify-between gap-4">
           <Logo />
-          <Button asChild variant="outline">
-            <Link href="/">
-              <ArrowLeft className="h-4 w-4" /> Voltar ao site
-            </Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            <span className="hidden text-sm text-slate-600 md:inline">{user.email}</span>
+            <Button asChild variant="outline">
+              <Link href="/">
+                <ArrowLeft className="h-4 w-4" /> Voltar ao site
+              </Link>
+            </Button>
+            <form action={logoutAction}>
+              <Button variant="outline" className="text-destructive hover:text-destructive">
+                <LogOut className="h-4 w-4" /> Sair
+              </Button>
+            </form>
+          </div>
         </div>
       </header>
 
@@ -100,7 +110,7 @@ function ProductForm({
   submitIcon: React.ReactNode;
 }) {
   return (
-    <form action={action} encType="multipart/form-data" className="grid gap-4">
+    <form action={action} className="grid gap-4">
       {product ? <input type="hidden" name="id" value={product.id} /> : null}
       <div className="grid gap-2">
         <Label htmlFor={`name-${product?.id ?? "new"}`}>Nome</Label>

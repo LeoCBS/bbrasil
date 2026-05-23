@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
@@ -31,9 +32,9 @@ export default async function AdminProductsPage() {
               </Link>
             </Button>
             <form action={logoutAction}>
-              <Button variant="outline" className="text-destructive hover:text-destructive">
+              <SubmitButton pendingLabel="Saindo..." variant="outline" className="text-destructive hover:text-destructive">
                 <LogOut className="h-4 w-4" /> Sair
-              </Button>
+              </SubmitButton>
             </form>
           </div>
         </div>
@@ -75,9 +76,9 @@ export default async function AdminProductsPage() {
                     </div>
                     <form action={deleteProductAction}>
                       <input type="hidden" name="id" value={product.id} />
-                      <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                      <SubmitButton pendingLabel="Excluindo..." variant="outline" size="sm" className="text-destructive hover:text-destructive">
                         <Trash2 className="h-4 w-4" /> Excluir
-                      </Button>
+                      </SubmitButton>
                     </form>
                   </div>
                 </CardHeader>
@@ -110,7 +111,7 @@ function ProductForm({
   submitIcon: React.ReactNode;
 }) {
   return (
-    <form action={action} className="grid gap-4">
+    <form action={action} encType="multipart/form-data" className="grid gap-4">
       {product ? <input type="hidden" name="id" value={product.id} /> : null}
       <div className="grid gap-2">
         <Label htmlFor={`name-${product?.id ?? "new"}`}>Nome</Label>
@@ -170,9 +171,9 @@ function ProductForm({
         />
         Produto ativo
       </label>
-      <Button className="w-full" type="submit">
+      <SubmitButton className="w-full" pendingLabel={product ? "Salvando..." : "Criando..."}>
         {submitIcon} {submitLabel}
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

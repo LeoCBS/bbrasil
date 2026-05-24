@@ -45,6 +45,54 @@ const categories = [
   }
 ];
 
+const units = [
+  {
+    name: "FLORIANOPOLIS SC",
+    address: ["Rua Sao Ludgero, 1580 - CEP 88117-270", "Barreiros - Sao Jose - SC"],
+    phones: [{ label: "(48) 3240 0074", href: "https://wa.me/554832400074" }],
+    email: "comercial@bbrasilprodutosdelimpeza.com.br"
+  },
+  {
+    name: "JOINVILLE SC",
+    address: ["Rua Rocha Pombo, 252 - CEP 89222-060", "Iririu - Joinville - SC"],
+    phones: [{ label: "(47) 3026 6607", href: "https://wa.me/554730266607" }],
+    email: "joinville@bbrasilprodutosdelimpeza.com.br"
+  },
+  {
+    name: "ITAJAI SC",
+    address: ["Rua Blumenau, 1520 - Bl. 05 - CEP 88305-104", "Barra do Rio - Itajai - SC"],
+    phones: [{ label: "(47) 3246 0868", href: "https://wa.me/554732460868" }],
+    email: "itajai@bbrasilprodutosdelimpeza.com.br"
+  },
+  {
+    name: "BLUMENAU SC",
+    address: ["Rua Fritz Spernau, 912 - CEP 89052-015", "Fortaleza - Blumenau - SC"],
+    phones: [{ label: "(47) 3338 5555", href: "https://wa.me/554733385555" }],
+    email: "blumenau@bbrasilprodutosdelimpeza.com.br"
+  },
+  {
+    name: "CRICIUMA SC",
+    address: ["Rua Clarinda Milioli de Luca, 595 loja 01 - CEP 88810-400", "Mina do Mato - Criciuma - SC"],
+    phones: [{ label: "(48) 3413 5005", href: "https://wa.me/554834135005" }],
+    email: "criciuma@bbrasilprodutosdelimpeza.com.br"
+  },
+  {
+    name: "CURITIBA PR",
+    address: ["Rua Des. Westphalen, 1642 A - CEP 80230-100", "Reboucas - Curitiba - PR"],
+    phones: [
+      { label: "(41) 3278 7008", href: "https://wa.me/554132787008" },
+      { label: "(41) 3278 3301", href: "https://wa.me/554132783301" }
+    ],
+    email: "curitiba@bbrasilprodutosdelimpeza.com.br"
+  },
+  {
+    name: "SAO PAULO SP",
+    address: ["Rua Cel. Mario de Azevedo, 153 - CEP 02710-020", "Jardim Pereira Leite - Sao Paulo - SP"],
+    phones: [{ label: "(11) 2679 5559", href: "https://wa.me/551126795559" }],
+    email: "sp@bbrasilprodutosdelimpeza.com.br"
+  }
+];
+
 export default async function Home() {
   const products = await getProducts();
   const heroProducts = products.filter((product) => product.image_src).slice(0, 3);
@@ -121,7 +169,7 @@ export default async function Home() {
         <div className="mb-5 flex items-end justify-between gap-4">
           <div>
             <h2 className="text-3xl font-bold tracking-normal text-brand-ink">Produtos em destaque</h2>
-            <p className="mt-2 text-slate-600">Catalogo conectado ao Supabase quando configurado.</p>
+            <p className="mt-2 text-slate-600">Conheca nossos produtos mais populares e recomendados</p>
           </div>
           <Button asChild variant="outline">
             <Link href="/admin/produtos">Admin</Link>
@@ -176,16 +224,63 @@ export default async function Home() {
       </section>
 
       <section id="contato" className="container py-8">
-        <div className="flex flex-col gap-5 rounded-lg bg-brand-blue p-8 text-white md:flex-row md:items-center md:justify-between md:p-10">
+        <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-2xl font-bold">Precisa de ajuda para escolher o produto ideal?</h2>
-            <p className="mt-3 text-lg text-white/90">Nossa equipe esta pronta para te atender.</p>
+            <h2 className="text-3xl font-bold tracking-normal text-brand-ink">Unidades B.Brasil</h2>
+            <p className="mt-2 max-w-2xl text-slate-600">
+              Encontre a unidade mais proxima para atendimento comercial, pedidos e suporte.
+            </p>
           </div>
-          <Button asChild variant="secondary" size="lg">
-            <Link href="https://wa.me/5511999999999">
-              <MessageCircle className="h-5 w-5" /> Fale conosco
+          <Button asChild size="lg">
+            <Link href={units[0].phones[0].href}>
+              <MessageCircle className="h-5 w-5" /> Fale com Florianopolis
             </Link>
           </Button>
+        </div>
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {units.map((unit) => (
+            <Card key={unit.name} className="h-full shadow-soft">
+              <CardContent className="flex h-full flex-col p-6">
+                <h3 className="text-lg font-bold text-brand-ink">Unidade {unit.name}</h3>
+                <div className="mt-5 grid gap-4 text-sm leading-6 text-slate-600">
+                  <div className="flex gap-3">
+                    <MapPin className="mt-1 h-4 w-4 shrink-0 text-brand-blue" />
+                    <span>
+                      {unit.address.map((line) => (
+                        <span key={line} className="block">
+                          {line}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                  <div className="flex gap-3">
+                    <MessageCircle className="mt-1 h-4 w-4 shrink-0 text-brand-green" />
+                    <span className="flex flex-wrap gap-x-2 gap-y-1">
+                      {unit.phones.map((phone, index) => (
+                        <span key={phone.label} className="inline-flex items-center gap-2">
+                          {index > 0 ? <span className="text-slate-400">/</span> : null}
+                          <Link
+                            href={phone.href}
+                            className="font-semibold text-brand-green hover:text-brand-blue"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {phone.label}
+                          </Link>
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                  <div className="flex gap-3">
+                    <Mail className="mt-1 h-4 w-4 shrink-0 text-brand-blue" />
+                    <Link href={`mailto:${unit.email}`} className="break-all font-medium text-slate-700 hover:text-brand-blue">
+                      {unit.email}
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </section>
       <Footer />
@@ -207,7 +302,7 @@ function Header() {
           <Link href="#contato">Contato</Link>
         </nav>
         <Button asChild variant="secondary" className="hidden md:inline-flex">
-          <Link href="https://wa.me/5511999999999">
+          <Link href={units[0].phones[0].href}>
             <MessageCircle className="h-5 w-5" /> Fale conosco
           </Link>
         </Button>
@@ -241,15 +336,15 @@ function Footer() {
         <div>
           <h3 className="mb-4 font-semibold">Contato</h3>
           <div className="grid gap-3 text-sm text-slate-600">
-            <span className="flex items-center gap-3">
-              <MessageCircle className="h-4 w-4" /> (11) 99999-9999
-            </span>
-            <span className="flex items-center gap-3">
-              <Mail className="h-4 w-4" /> contato@bbrasil.com.br
-            </span>
-            <span className="flex items-center gap-3">
-              <MapPin className="h-4 w-4" /> Sao Paulo - SP
-            </span>
+            <Link href={units[0].phones[0].href} className="flex items-center gap-3 hover:text-brand-blue">
+              <MessageCircle className="h-4 w-4" /> {units[0].phones[0].label}
+            </Link>
+            <Link href={`mailto:${units[0].email}`} className="flex items-center gap-3 break-all hover:text-brand-blue">
+              <Mail className="h-4 w-4 shrink-0" /> {units[0].email}
+            </Link>
+            <Link href="#contato" className="flex items-center gap-3 hover:text-brand-blue">
+              <MapPin className="h-4 w-4" /> Ver todas as unidades
+            </Link>
           </div>
         </div>
       </div>

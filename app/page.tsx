@@ -156,7 +156,10 @@ export default async function Home() {
                 <category.icon className="h-14 w-14 text-brand-blue" strokeWidth={1.5} />
                 <h3 className="mt-5 text-lg font-semibold text-brand-ink">{category.title}</h3>
                 <p className="mt-4 min-h-20 text-sm leading-6 text-slate-600">{category.description}</p>
-                <Link href="/produtos" className="mt-auto inline-flex items-center gap-2 pt-4 text-sm font-semibold text-brand-green">
+                <Link
+                  href={{ pathname: "/produtos", query: { categoria: category.title } }}
+                  className="mt-auto inline-flex items-center gap-2 pt-4 text-sm font-semibold text-brand-green"
+                >
                   Ver produtos <ArrowRight className="h-4 w-4" />
                 </Link>
               </CardContent>

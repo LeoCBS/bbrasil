@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Database, LogOut, Plus, Save, Trash2 } from "luc
 import { logoutAction, requireAdminUser } from "@/auth";
 import { createProductAction, deleteProductAction, updateProductAction } from "@/lib/actions";
 import { getPaginatedProducts, type Product } from "@/lib/products";
+import { productCompanies } from "@/lib/companies";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -104,7 +105,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                     <div>
                       <CardTitle>{product.name}</CardTitle>
                       <CardDescription>
-                        {product.category} · {product.size} · {product.active ? "Ativo" : "Inativo"}
+                        {product.company} · {product.category} · {product.size} · {product.active ? "Ativo" : "Inativo"}
                       </CardDescription>
                     </div>
                     <form action={deleteProductAction}>
@@ -213,6 +214,21 @@ function ProductForm({
           {categories.map((category) => (
             <option key={category} value={category}>
               {category}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor={`company-${product?.id ?? "new"}`}>Empresa</Label>
+        <select
+          id={`company-${product?.id ?? "new"}`}
+          name="company"
+          defaultValue={product?.company ?? productCompanies[0]}
+          className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {productCompanies.map((company) => (
+            <option key={company} value={company}>
+              {company}
             </option>
           ))}
         </select>

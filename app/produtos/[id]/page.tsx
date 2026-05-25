@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MessageCircle, PackageCheck, Tag } from "lucide-react";
+import { ArrowLeft, Building2, PackageCheck, Tag } from "lucide-react";
 import { ProductVisual } from "@/components/site/product-visual";
+import { AddToQuoteButton } from "@/components/site/add-to-quote-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
@@ -65,7 +66,14 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             <h1 className="mt-3 text-4xl font-bold tracking-normal text-brand-ink md:text-5xl">{product.name}</h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">{product.description}</p>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <Card className="shadow-soft">
+                <CardContent className="p-5">
+                  <Building2 className="h-6 w-6 text-brand-blue" />
+                  <span className="mt-4 block text-sm text-slate-500">Empresa</span>
+                  <strong className="mt-1 block text-lg text-brand-ink">{product.company}</strong>
+                </CardContent>
+              </Card>
               <Card className="shadow-soft">
                 <CardContent className="p-5">
                   <PackageCheck className="h-6 w-6 text-brand-blue" />
@@ -92,11 +100,15 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             </div>
 
             <div className="mt-8 flex flex-wrap gap-4">
-              <Button asChild size="lg">
-                <Link href="https://wa.me/5511999999999">
-                  <MessageCircle className="h-5 w-5" /> Solicitar orcamento
-                </Link>
-              </Button>
+              <AddToQuoteButton
+                item={{
+                  id: product.id,
+                  name: product.name,
+                  company: product.company,
+                  category: product.category,
+                  size: product.size
+                }}
+              />
               <Button asChild variant="outline" size="lg">
                 <Link href="/produtos">Ver outros produtos</Link>
               </Button>

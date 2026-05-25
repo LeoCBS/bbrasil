@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
 import { getProducts } from "@/lib/products";
+import { productCompanies } from "@/lib/companies";
 
 const categories = [
   {
@@ -94,8 +95,26 @@ const units = [
   }
 ];
 
-export default async function Home() {
-  const products = await getProducts();
+type HomeProps = {
+  searchParams?: Promise<{
+    empresa?: string;
+  }>;
+};
+
+function buildHomeCompanyHref(company?: string) {
+  if (!company) {
+    return "/#produtos";
+  }
+
+  const params = new URLSearchParams({ empresa: company });
+
+  return `/?${params.toString()}#produtos`;
+}
+
+export default async function Home({ searchParams }: HomeProps) {
+  const params = await searchParams;
+  const selectedCompany = params?.empresa?.trim();
+  const products = await getProducts({ company: selectedCompany });
   const heroProducts = products.filter((product) => product.image_src).slice(0, 3);
   const heroImageSizes = ["h-80 w-56", "h-60 w-36", "h-56 w-32"];
 
@@ -170,14 +189,32 @@ export default async function Home() {
       </section>
 
       <section id="produtos" className="container pb-8">
-        <div className="mb-5 flex items-end justify-between gap-4">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-normal text-brand-ink">Produtos em destaque</h2>
-            <p className="mt-2 text-slate-600">Conheca nossos produtos mais populares e recomendados</p>
+            <p className="mt-2 text-slate-600">
+              {selectedCompany
+                ? `Conheca produtos em destaque da unidade ${selectedCompany}.`
+                : "Conheca nossos produtos mais populares e recomendados"}
+            </p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/admin/produtos">Admin</Link>
-          </Button>
+          <div className="grid gap-3">
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant={selectedCompany ? "outline" : "secondary"} size="sm">
+                <Link href={buildHomeCompanyHref()}>Todas</Link>
+              </Button>
+              {productCompanies.map((company) => (
+                <Button key={company} asChild variant={selectedCompany === company ? "secondary" : "outline"} size="sm">
+                  <Link href={buildHomeCompanyHref(company)}>{company}</Link>
+                </Button>
+              ))}
+            </div>
+            <div className="flex justify-start lg:justify-end">
+              <Button asChild variant="outline">
+                <Link href="/admin/produtos">Admin</Link>
+              </Button>
+            </div>
+          </div>
         </div>
         <div className="grid gap-5 md:grid-cols-3">
           {products.slice(0, 3).map((product) => (
@@ -187,6 +224,7 @@ export default async function Home() {
                   <ProductVisual name={product.name} imageSrc={product.image_src} compact />
                   <div className="flex flex-col py-2">
                     <span className="text-sm font-semibold text-brand-green">{product.category}</span>
+                    <span className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{product.company}</span>
                     <h3 className="mt-2 text-xl font-bold text-brand-ink">{product.name}</h3>
                     <p className="mt-3 text-sm leading-6 text-slate-600">{product.description}</p>
                     <span className="mt-auto pt-4 text-sm font-semibold text-brand-blue">{product.size}</span>
@@ -195,6 +233,19 @@ export default async function Home() {
               </Card>
             </Link>
           ))}
+        </div>
+        <div className="mt-5 flex justify-end">
+          <Button asChild variant="outline">
+            <Link
+              href={
+                selectedCompany
+                  ? { pathname: "/produtos", query: { empresa: selectedCompany } }
+                  : "/produtos"
+              }
+            >
+              Ver catalogo completo <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </section>
 

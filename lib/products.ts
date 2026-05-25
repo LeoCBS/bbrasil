@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 export type Product = {
   id: string;
   name: string;
+  company: string;
   category: string;
   description: string;
   size: string;
@@ -31,6 +32,7 @@ export type ProductsPage = {
 
 type GetProductsOptions = {
   includeInactive?: boolean;
+  company?: string;
 };
 
 type GetPaginatedProductsOptions = GetProductsOptions & {
@@ -39,10 +41,17 @@ type GetPaginatedProductsOptions = GetProductsOptions & {
   category?: string;
 };
 
+type ProductRecord = Omit<ProductInput, "company"> & {
+  id: string;
+  company?: string | null;
+  created_at?: string;
+};
+
 const fallbackProducts: Product[] = [
   {
     id: "demo-1",
     name: "Detergente Profissional",
+    company: "FLORIANOPOLIS SC",
     category: "Limpeza Geral",
     description: "Alto rendimento para cozinhas, pisos lavaveis e manutencao diaria.",
     size: "5L",
@@ -55,6 +64,7 @@ const fallbackProducts: Product[] = [
   {
     id: "demo-2",
     name: "Limpador Multiuso",
+    company: "JOINVILLE SC",
     category: "Higienizacao",
     description: "Solucao pratica para superficies corporativas e ambientes de alto fluxo.",
     size: "750ml",
@@ -67,6 +77,7 @@ const fallbackProducts: Product[] = [
   {
     id: "demo-3",
     name: "Desinfetante Concentrado",
+    company: "ITAJAI SC",
     category: "Desinfeccao",
     description: "Formula concentrada para limpeza profunda e controle de odores.",
     size: "1L",
@@ -89,21 +100,26 @@ function byteaToDataUrl(imageBlob: string | null, mimeType: string | null) {
   return `data:${mimeType};base64,${base64}`;
 }
 
-function normalizeProduct(product: ProductInput & { id: string; created_at?: string }): Product {
+function normalizeProduct(product: ProductRecord): Product {
   return {
     ...product,
+    company: product.company ?? "FLORIANOPOLIS SC",
     image_blob: product.image_blob ?? null,
     image_mime_type: product.image_mime_type ?? null,
     image_src: byteaToDataUrl(product.image_blob ?? null, product.image_mime_type ?? null)
   };
 }
 
-function normalizeCategory(value: string) {
+function normalizeText(value: string) {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
+}
+
+function matchesText(value: string, selected?: string) {
+  return selected ? normalizeText(value) === normalizeText(selected) : true;
 }
 
 function paginateProducts(products: Product[], page: number, pageSize: number): ProductsPage {
@@ -137,12 +153,12 @@ function getSupabase() {
   });
 }
 
-export async function getProducts({ includeInactive = false }: GetProductsOptions = {}) {
+export async function getProducts({ includeInactive = false, company }: GetProductsOptions = {}) {
   noStore();
   const supabase = getSupabase();
 
   if (!supabase) {
-    return fallbackProducts.filter((product) => includeInactive || product.active);
+    return fallbackProducts.filter((product) => (includeInactive || product.active) && matchesText(product.company, company));
   }
 
   let query = supabase.from("products").select("*").order("created_at", { ascending: false });
@@ -151,21 +167,26 @@ export async function getProducts({ includeInactive = false }: GetProductsOption
     query = query.eq("active", true);
   }
 
+  if (company) {
+    query = query.eq("company", company);
+  }
+
   const { data, error } = await query;
 
   if (error) {
     console.error("Supabase products fetch failed:", error.message);
-    return fallbackProducts.filter((product) => includeInactive || product.active);
+    return fallbackProducts.filter((product) => (includeInactive || product.active) && matchesText(product.company, company));
   }
 
-  return (data as Array<ProductInput & { id: string; created_at?: string }>).map(normalizeProduct);
+  return (data as ProductRecord[]).map(normalizeProduct);
 }
 
 export async function getPaginatedProducts({
   includeInactive = false,
   page = 1,
   pageSize = 9,
-  category
+  category,
+  company
 }: GetPaginatedProductsOptions = {}) {
   noStore();
   const supabase = getSupabase();
@@ -177,9 +198,10 @@ export async function getPaginatedProducts({
   if (!supabase) {
     const products = fallbackProducts.filter((product) => {
       const isVisible = includeInactive || product.active;
-      const isInCategory = category ? normalizeCategory(product.category) === normalizeCategory(category) : true;
+      const isInCategory = matchesText(product.category, category);
+      const isFromCompany = matchesText(product.company, company);
 
-      return isVisible && isInCategory;
+      return isVisible && isInCategory && isFromCompany;
     });
 
     return paginateProducts(products, safePage, safePageSize);
@@ -195,11 +217,17 @@ export async function getPaginatedProducts({
     query = query.eq("category", category);
   }
 
+  if (company) {
+    query = query.eq("company", company);
+  }
+
   const { data, error, count } = await query.range(from, to);
 
   if (error) {
     console.error("Supabase products fetch failed:", error.message);
-    const products = fallbackProducts.filter((product) => includeInactive || product.active);
+    const products = fallbackProducts.filter((product) => {
+      return (includeInactive || product.active) && matchesText(product.category, category) && matchesText(product.company, company);
+    });
 
     return paginateProducts(products, safePage, safePageSize);
   }
@@ -212,12 +240,13 @@ export async function getPaginatedProducts({
       includeInactive,
       page: totalPages,
       pageSize: safePageSize,
-      category
+      category,
+      company
     });
   }
 
   return {
-    products: (data as Array<ProductInput & { id: string; created_at?: string }>).map(normalizeProduct),
+    products: (data as ProductRecord[]).map(normalizeProduct),
     total,
     page: Math.min(safePage, totalPages),
     pageSize: safePageSize,
@@ -250,7 +279,7 @@ export async function getProduct(id: string, { includeInactive = false } = {}) {
     return null;
   }
 
-  return normalizeProduct(data as ProductInput & { id: string; created_at?: string });
+  return normalizeProduct(data as ProductRecord);
 }
 
 export async function createProduct(input: ProductMutationInput) {

@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
 import { getPaginatedProducts } from "@/lib/products";
+import { productCompanies } from "@/lib/companies";
 
 const pageSize = 1;
 
 type ProductsPageProps = {
   searchParams?: Promise<{
     categoria?: string;
+    empresa?: string;
     page?: string;
   }>;
 };
@@ -21,11 +23,15 @@ function parsePage(value: string | undefined) {
   return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
-function buildProductsHref(page: number, category?: string) {
+function buildProductsHref({ page, category, company }: { page: number; category?: string; company?: string }) {
   const params = new URLSearchParams();
 
   if (category) {
     params.set("categoria", category);
+  }
+
+  if (company) {
+    params.set("empresa", company);
   }
 
   if (page > 1) {
@@ -40,12 +46,15 @@ function buildProductsHref(page: number, category?: string) {
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
   const selectedCategory = params?.categoria?.trim();
+  const selectedCompany = params?.empresa?.trim();
   const currentPage = parsePage(params?.page);
   const { products, total, page, totalPages } = await getPaginatedProducts({
     category: selectedCategory,
+    company: selectedCompany,
     page: currentPage,
     pageSize
   });
+  const hasFilters = Boolean(selectedCategory || selectedCompany);
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -70,13 +79,35 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 ? `${total} ${total === 1 ? "produto encontrado" : "produtos encontrados"}.`
                 : "Confira as solucoes profissionais da B.Brasil."}
             </p>
+            {selectedCompany ? <p className="mt-2 text-sm font-semibold text-brand-green">Empresa: {selectedCompany}</p> : null}
           </div>
-          {selectedCategory ? (
+          {hasFilters ? (
             <Button asChild variant="outline">
               <Link href="/produtos">Ver todos</Link>
             </Button>
           ) : null}
         </div>
+        <form className="mt-6 grid gap-4 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1fr_auto]" action="/produtos">
+          {selectedCategory ? <input type="hidden" name="categoria" value={selectedCategory} /> : null}
+          <label className="grid gap-2 text-sm font-medium text-brand-ink">
+            Empresa
+            <select
+              name="empresa"
+              defaultValue={selectedCompany ?? ""}
+              className="h-11 rounded-md border border-input bg-background px-3 text-sm font-normal text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">Todas as empresas</option>
+              {productCompanies.map((company) => (
+                <option key={company} value={company}>
+                  {company}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button type="submit" className="md:self-end">
+            Filtrar produtos
+          </Button>
+        </form>
         <div className="mt-8 grid gap-5 md:grid-cols-3">
           {products.map((product) => (
             <Link key={product.id} href={`/produtos/${product.id}`} className="block h-full">
@@ -86,6 +117,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                     <ProductVisual name={product.name} imageSrc={product.image_src} compact />
                   </div>
                   <span className="mt-5 block text-sm font-semibold text-brand-green">{product.category}</span>
+                  <span className="mt-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">{product.company}</span>
                   <h2 className="mt-2 text-xl font-bold text-brand-ink">{product.name}</h2>
                   <p className="mt-3 text-sm leading-6 text-slate-600">{product.description}</p>
                   <div className="mt-auto flex items-center justify-between pt-5">
@@ -113,8 +145,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <Pagination
             page={page}
             totalPages={totalPages}
-            previousHref={buildProductsHref(page - 1, selectedCategory)}
-            nextHref={buildProductsHref(page + 1, selectedCategory)}
+            previousHref={buildProductsHref({ page: page - 1, category: selectedCategory, company: selectedCompany })}
+            nextHref={buildProductsHref({ page: page + 1, category: selectedCategory, company: selectedCompany })}
           />
         ) : null}
       </section>

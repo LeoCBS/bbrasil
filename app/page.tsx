@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  ChevronDown,
   Mail,
   MapPin,
   MessageCircle,
@@ -11,7 +12,7 @@ import {
   Trash2,
   Waves
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
@@ -304,11 +305,33 @@ function Header() {
           <Link href="#sobre">Sobre nos</Link>
           <Link href="#contato">Contato</Link>
         </nav>
-        <Button asChild variant="secondary" className="hidden md:inline-flex">
-          <Link href={units[0].phones[0].href}>
+        <details className="group relative hidden md:block">
+          <summary className={buttonVariants({ variant: "secondary", className: "cursor-pointer list-none" })}>
             <MessageCircle className="h-5 w-5" /> Fale conosco
-          </Link>
-        </Button>
+            <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
+          </summary>
+          <div className="absolute right-0 top-full z-40 mt-3 w-80 overflow-hidden rounded-lg border bg-white py-2 shadow-lg">
+            {units.map((unit) => (
+              <div key={unit.name} className="border-b px-3 py-2 last:border-b-0">
+                <p className="px-2 text-xs font-bold uppercase tracking-wide text-brand-ink">Unidade {unit.name}</p>
+                <div className="mt-1 grid gap-1">
+                  {unit.phones.map((phone) => (
+                    <Link
+                      key={phone.label}
+                      href={phone.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-between gap-3 rounded-md px-2 py-2 text-sm text-slate-600 hover:bg-accent hover:text-brand-green"
+                    >
+                      <span>{phone.label}</span>
+                      <MessageCircle className="h-4 w-4 shrink-0" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
       </div>
     </header>
   );

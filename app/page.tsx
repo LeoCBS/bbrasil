@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   ChevronDown,
@@ -140,52 +141,60 @@ export default async function Home({ searchParams }: HomeProps) {
   const params = await searchParams;
   const selectedCompany = params?.empresa?.trim();
   const products = await getProducts({ company: selectedCompany });
-  const heroProducts = products.filter((product) => product.image_src).slice(0, 3);
-  const heroImageSizes = ["h-80 w-56", "h-60 w-36", "h-56 w-32"];
 
   return (
     <main className="min-h-screen bg-white">
       <Header />
-      <section className="overflow-hidden border-b bg-gradient-to-r from-slate-50 via-white to-slate-50">
-        <div className="container grid min-h-[510px] items-center gap-10 py-12 md:grid-cols-[0.9fr_1.1fr] md:py-8">
-          <div className="max-w-xl">
-            <h1 className="text-5xl font-bold leading-tight tracking-normal text-brand-ink md:text-6xl">
-              Higiene que <span className="block text-brand-blue">transforma</span>
-              <span className="block text-brand-green">ambientes.</span>
-            </h1>
-            <p className="mt-6 max-w-md text-lg leading-8 text-slate-700">
-              Solucoes profissionais em higiene e limpeza para empresas, instituicoes e profissionais exigentes.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Button asChild size="lg">
-                <Link href="#categorias">
-                  Ver produtos <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="link" size="lg" className="px-0 text-brand-green">
-                <Link href="#sobre">
-                  Sobre nos <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-          <div className="relative flex min-h-[430px] items-end justify-center">
-            <div className="absolute bottom-0 right-0 h-20 w-full max-w-2xl rounded-tl-[42px] bg-[#e9dfd1]" />
-            <div className="absolute right-0 top-12 h-72 w-36 rounded-full border-l-4 border-brand-green/20">
-              <div className="absolute right-2 top-0 h-32 w-16 rounded-[100%_0] bg-brand-green/85 rotate-12" />
-              <div className="absolute right-12 top-28 h-32 w-16 rounded-[100%_0] bg-brand-green/75 -rotate-12" />
-            </div>
-            <div className="relative z-10 flex items-end gap-5">
-              {heroProducts.map((product, index) => (
-                <ProductVisual
-                  key={product.id}
-                  name={product.name}
-                  imageSrc={product.image_src}
-                  className={heroImageSizes[index]}
+      <section className="border-b bg-slate-50 py-6">
+        <div className="container">
+          <details className="group relative">
+            <summary className="block cursor-pointer list-none overflow-hidden rounded-lg shadow-soft outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <div className="relative min-h-[280px] overflow-hidden md:min-h-[350px]">
+                <Image
+                  src="/hero-specialist.png"
+                  alt="Especialista em higiene profissional pronta para atendimento"
+                  fill
+                  priority
+                  className="object-cover"
+                  sizes="(min-width: 1280px) 1180px, 100vw"
                 />
+                <div className="absolute inset-0 bg-gradient-to-r from-brand-blue/90 via-brand-green/70 to-brand-green/20" />
+                <div className="relative z-10 flex min-h-[280px] max-w-2xl flex-col justify-center p-7 text-white md:min-h-[350px] md:p-12">
+                  <span className="text-2xl font-semibold md:text-4xl">Fale com um</span>
+                  <h1 className="mt-1 text-4xl font-bold leading-none tracking-normal md:text-6xl">
+                    Especialista
+                  </h1>
+                  <p className="mt-4 max-w-md text-sm leading-6 text-white/90 md:text-base">
+                    Conheça nosso portfólio completo de higiene profissional e escolha a loja ideal para falar agora.
+                  </p>
+                  <span className="mt-6 inline-flex w-fit items-center gap-2 rounded-md bg-white px-5 py-3 text-sm font-bold text-brand-green shadow">
+                    Escolher loja <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
+                  </span>
+                </div>
+              </div>
+            </summary>
+            <div className="absolute left-4 right-4 top-full z-40 mt-3 grid gap-2 rounded-lg border bg-white p-3 shadow-lg md:left-auto md:w-96">
+              {units.map((unit) => (
+                <div key={unit.name} className="rounded-md border p-3">
+                  <p className="text-xs font-bold uppercase tracking-wide text-brand-ink">Unidade {unit.name}</p>
+                  <div className="mt-2 grid gap-2">
+                    {unit.phones.map((phone) => (
+                      <Link
+                        key={phone.label}
+                        href={phone.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2 text-sm font-semibold text-brand-green hover:bg-accent hover:text-brand-blue"
+                      >
+                        <span>{phone.label}</span>
+                        <MessageCircle className="h-4 w-4 shrink-0" />
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
+          </details>
         </div>
       </section>
 

@@ -7,7 +7,7 @@ import { Logo } from "@/components/site/logo";
 import { getPaginatedProducts } from "@/lib/products";
 import { productCompanies } from "@/lib/companies";
 
-const pageSize = 1;
+const pageSize = 10;
 
 type ProductsPageProps = {
   searchParams?: Promise<{

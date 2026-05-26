@@ -13,7 +13,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
 
-const categories = ["Limpeza Geral", "Higienizacao", "Desinfeccao", "Equipamentos", "Descartaveis"];
+const categories = [
+  "ALTOLIM",
+  "EQUIPAMENTOS E ACESSÓRIOS",
+  "DESCARTÁVEIS",
+  "HIGIENE PESSOAL",
+  "COPA/COZINHA",
+  "EPI",
+  "LIMPEZA E HIGIENE",
+  "DISPENSER",
+  "GERENCIAMENTO DE RESÍDUOS",
+  "PANOS"
+];
 const pageSize = 5;
 
 type AdminProductsPageProps = {

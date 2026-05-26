@@ -21,29 +21,54 @@ import { productCompanies } from "@/lib/companies";
 
 const categories = [
   {
-    title: "Limpeza Geral",
-    description: "Produtos para limpeza diaria e manutencao de ambientes.",
+    title: "ALTOLIM",
+    description: "Linha Altolim para rotinas profissionais de limpeza.",
     icon: SprayCan
   },
   {
-    title: "Higienizacao",
-    description: "Solucoes para higienizacao profunda e eficaz de superficies.",
-    icon: ShieldPlus
-  },
-  {
-    title: "Desinfeccao",
-    description: "Produtos desinfetantes para ambientes seguros e protegidos.",
-    icon: Sparkles
-  },
-  {
-    title: "Equipamentos",
+    title: "EQUIPAMENTOS E ACESSÓRIOS",
     description: "Equipamentos e acessorios para limpeza profissional.",
     icon: PackageCheck
   },
   {
-    title: "Descartaveis",
-    description: "Descartaveis de alta qualidade para seu negocio.",
+    title: "DESCARTÁVEIS",
+    description: "Descartaveis para empresas, cozinhas e ambientes de alto fluxo.",
     icon: Trash2
+  },
+  {
+    title: "HIGIENE PESSOAL",
+    description: "Itens para cuidado, assepsia e higiene pessoal.",
+    icon: ShieldPlus
+  },
+  {
+    title: "COPA/COZINHA",
+    description: "Produtos para copa, cozinha e areas de preparo.",
+    icon: Sparkles
+  },
+  {
+    title: "EPI",
+    description: "Equipamentos de protecao individual para operacoes seguras.",
+    icon: ShieldPlus
+  },
+  {
+    title: "LIMPEZA E HIGIENE",
+    description: "Solucoes para limpeza, higienizacao e manutencao diaria.",
+    icon: SprayCan
+  },
+  {
+    title: "DISPENSER",
+    description: "Dispensers e suportes para ambientes profissionais.",
+    icon: PackageCheck
+  },
+  {
+    title: "GERENCIAMENTO DE RESÍDUOS",
+    description: "Produtos para descarte, coleta e gestao de residuos.",
+    icon: Trash2
+  },
+  {
+    title: "PANOS",
+    description: "Panos e acessorios texteis para limpeza profissional.",
+    icon: Waves
   }
 ];
 
@@ -134,7 +159,7 @@ export default async function Home({ searchParams }: HomeProps) {
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Button asChild size="lg">
                 <Link href="#categorias">
-                  Ver categorias <ArrowRight className="h-4 w-4" />
+                  Ver produtos <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild variant="link" size="lg" className="px-0 text-brand-green">
@@ -257,13 +282,18 @@ export default async function Home({ searchParams }: HomeProps) {
             </h2>
             <div className="mt-4 h-0.5 w-14 bg-brand-green" />
             <p className="mt-7 leading-7 text-slate-700">
-              Somos especialistas em solucoes de higiene profissional, oferecendo produtos de alta qualidade para empresas,
-              instituicoes e profissionais que nao abrem mao da excelencia.
+              Há quase quatro décadas, nossa empresa atua com excelência no segmento de higiene profissional, oferecendo soluções completas para empresas que valorizam qualidade, segurança e bem-estar. Presente nos estados de Santa Catarina, São Paulo e Paraná, consolidamos nossa trajetória como uma das líderes do mercado brasileiro, reconhecida pela confiança, inovação e compromisso com cada cliente.
             </p>
-            <p className="mt-4 leading-7 text-slate-700">
-              Nosso compromisso e com a qualidade, eficiencia e sustentabilidade em tudo o que fazemos.
+            <p className="mt-7 leading-7 text-slate-700">
+Mais do que fornecer produtos, entregamos cuidado. Nosso portfólio reúne soluções de alta qualidade para higiene, limpeza e conservação de ambientes, atendendo diferentes segmentos com eficiência e responsabilidade. Cada produto é selecionado para garantir desempenho, segurança e resultados que fazem a diferença no dia a dia.
+</p>
+<p className="mt-7 leading-7 text-slate-700">
+Nosso reconhecimento é resultado de um trabalho construído com dedicação, atendimento próximo e foco constante na satisfação dos clientes. Acreditamos que ambientes saudáveis promovem mais qualidade de vida, produtividade e bem-estar para as pessoas.
+</p>
+<p className="mt-7 leading-7 text-slate-700">
+Com tradição, experiência e olhar voltado para o futuro, seguimos expandindo nossa atuação e fortalecendo nossa missão: cuidar de pessoas e contribuir para ambientes mais limpos, seguros e saudáveis em todo o Brasil.
+
             </p>
-            <Button className="mt-6">Saiba mais sobre nos</Button>
           </div>
           <div className="relative min-h-72 overflow-hidden rounded-lg bg-gradient-to-br from-slate-200 via-white to-slate-100">
             <div className="absolute inset-x-8 bottom-16 h-8 rounded-full bg-sky-200 blur-sm" />
@@ -352,8 +382,8 @@ function Header() {
           <Link className="border-b-2 border-brand-green pb-1 text-brand-blue" href="/">
             Inicio
           </Link>
-          <Link href="#categorias">Categorias</Link>
-          <Link href="#sobre">Sobre nos</Link>
+          <Link href="#categorias">Produtos</Link>
+          <Link href="#sobre">Quem somos</Link>
           <Link href="#contato">Contato</Link>
         </nav>
         <details className="group relative hidden md:block">
@@ -426,7 +456,7 @@ function Footer() {
         </div>
       </div>
       <div className="bg-brand-blue py-5 text-center text-sm text-white">
-        © 2024 B.Brasil Higiene Profissional. Todos os direitos reservados.
+        © 2026 B.Brasil Higiene Profissional. Todos os direitos reservados.
       </div>
     </footer>
   );

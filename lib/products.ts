@@ -21,6 +21,24 @@ export type ProductMutationInput = Omit<ProductInput, "image_blob" | "image_mime
   image_mime_type?: string | null;
 };
 
+export type ProductsPage = {
+  products: Product[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+type GetProductsOptions = {
+  includeInactive?: boolean;
+};
+
+type GetPaginatedProductsOptions = GetProductsOptions & {
+  page?: number;
+  pageSize?: number;
+  category?: string;
+};
+
 const fallbackProducts: Product[] = [
   {
     id: "demo-1",
@@ -80,6 +98,30 @@ function normalizeProduct(product: ProductInput & { id: string; created_at?: str
   };
 }
 
+function normalizeCategory(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function paginateProducts(products: Product[], page: number, pageSize: number): ProductsPage {
+  const safePageSize = Math.max(1, pageSize);
+  const total = products.length;
+  const totalPages = Math.max(1, Math.ceil(total / safePageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const from = (safePage - 1) * safePageSize;
+
+  return {
+    products: products.slice(from, from + safePageSize),
+    total,
+    page: safePage,
+    pageSize: safePageSize,
+    totalPages
+  };
+}
+
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -95,7 +137,7 @@ function getSupabase() {
   });
 }
 
-export async function getProducts({ includeInactive = false } = {}) {
+export async function getProducts({ includeInactive = false }: GetProductsOptions = {}) {
   noStore();
   const supabase = getSupabase();
 
@@ -117,6 +159,70 @@ export async function getProducts({ includeInactive = false } = {}) {
   }
 
   return (data as Array<ProductInput & { id: string; created_at?: string }>).map(normalizeProduct);
+}
+
+export async function getPaginatedProducts({
+  includeInactive = false,
+  page = 1,
+  pageSize = 9,
+  category
+}: GetPaginatedProductsOptions = {}) {
+  noStore();
+  const supabase = getSupabase();
+  const safePageSize = Math.max(1, pageSize);
+  const safePage = Math.max(1, page);
+  const from = (safePage - 1) * safePageSize;
+  const to = from + safePageSize - 1;
+
+  if (!supabase) {
+    const products = fallbackProducts.filter((product) => {
+      const isVisible = includeInactive || product.active;
+      const isInCategory = category ? normalizeCategory(product.category) === normalizeCategory(category) : true;
+
+      return isVisible && isInCategory;
+    });
+
+    return paginateProducts(products, safePage, safePageSize);
+  }
+
+  let query = supabase.from("products").select("*", { count: "exact" }).order("created_at", { ascending: false });
+
+  if (!includeInactive) {
+    query = query.eq("active", true);
+  }
+
+  if (category) {
+    query = query.eq("category", category);
+  }
+
+  const { data, error, count } = await query.range(from, to);
+
+  if (error) {
+    console.error("Supabase products fetch failed:", error.message);
+    const products = fallbackProducts.filter((product) => includeInactive || product.active);
+
+    return paginateProducts(products, safePage, safePageSize);
+  }
+
+  const total = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / safePageSize));
+
+  if (total > 0 && safePage > totalPages) {
+    return getPaginatedProducts({
+      includeInactive,
+      page: totalPages,
+      pageSize: safePageSize,
+      category
+    });
+  }
+
+  return {
+    products: (data as Array<ProductInput & { id: string; created_at?: string }>).map(normalizeProduct),
+    total,
+    page: Math.min(safePage, totalPages),
+    pageSize: safePageSize,
+    totalPages
+  };
 }
 
 export async function getProduct(id: string, { includeInactive = false } = {}) {

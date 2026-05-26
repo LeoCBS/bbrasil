@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowLeft, Database, LogOut, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Database, LogOut, Plus, Save, Trash2 } from "lucide-react";
 import { logoutAction, requireAdminUser } from "@/auth";
 import { createProductAction, deleteProductAction, updateProductAction } from "@/lib/actions";
-import { getProducts, type Product } from "@/lib/products";
+import { getPaginatedProducts, type Product } from "@/lib/products";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,10 +13,33 @@ import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
 
 const categories = ["Limpeza Geral", "Higienizacao", "Desinfeccao", "Equipamentos", "Descartaveis"];
+const pageSize = 5;
 
-export default async function AdminProductsPage() {
+type AdminProductsPageProps = {
+  searchParams?: Promise<{
+    page?: string;
+  }>;
+};
+
+function parsePage(value: string | undefined) {
+  const page = Number(value);
+
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+function buildAdminProductsHref(page: number) {
+  return page > 1 ? `/admin/produtos?page=${page}` : "/admin/produtos";
+}
+
+export default async function AdminProductsPage({ searchParams }: AdminProductsPageProps) {
   const user = await requireAdminUser();
-  const products = await getProducts({ includeInactive: true });
+  const params = await searchParams;
+  const currentPage = parsePage(params?.page);
+  const { products, total, page, totalPages } = await getPaginatedProducts({
+    includeInactive: true,
+    page: currentPage,
+    pageSize
+  });
   const isConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   return (
@@ -44,7 +67,9 @@ export default async function AdminProductsPage() {
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-4xl font-bold tracking-normal text-brand-ink">Admin de produtos</h1>
-            <p className="mt-3 text-slate-600">Cadastre, edite e remova produtos exibidos no catalogo.</p>
+            <p className="mt-3 text-slate-600">
+              Cadastre, edite e remova produtos exibidos no catalogo. {total} {total === 1 ? "produto cadastrado" : "produtos cadastrados"}.
+            </p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-md border bg-white px-4 py-3 text-sm text-slate-600">
             <Database className="h-4 w-4 text-brand-green" />
@@ -64,6 +89,14 @@ export default async function AdminProductsPage() {
           </Card>
 
           <div className="grid gap-5">
+            {products.length === 0 ? (
+              <Card className="shadow-soft">
+                <CardContent className="p-8 text-center">
+                  <h2 className="text-xl font-bold text-brand-ink">Nenhum produto cadastrado</h2>
+                  <p className="mt-3 text-slate-600">Use o formulario ao lado para criar o primeiro produto.</p>
+                </CardContent>
+              </Card>
+            ) : null}
             {products.map((product) => (
               <Card key={product.id} className="shadow-soft">
                 <CardHeader className="pb-4">
@@ -92,10 +125,62 @@ export default async function AdminProductsPage() {
                 </CardContent>
               </Card>
             ))}
+            {totalPages > 1 ? (
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                previousHref={buildAdminProductsHref(page - 1)}
+                nextHref={buildAdminProductsHref(page + 1)}
+              />
+            ) : null}
           </div>
         </div>
       </section>
     </main>
+  );
+}
+
+function Pagination({
+  page,
+  totalPages,
+  previousHref,
+  nextHref
+}: {
+  page: number;
+  totalPages: number;
+  previousHref: string;
+  nextHref: string;
+}) {
+  return (
+    <nav className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Paginacao do admin de produtos">
+      <span className="text-sm text-slate-600">
+        Pagina {page} de {totalPages}
+      </span>
+      <div className="flex gap-3">
+        {page > 1 ? (
+          <Button asChild variant="outline">
+            <Link href={previousHref}>
+              <ArrowLeft className="h-4 w-4" /> Anterior
+            </Link>
+          </Button>
+        ) : (
+          <Button variant="outline" disabled>
+            <ArrowLeft className="h-4 w-4" /> Anterior
+          </Button>
+        )}
+        {page < totalPages ? (
+          <Button asChild>
+            <Link href={nextHref}>
+              Proxima <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        ) : (
+          <Button disabled>
+            Proxima <ArrowRight className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    </nav>
   );
 }
 

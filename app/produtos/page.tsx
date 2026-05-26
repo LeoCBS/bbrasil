@@ -4,30 +4,48 @@ import { ProductVisual } from "@/components/site/product-visual";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
-import { getProducts } from "@/lib/products";
+import { getPaginatedProducts } from "@/lib/products";
+
+const pageSize = 1;
 
 type ProductsPageProps = {
   searchParams?: Promise<{
     categoria?: string;
-    category?: string;
+    page?: string;
   }>;
 };
 
-function normalizeCategory(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
+function parsePage(value: string | undefined) {
+  const page = Number(value);
+
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+function buildProductsHref(page: number, category?: string) {
+  const params = new URLSearchParams();
+
+  if (category) {
+    params.set("categoria", category);
+  }
+
+  if (page > 1) {
+    params.set("page", String(page));
+  }
+
+  const query = params.toString();
+
+  return query ? `/produtos?${query}` : "/produtos";
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
-  const selectedCategory = params?.categoria ?? params?.category ?? "";
-  const products = await getProducts();
-  const filteredProducts = selectedCategory
-    ? products.filter((product) => normalizeCategory(product.category) === normalizeCategory(selectedCategory))
-    : products;
+  const selectedCategory = params?.categoria?.trim();
+  const currentPage = parsePage(params?.page);
+  const { products, total, page, totalPages } = await getPaginatedProducts({
+    category: selectedCategory,
+    page: currentPage,
+    pageSize
+  });
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -47,7 +65,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             <h1 className="text-4xl font-bold tracking-normal text-brand-ink">
               {selectedCategory ? `Produtos de ${selectedCategory}` : "Produtos"}
             </h1>
-            <p className="mt-3 text-slate-600">Confira as solucoes profissionais da B.Brasil.</p>
+            <p className="mt-3 text-slate-600">
+              {total > 0
+                ? `${total} ${total === 1 ? "produto encontrado" : "produtos encontrados"}.`
+                : "Confira as solucoes profissionais da B.Brasil."}
+            </p>
           </div>
           {selectedCategory ? (
             <Button asChild variant="outline">
@@ -56,7 +78,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           ) : null}
         </div>
         <div className="mt-8 grid gap-5 md:grid-cols-3">
-          {filteredProducts.map((product) => (
+          {products.map((product) => (
             <Link key={product.id} href={`/produtos/${product.id}`} className="block h-full">
               <Card id={product.id} className="h-full scroll-mt-28 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
                 <CardContent className="flex h-full flex-col p-6">
@@ -78,16 +100,68 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             </Link>
           ))}
         </div>
-        {filteredProducts.length === 0 ? (
+        {products.length === 0 ? (
           <div className="mt-8 rounded-lg border bg-white p-8 text-center shadow-soft">
             <h2 className="text-xl font-bold text-brand-ink">Nenhum produto encontrado</h2>
-            <p className="mt-3 text-slate-600">Nao encontramos produtos cadastrados para esta categoria.</p>
+            <p className="mt-3 text-slate-600">Nao encontramos produtos cadastrados para esta busca.</p>
             <Button asChild className="mt-6">
               <Link href="/produtos">Ver todos os produtos</Link>
             </Button>
           </div>
         ) : null}
+        {totalPages > 1 ? (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            previousHref={buildProductsHref(page - 1, selectedCategory)}
+            nextHref={buildProductsHref(page + 1, selectedCategory)}
+          />
+        ) : null}
       </section>
     </main>
+  );
+}
+
+function Pagination({
+  page,
+  totalPages,
+  previousHref,
+  nextHref
+}: {
+  page: number;
+  totalPages: number;
+  previousHref: string;
+  nextHref: string;
+}) {
+  return (
+    <nav className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Paginacao de produtos">
+      <span className="text-sm text-slate-600">
+        Pagina {page} de {totalPages}
+      </span>
+      <div className="flex gap-3">
+        {page > 1 ? (
+          <Button asChild variant="outline">
+            <Link href={previousHref}>
+              <ArrowLeft className="h-4 w-4" /> Anterior
+            </Link>
+          </Button>
+        ) : (
+          <Button variant="outline" disabled>
+            <ArrowLeft className="h-4 w-4" /> Anterior
+          </Button>
+        )}
+        {page < totalPages ? (
+          <Button asChild>
+            <Link href={nextHref}>
+              Proxima <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        ) : (
+          <Button disabled>
+            Proxima <ArrowRight className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    </nav>
   );
 }

@@ -99,7 +99,7 @@ const units = [
   },
   {
     name: "CRICIUMA SC",
-    address: ["Rua Clarinda Milioli de Luca, 595 loja 01 - CEP 88810-400", "Mina do Mato - Criciuma - SC"],
+    address: ["Rua Gonçalves Ledo, 92 sala 02 - Centro - Criciúma SC. Cep: 88802-120"],
     phones: [{ label: "(48) 3413 5005", href: "https://wa.me/554834135005" }],
     email: "criciuma@bbrasilprodutosdelimpeza.com.br"
   },
@@ -275,7 +275,7 @@ export default async function Home({ searchParams }: HomeProps) {
       </section>
 
       <section id="sobre" className="container py-8">
-        <div className="grid gap-10 rounded-lg bg-slate-50 p-8 shadow-soft md:grid-cols-2 md:p-12">
+        <div className="grid gap-10 rounded-lg bg-slate-50 p-8 shadow-soft lg:grid-cols-[1.08fr_0.92fr] lg:items-start lg:p-12">
           <div>
             <h2 className="text-3xl font-bold tracking-normal text-brand-ink">
               Sobre a <span className="text-brand-blue">B.Brasil</span>
@@ -285,24 +285,37 @@ export default async function Home({ searchParams }: HomeProps) {
               Há quase quatro décadas, nossa empresa atua com excelência no segmento de higiene profissional, oferecendo soluções completas para empresas que valorizam qualidade, segurança e bem-estar. Presente nos estados de Santa Catarina, São Paulo e Paraná, consolidamos nossa trajetória como uma das líderes do mercado brasileiro, reconhecida pela confiança, inovação e compromisso com cada cliente.
             </p>
             <p className="mt-7 leading-7 text-slate-700">
-Mais do que fornecer produtos, entregamos cuidado. Nosso portfólio reúne soluções de alta qualidade para higiene, limpeza e conservação de ambientes, atendendo diferentes segmentos com eficiência e responsabilidade. Cada produto é selecionado para garantir desempenho, segurança e resultados que fazem a diferença no dia a dia.
-</p>
-<p className="mt-7 leading-7 text-slate-700">
-Nosso reconhecimento é resultado de um trabalho construído com dedicação, atendimento próximo e foco constante na satisfação dos clientes. Acreditamos que ambientes saudáveis promovem mais qualidade de vida, produtividade e bem-estar para as pessoas.
-</p>
-<p className="mt-7 leading-7 text-slate-700">
-Com tradição, experiência e olhar voltado para o futuro, seguimos expandindo nossa atuação e fortalecendo nossa missão: cuidar de pessoas e contribuir para ambientes mais limpos, seguros e saudáveis em todo o Brasil.
-
+              Mais do que fornecer produtos, entregamos cuidado. Nosso portfólio reúne soluções de alta qualidade para higiene, limpeza e conservação de ambientes, atendendo diferentes segmentos com eficiência e responsabilidade. Cada produto é selecionado para garantir desempenho, segurança e resultados que fazem a diferença no dia a dia.
+            </p>
+            <p className="mt-7 leading-7 text-slate-700">
+              Nosso reconhecimento é resultado de um trabalho construído com dedicação, atendimento próximo e foco constante na satisfação dos clientes. Acreditamos que ambientes saudáveis promovem mais qualidade de vida, produtividade e bem-estar para as pessoas.
+            </p>
+            <p className="mt-7 leading-7 text-slate-700">
+              Com tradição, experiência e olhar voltado para o futuro, seguimos expandindo nossa atuação e fortalecendo nossa missão: cuidar de pessoas e contribuir para ambientes mais limpos, seguros e saudáveis em todo o Brasil.
             </p>
           </div>
-          <div className="relative min-h-72 overflow-hidden rounded-lg bg-gradient-to-br from-slate-200 via-white to-slate-100">
-            <div className="absolute inset-x-8 bottom-16 h-8 rounded-full bg-sky-200 blur-sm" />
-            <div className="absolute left-14 top-20 h-36 w-56 rotate-[-8deg] rounded-[40%] bg-sky-300 shadow-lg" />
-            <div className="absolute left-36 top-8 h-44 w-28 rotate-12 rounded-[50%_50%_35%_35%] bg-brand-green" />
-            <div className="absolute bottom-0 right-0 w-60 rounded-tl-lg bg-brand-green p-6 text-white">
-              <Waves className="mb-5 h-7 w-7" />
-              <h3 className="font-bold">Sustentabilidade</h3>
-              <p className="mt-2 text-sm leading-6">Compromisso com o meio ambiente e praticas sustentaveis.</p>
+          <div className="relative min-h-[440px] overflow-hidden rounded-lg bg-gradient-to-br from-white via-sky-50 to-slate-100 p-7 shadow-soft lg:sticky lg:top-32 lg:self-start">
+            <div className="absolute left-8 top-8 h-36 w-48 rotate-[-8deg] rounded-[40%] bg-sky-300 shadow-lg" />
+            <div className="absolute left-36 top-0 h-44 w-28 rotate-12 rounded-[50%_50%_35%_35%] bg-brand-green" />
+            <div className="absolute inset-x-10 bottom-28 h-8 rounded-full bg-sky-200 blur-sm" />
+            <div className="relative z-10 flex h-full min-h-[386px] flex-col justify-between">
+              <div className="ml-auto max-w-52 rounded-lg bg-white/90 p-5 shadow-soft">
+                <span className="block text-4xl font-bold text-brand-blue">40</span>
+                <span className="mt-1 block text-sm font-semibold text-brand-ink">anos de trajetória</span>
+                <p className="mt-3 text-sm leading-6 text-slate-600">Atuação consolidada em higiene profissional no Sul e Sudeste.</p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                <div className="rounded-lg bg-brand-blue p-5 text-white shadow-soft">
+                  <PackageCheck className="mb-4 h-6 w-6" />
+                  <h3 className="font-bold">Portfólio completo</h3>
+                  <p className="mt-2 text-sm leading-6 text-white/90">Soluções para diferentes segmentos e rotinas profissionais.</p>
+                </div>
+                <div className="rounded-lg bg-brand-green p-5 text-white shadow-soft">
+                  <Waves className="mb-4 h-6 w-6" />
+                  <h3 className="font-bold">Sustentabilidade</h3>
+                  <p className="mt-2 text-sm leading-6 text-white/90">Compromisso com o meio ambiente e praticas sustentaveis.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

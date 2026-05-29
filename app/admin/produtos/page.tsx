@@ -267,9 +267,9 @@ function ProductForm({
       </div>
       <div className="grid gap-2">
         <Label htmlFor={`image-${product?.id ?? "new"}`}>Imagem do produto</Label>
-        {product?.image_src ? (
+        {product?.image_url ? (
           <div className="flex justify-center rounded-md border border-dashed bg-white p-3">
-            <ProductVisual name={product.name} imageSrc={product.image_src} compact />
+            <ProductVisual name={product.name} imageSrc={product.image_url} compact />
           </div>
         ) : null}
         <Input id={`image-${product?.id ?? "new"}`} name="image_blob" type="file" accept="image/*" />

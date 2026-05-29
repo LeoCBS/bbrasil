@@ -22,7 +22,9 @@ async function parseProduct(formData: FormData): Promise<ProductMutationInput> {
     description: String(formData.get("description") ?? "").trim(),
     size: String(formData.get("size") ?? "").trim(),
     price: priceValue ? Number(priceValue) : null,
-    active: formData.get("active") === "on"
+    active: formData.get("active") === "on",
+    // ensure image_url is always present to satisfy ProductMutationInput
+    image_url: String(formData.get("image_url") ?? "")
   };
 
   if (hasImageFile) {

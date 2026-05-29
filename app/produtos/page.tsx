@@ -45,6 +45,7 @@ function buildProductsHref({ page, category, company }: { page: number; category
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
+  
   const selectedCategory = params?.categoria?.trim();
   const selectedCompany = params?.empresa?.trim();
   const currentPage = parsePage(params?.page);
@@ -114,7 +115,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               <Card id={product.id} className="h-full scroll-mt-28 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
                 <CardContent className="flex h-full flex-col p-6">
                   <div className="flex justify-center">
-                    <ProductVisual name={product.name} imageSrc={product.image_src} compact />
+                    <ProductVisual name={product.name} imageSrc={product.image_url} compact />
                   </div>
                   <span className="mt-5 block text-sm font-semibold text-brand-green">{product.category}</span>
                   <span className="mt-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">{product.company}</span>

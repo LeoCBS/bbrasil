@@ -255,12 +255,23 @@ export default async function Home({ searchParams }: HomeProps) {
             <Link key={product.id} href={`/produtos/${product.id}`} className="block h-full">
               <Card className="h-full overflow-hidden shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
                 <CardContent className="grid h-full grid-cols-[120px_1fr] gap-5 p-5">
-                  <ProductVisual name={product.name} imageSrc={product.image_src} compact />
+                  <ProductVisual name={product.name} imageSrc={product.image_url} compact />
                   <div className="flex flex-col py-2">
                     <span className="text-sm font-semibold text-brand-green">{product.category}</span>
                     <span className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{product.company}</span>
                     <h3 className="mt-2 text-xl font-bold text-brand-ink">{product.name}</h3>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">{product.description}</p>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">
+                      {product.description && product.description.length > 150 ? (
+                        <>
+                          {product.description.substring(0, 150)}...{' '}
+                          <Link href={`/produtos/${product.id}`} className="font-semibold text-brand-blue hover:underline">
+                            leia mais
+                          </Link>
+                        </>
+                      ) : (
+                        product.description
+                      )}
+                    </p>
                     <span className="mt-auto pt-4 text-sm font-semibold text-brand-blue">{product.size}</span>
                   </div>
                 </CardContent>

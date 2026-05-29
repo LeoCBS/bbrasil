@@ -8,6 +8,7 @@ type ProductVisualProps = {
 };
 
 export function ProductVisual({ name, imageSrc, className, compact = false }: ProductVisualProps) {
+  console.log("Rendering ProductVisual with imageSrc:", imageSrc);
   if (!imageSrc) {
     return null;
   }

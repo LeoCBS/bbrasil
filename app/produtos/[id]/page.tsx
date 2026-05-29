@@ -55,7 +55,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       <section className="container py-10">
         <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
           <div className="flex min-h-[430px] items-center justify-center rounded-lg bg-white p-8 shadow-soft">
-            <ProductVisual name={product.name} imageSrc={product.image_src} className="h-[360px] w-full max-w-sm" />
+            <ProductVisual name={product.name} imageSrc={product.image_url} className="h-[360px] w-full max-w-sm" />
           </div>
 
           <div>

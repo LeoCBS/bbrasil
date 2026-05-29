@@ -11,7 +11,7 @@ export type Product = {
   price: number | null;
   image_blob: string | null;
   image_mime_type: string | null;
-  image_src: string | null;
+  image_url: string | null;
   active: boolean;
   created_at?: string;
 };
@@ -58,7 +58,7 @@ const fallbackProducts: Product[] = [
     price: 48.9,
     image_blob: null,
     image_mime_type: null,
-    image_src: null,
+    image_url: null,
     active: true
   },
   {
@@ -71,7 +71,7 @@ const fallbackProducts: Product[] = [
     price: 18.5,
     image_blob: null,
     image_mime_type: null,
-    image_src: null,
+    image_url: null,
     active: true
   },
   {
@@ -84,7 +84,7 @@ const fallbackProducts: Product[] = [
     price: 24.9,
     image_blob: null,
     image_mime_type: null,
-    image_src: null,
+    image_url: null,
     active: true
   }
 ];
@@ -106,7 +106,7 @@ function normalizeProduct(product: ProductRecord): Product {
     company: product.company ?? "FLORIANOPOLIS SC",
     image_blob: product.image_blob ?? null,
     image_mime_type: product.image_mime_type ?? null,
-    image_src: byteaToDataUrl(product.image_blob ?? null, product.image_mime_type ?? null)
+    image_url: product.image_url ?? byteaToDataUrl(product.image_blob ?? null, product.image_mime_type ?? null)
   };
 }
 
@@ -149,7 +149,7 @@ function getSupabase() {
   return createClient(url, key, {
     auth: {
       persistSession: false
-    }
+    },
   });
 }
 
@@ -214,15 +214,17 @@ export async function getPaginatedProducts({
   }
 
   if (category) {
+    console.log("Filtering by category:", category);
     query = query.eq("category", category);
   }
 
   if (company) {
     query = query.eq("company", company);
   }
-
+  
+  
   const { data, error, count } = await query.range(from, to);
-
+  
   if (error) {
     console.error("Supabase products fetch failed:", error.message);
     const products = fallbackProducts.filter((product) => {

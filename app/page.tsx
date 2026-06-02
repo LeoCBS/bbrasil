@@ -10,6 +10,7 @@ import {
   ShieldPlus,
   Sparkles,
   SprayCan,
+  Search,
   Trash2,
   Waves
 } from "lucide-react";
@@ -124,23 +125,31 @@ const units = [
 type HomeProps = {
   searchParams?: Promise<{
     empresa?: string;
+    busca?: string;
   }>;
 };
 
-function buildHomeCompanyHref(company?: string) {
-  if (!company) {
-    return "/#produtos";
+function buildHomeCompanyHref(company?: string, search?: string) {
+  const params = new URLSearchParams();
+
+  if (company) {
+    params.set("empresa", company);
   }
 
-  const params = new URLSearchParams({ empresa: company });
+  if (search) {
+    params.set("busca", search);
+  }
 
-  return `/?${params.toString()}#produtos`;
+  const query = params.toString();
+
+  return query ? `/?${query}#produtos` : "/#produtos";
 }
 
 export default async function Home({ searchParams }: HomeProps) {
   const params = await searchParams;
   const selectedCompany = params?.empresa?.trim();
-  const products = await getProducts({ company: selectedCompany });
+  const selectedSearch = params?.busca?.trim();
+  const products = await getProducts({ company: selectedCompany, search: selectedSearch });
 
   return (
     <main className="min-h-screen bg-white">
@@ -227,7 +236,9 @@ export default async function Home({ searchParams }: HomeProps) {
           <div>
             <h2 className="text-3xl font-bold tracking-normal text-brand-ink">Produtos em destaque</h2>
             <p className="mt-2 text-slate-600">
-              {selectedCompany
+              {selectedSearch
+                ? `Resultados para "${selectedSearch}".`
+                : selectedCompany
                 ? `Conheca produtos em destaque da unidade ${selectedCompany}.`
                 : "Conheca nossos produtos mais populares e recomendados"}
             </p>
@@ -235,11 +246,11 @@ export default async function Home({ searchParams }: HomeProps) {
           <div className="grid gap-3">
             <div className="flex flex-wrap gap-2">
               <Button asChild variant={selectedCompany ? "outline" : "secondary"} size="sm">
-                <Link href={buildHomeCompanyHref()}>Todas</Link>
+                <Link href={buildHomeCompanyHref(undefined, selectedSearch)}>Todas</Link>
               </Button>
               {productCompanies.map((company) => (
                 <Button key={company} asChild variant={selectedCompany === company ? "secondary" : "outline"} size="sm">
-                  <Link href={buildHomeCompanyHref(company)}>{company}</Link>
+                  <Link href={buildHomeCompanyHref(company, selectedSearch)}>{company}</Link>
                 </Button>
               ))}
             </div>
@@ -250,6 +261,24 @@ export default async function Home({ searchParams }: HomeProps) {
             </div>
           </div>
         </div>
+        <form className="mb-6 grid gap-3 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1fr_auto]" action="/#produtos">
+          {selectedCompany ? <input type="hidden" name="empresa" value={selectedCompany} /> : null}
+          <label className="grid gap-2 text-sm font-medium text-brand-ink">
+            Buscar produto
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                name="busca"
+                defaultValue={selectedSearch ?? ""}
+                placeholder="Titulo, descricao, categoria ou loja"
+                className="h-11 w-full rounded-md border border-input bg-background pl-10 pr-3 text-sm font-normal text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
+          </label>
+          <Button type="submit" className="md:self-end">
+            <Search className="h-4 w-4" /> Pesquisar
+          </Button>
+        </form>
         <div className="grid gap-5 md:grid-cols-3">
           {products.slice(0, 3).map((product) => (
             <Link key={product.id} href={`/produtos/${product.id}`} className="block h-full">
@@ -279,12 +308,18 @@ export default async function Home({ searchParams }: HomeProps) {
             </Link>
           ))}
         </div>
+        {products.length === 0 ? (
+          <div className="rounded-lg border bg-white p-8 text-center shadow-soft">
+            <h3 className="text-xl font-bold text-brand-ink">Nenhum produto encontrado</h3>
+            <p className="mt-3 text-slate-600">Tente buscar por outro titulo, descricao, categoria ou loja.</p>
+          </div>
+        ) : null}
         <div className="mt-5 flex justify-end">
           <Button asChild variant="outline">
             <Link
               href={
-                selectedCompany
-                  ? { pathname: "/produtos", query: { empresa: selectedCompany } }
+                selectedCompany || selectedSearch
+                  ? { pathname: "/produtos", query: { ...(selectedCompany ? { empresa: selectedCompany } : {}), ...(selectedSearch ? { busca: selectedSearch } : {}) } }
                   : "/produtos"
               }
             >

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Search } from "lucide-react";
 import { ProductVisual } from "@/components/site/product-visual";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +13,7 @@ type ProductsPageProps = {
   searchParams?: Promise<{
     categoria?: string;
     empresa?: string;
+    busca?: string;
     page?: string;
   }>;
 };
@@ -23,7 +24,17 @@ function parsePage(value: string | undefined) {
   return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
-function buildProductsHref({ page, category, company }: { page: number; category?: string; company?: string }) {
+function buildProductsHref({
+  page,
+  category,
+  company,
+  search
+}: {
+  page: number;
+  category?: string;
+  company?: string;
+  search?: string;
+}) {
   const params = new URLSearchParams();
 
   if (category) {
@@ -32,6 +43,10 @@ function buildProductsHref({ page, category, company }: { page: number; category
 
   if (company) {
     params.set("empresa", company);
+  }
+
+  if (search) {
+    params.set("busca", search);
   }
 
   if (page > 1) {
@@ -48,14 +63,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   
   const selectedCategory = params?.categoria?.trim();
   const selectedCompany = params?.empresa?.trim();
+  const selectedSearch = params?.busca?.trim();
   const currentPage = parsePage(params?.page);
   const { products, total, page, totalPages } = await getPaginatedProducts({
     category: selectedCategory,
     company: selectedCompany,
+    search: selectedSearch,
     page: currentPage,
     pageSize
   });
-  const hasFilters = Boolean(selectedCategory || selectedCompany);
+  const hasFilters = Boolean(selectedCategory || selectedCompany || selectedSearch);
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -81,6 +98,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 : "Confira as solucoes profissionais da B.Brasil."}
             </p>
             {selectedCompany ? <p className="mt-2 text-sm font-semibold text-brand-green">Empresa: {selectedCompany}</p> : null}
+            {selectedSearch ? <p className="mt-2 text-sm font-semibold text-brand-green">Busca: {selectedSearch}</p> : null}
           </div>
           {hasFilters ? (
             <Button asChild variant="outline">
@@ -88,8 +106,20 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             </Button>
           ) : null}
         </div>
-        <form className="mt-6 grid gap-4 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1fr_auto]" action="/produtos">
+        <form className="mt-6 grid gap-4 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1.2fr_1fr_auto]" action="/produtos">
           {selectedCategory ? <input type="hidden" name="categoria" value={selectedCategory} /> : null}
+          <label className="grid gap-2 text-sm font-medium text-brand-ink">
+            Buscar produto
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                name="busca"
+                defaultValue={selectedSearch ?? ""}
+                placeholder="Titulo, descricao, categoria ou loja"
+                className="h-11 w-full rounded-md border border-input bg-background pl-10 pr-3 text-sm font-normal text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
+          </label>
           <label className="grid gap-2 text-sm font-medium text-brand-ink">
             Empresa
             <select
@@ -106,7 +136,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             </select>
           </label>
           <Button type="submit" className="md:self-end">
-            Filtrar produtos
+            <Search className="h-4 w-4" /> Filtrar produtos
           </Button>
         </form>
         <div className="mt-8 grid gap-5 md:grid-cols-3">
@@ -146,8 +176,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <Pagination
             page={page}
             totalPages={totalPages}
-            previousHref={buildProductsHref({ page: page - 1, category: selectedCategory, company: selectedCompany })}
-            nextHref={buildProductsHref({ page: page + 1, category: selectedCategory, company: selectedCompany })}
+            previousHref={buildProductsHref({ page: page - 1, category: selectedCategory, company: selectedCompany, search: selectedSearch })}
+            nextHref={buildProductsHref({ page: page + 1, category: selectedCategory, company: selectedCompany, search: selectedSearch })}
           />
         ) : null}
       </section>

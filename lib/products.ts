@@ -33,6 +33,7 @@ export type ProductsPage = {
 type GetProductsOptions = {
   includeInactive?: boolean;
   company?: string;
+  search?: string;
 };
 
 type GetPaginatedProductsOptions = GetProductsOptions & {
@@ -122,6 +123,21 @@ function matchesText(value: string, selected?: string) {
   return selected ? normalizeText(value) === normalizeText(selected) : true;
 }
 
+function matchesSearch(product: Product, search?: string) {
+  if (!search) {
+    return true;
+  }
+
+  const normalizedSearch = normalizeText(search);
+  const searchableText = [product.name, product.description, product.category, product.company].map(normalizeText).join(" ");
+
+  return searchableText.includes(normalizedSearch);
+}
+
+function escapeSearchPattern(value: string) {
+  return value.replace(/[%_]/g, "\\$&").replace(/,/g, "\\,");
+}
+
 function paginateProducts(products: Product[], page: number, pageSize: number): ProductsPage {
   const safePageSize = Math.max(1, pageSize);
   const total = products.length;
@@ -153,12 +169,14 @@ function getSupabase() {
   });
 }
 
-export async function getProducts({ includeInactive = false, company }: GetProductsOptions = {}) {
+export async function getProducts({ includeInactive = false, company, search }: GetProductsOptions = {}) {
   noStore();
   const supabase = getSupabase();
 
   if (!supabase) {
-    return fallbackProducts.filter((product) => (includeInactive || product.active) && matchesText(product.company, company));
+    return fallbackProducts.filter(
+      (product) => (includeInactive || product.active) && matchesText(product.company, company) && matchesSearch(product, search)
+    );
   }
 
   let query = supabase.from("products").select("*").order("created_at", { ascending: false });
@@ -171,11 +189,18 @@ export async function getProducts({ includeInactive = false, company }: GetProdu
     query = query.eq("company", company);
   }
 
+  if (search) {
+    const pattern = `%${escapeSearchPattern(search.trim())}%`;
+    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},category.ilike.${pattern},company.ilike.${pattern}`);
+  }
+
   const { data, error } = await query;
 
   if (error) {
     console.error("Supabase products fetch failed:", error.message);
-    return fallbackProducts.filter((product) => (includeInactive || product.active) && matchesText(product.company, company));
+    return fallbackProducts.filter(
+      (product) => (includeInactive || product.active) && matchesText(product.company, company) && matchesSearch(product, search)
+    );
   }
 
   return (data as ProductRecord[]).map(normalizeProduct);
@@ -186,7 +211,8 @@ export async function getPaginatedProducts({
   page = 1,
   pageSize = 9,
   category,
-  company
+  company,
+  search
 }: GetPaginatedProductsOptions = {}) {
   noStore();
   const supabase = getSupabase();
@@ -200,8 +226,9 @@ export async function getPaginatedProducts({
       const isVisible = includeInactive || product.active;
       const isInCategory = matchesText(product.category, category);
       const isFromCompany = matchesText(product.company, company);
+      const isSearchMatch = matchesSearch(product, search);
 
-      return isVisible && isInCategory && isFromCompany;
+      return isVisible && isInCategory && isFromCompany && isSearchMatch;
     });
 
     return paginateProducts(products, safePage, safePageSize);
@@ -221,6 +248,11 @@ export async function getPaginatedProducts({
   if (company) {
     query = query.eq("company", company);
   }
+
+  if (search) {
+    const pattern = `%${escapeSearchPattern(search.trim())}%`;
+    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},category.ilike.${pattern},company.ilike.${pattern}`);
+  }
   
   
   const { data, error, count } = await query.range(from, to);
@@ -228,7 +260,12 @@ export async function getPaginatedProducts({
   if (error) {
     console.error("Supabase products fetch failed:", error.message);
     const products = fallbackProducts.filter((product) => {
-      return (includeInactive || product.active) && matchesText(product.category, category) && matchesText(product.company, company);
+      return (
+        (includeInactive || product.active) &&
+        matchesText(product.category, category) &&
+        matchesText(product.company, company) &&
+        matchesSearch(product, search)
+      );
     });
 
     return paginateProducts(products, safePage, safePageSize);
@@ -243,7 +280,8 @@ export async function getPaginatedProducts({
       page: totalPages,
       pageSize: safePageSize,
       category,
-      company
+      company,
+      search
     });
   }
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Database, LogOut, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Database, LogOut, Plus, Save, Search, Trash2 } from "lucide-react";
 import { logoutAction, requireAdminUser } from "@/auth";
 import { createProductAction, deleteProductAction, updateProductAction } from "@/lib/actions";
 import { getPaginatedProducts, type Product } from "@/lib/products";
@@ -29,6 +29,7 @@ const pageSize = 5;
 
 type AdminProductsPageProps = {
   searchParams?: Promise<{
+    busca?: string;
     page?: string;
   }>;
 };
@@ -39,16 +40,30 @@ function parsePage(value: string | undefined) {
   return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
-function buildAdminProductsHref(page: number) {
-  return page > 1 ? `/admin/produtos?page=${page}` : "/admin/produtos";
+function buildAdminProductsHref(page: number, search?: string) {
+  const params = new URLSearchParams();
+
+  if (search) {
+    params.set("busca", search);
+  }
+
+  if (page > 1) {
+    params.set("page", String(page));
+  }
+
+  const query = params.toString();
+
+  return query ? `/admin/produtos?${query}` : "/admin/produtos";
 }
 
 export default async function AdminProductsPage({ searchParams }: AdminProductsPageProps) {
   const user = await requireAdminUser();
   const params = await searchParams;
+  const selectedSearch = params?.busca?.trim();
   const currentPage = parsePage(params?.page);
   const { products, total, page, totalPages } = await getPaginatedProducts({
     includeInactive: true,
+    search: selectedSearch,
     page: currentPage,
     pageSize
   });
@@ -82,12 +97,36 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
             <p className="mt-3 text-slate-600">
               Cadastre, edite e remova produtos exibidos no catalogo. {total} {total === 1 ? "produto cadastrado" : "produtos cadastrados"}.
             </p>
+            {selectedSearch ? <p className="mt-2 text-sm font-semibold text-brand-green">Busca: {selectedSearch}</p> : null}
           </div>
           <div className="inline-flex items-center gap-2 rounded-md border bg-white px-4 py-3 text-sm text-slate-600">
             <Database className="h-4 w-4 text-brand-green" />
             {isConfigured ? "Supabase conectado" : "Modo demo: configure o Supabase para salvar"}
           </div>
         </div>
+
+        <form className="mb-6 grid gap-3 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1fr_auto_auto]" action="/admin/produtos">
+          <label className="grid gap-2 text-sm font-medium text-brand-ink">
+            Buscar produto
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                name="busca"
+                defaultValue={selectedSearch ?? ""}
+                placeholder="Titulo, descricao, categoria ou loja"
+                className="pl-10"
+              />
+            </div>
+          </label>
+          <Button type="submit" className="md:self-end">
+            <Search className="h-4 w-4" /> Pesquisar
+          </Button>
+          {selectedSearch ? (
+            <Button asChild variant="outline" className="md:self-end">
+              <Link href="/admin/produtos">Limpar</Link>
+            </Button>
+          ) : null}
+        </form>
 
         <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
           <Card className="shadow-soft">
@@ -105,7 +144,9 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
               <Card className="shadow-soft">
                 <CardContent className="p-8 text-center">
                   <h2 className="text-xl font-bold text-brand-ink">Nenhum produto cadastrado</h2>
-                  <p className="mt-3 text-slate-600">Use o formulario ao lado para criar o primeiro produto.</p>
+                  <p className="mt-3 text-slate-600">
+                    {selectedSearch ? "Nao encontramos produtos cadastrados para esta busca." : "Use o formulario ao lado para criar o primeiro produto."}
+                  </p>
                 </CardContent>
               </Card>
             ) : null}
@@ -141,8 +182,8 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
               <Pagination
                 page={page}
                 totalPages={totalPages}
-                previousHref={buildAdminProductsHref(page - 1)}
-                nextHref={buildAdminProductsHref(page + 1)}
+                previousHref={buildAdminProductsHref(page - 1, selectedSearch)}
+                nextHref={buildAdminProductsHref(page + 1, selectedSearch)}
               />
             ) : null}
           </div>

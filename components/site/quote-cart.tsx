@@ -164,7 +164,7 @@ export function QuoteCart() {
             </div>
 
             <footer className="border-t p-5">
-              <Button type="button" variant="outline" className="mb-4 w-full" onClick={() => setIsOpen(false)}>
+              <Button type="button" className="mb-4 w-full bg-brand-green text-white hover:bg-brand-greenDark" onClick={() => setIsOpen(false)}>
                 <ArrowLeft className="h-4 w-4" /> Continuar comprando
               </Button>
               <label className="grid gap-2 text-sm font-medium text-brand-ink">

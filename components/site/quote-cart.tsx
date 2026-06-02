@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Minus, MessageCircle, Plus, ShoppingCart, Trash2, X } from "lucide-react";
+import { ArrowLeft, Minus, MessageCircle, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import { productCompanyContacts } from "@/lib/companies";
 import { Button } from "@/components/ui/button";
 import { cartStorageKey, currentCompanyStorageKey, type QuoteCartItem } from "@/components/site/add-to-quote-button";
@@ -164,6 +164,9 @@ export function QuoteCart() {
             </div>
 
             <footer className="border-t p-5">
+              <Button type="button" variant="outline" className="mb-4 w-full" onClick={() => setIsOpen(false)}>
+                <ArrowLeft className="h-4 w-4" /> Continuar comprando
+              </Button>
               <label className="grid gap-2 text-sm font-medium text-brand-ink">
                 Empresa para envio
                 <select

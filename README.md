@@ -1,6 +1,6 @@
 # B.Brasil Higiene Profissional
 
-Projeto Next.js inspirado no prototipo fornecido, com Tailwind CSS, componentes no estilo shadcn/ui e painel admin para CRUD de produtos via Supabase.
+Projeto Next.js inspirado no prototipo fornecido, com Tailwind CSS, componentes no estilo shadcn/ui e painel admin para CRUD de produtos e categorias via Supabase.
 
 ## Rodando localmente
 
@@ -13,7 +13,7 @@ Acesse:
 
 - Site: `http://localhost:3000`
 - Login do admin: `http://localhost:3000/admin/login`
-- Admin de produtos: `http://localhost:3000/admin/produtos`
+- Admin do catalogo: `http://localhost:3000/admin/produtos`
 
 ## Supabase
 
@@ -41,14 +41,31 @@ create table public.products (
   created_at timestamptz not null default now()
 );
 
+create table public.categories (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  description text not null default '',
+  icon text not null default 'package',
+  active boolean not null default true,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
 alter table public.products enable row level security;
+alter table public.categories enable row level security;
 
 create policy "Produtos ativos visiveis publicamente"
 on public.products for select
 using (active = true);
+
+create policy "Categorias ativas visiveis publicamente"
+on public.categories for select
+using (active = true);
 ```
 
 O admin usa `SUPABASE_SERVICE_ROLE_KEY` em server actions. Nao exponha essa chave no navegador.
+
+As categorias usam o campo `icon` com estes valores aceitos pelo site: `package`, `spray`, `shield`, `sparkles`, `trash` e `waves`.
 
 Para acessar o admin, crie um usuario em **Supabase Auth > Users** com e-mail e senha. O login usa Supabase Auth nativo, sem providers externos.
 

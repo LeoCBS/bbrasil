@@ -3,7 +3,24 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminUser } from "@/auth";
+import { createCategory, deleteCategory, updateCategory, type CategoryMutationInput } from "@/lib/categories";
 import { createProduct, deleteProduct, updateProduct, type ProductMutationInput } from "@/lib/products";
+
+function parseSortOrder(value: FormDataEntryValue | null) {
+  const sortOrder = Number(value);
+
+  return Number.isFinite(sortOrder) ? sortOrder : 0;
+}
+
+function parseCategory(formData: FormData): CategoryMutationInput {
+  return {
+    name: String(formData.get("name") ?? "").trim(),
+    description: String(formData.get("description") ?? "").trim(),
+    icon: String(formData.get("icon") ?? "package").trim(),
+    sort_order: parseSortOrder(formData.get("sort_order")),
+    active: formData.get("active") === "on"
+  };
+}
 
 async function parseProduct(formData: FormData): Promise<ProductMutationInput> {
   const priceValue = String(formData.get("price") ?? "").replace(",", ".");
@@ -63,4 +80,33 @@ export async function deleteProductAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/produtos");
   revalidatePath("/admin/produtos");
+}
+
+export async function createCategoryAction(formData: FormData) {
+  await requireAdminUser();
+  await createCategory(parseCategory(formData));
+  revalidatePath("/");
+  revalidatePath("/produtos");
+  revalidatePath("/admin/produtos");
+  redirect("/admin/produtos");
+}
+
+export async function updateCategoryAction(formData: FormData) {
+  await requireAdminUser();
+  const id = String(formData.get("id") ?? "");
+  await updateCategory(id, parseCategory(formData));
+  revalidatePath("/");
+  revalidatePath("/produtos");
+  revalidatePath("/admin/produtos");
+  redirect("/admin/produtos");
+}
+
+export async function deleteCategoryAction(formData: FormData) {
+  await requireAdminUser();
+  const id = String(formData.get("id") ?? "");
+  await deleteCategory(id);
+  revalidatePath("/");
+  revalidatePath("/produtos");
+  revalidatePath("/admin/produtos");
+  redirect("/admin/produtos");
 }

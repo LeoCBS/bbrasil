@@ -18,61 +18,18 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
+import { getCategories, type Category } from "@/lib/categories";
 import { getProducts } from "@/lib/products";
 import { productCompanies } from "@/lib/companies";
 
-const categories = [
-  {
-    title: "ALTOLIM",
-    description: "Linha Altolim para rotinas profissionais de limpeza.",
-    icon: SprayCan
-  },
-  {
-    title: "EQUIPAMENTOS E ACESSÓRIOS",
-    description: "Equipamentos e acessorios para limpeza profissional.",
-    icon: PackageCheck
-  },
-  {
-    title: "DESCARTÁVEIS",
-    description: "Descartaveis para empresas, cozinhas e ambientes de alto fluxo.",
-    icon: Trash2
-  },
-  {
-    title: "HIGIENE PESSOAL",
-    description: "Itens para cuidado, assepsia e higiene pessoal.",
-    icon: ShieldPlus
-  },
-  {
-    title: "COPA/COZINHA",
-    description: "Produtos para copa, cozinha e areas de preparo.",
-    icon: Sparkles
-  },
-  {
-    title: "EPI",
-    description: "Equipamentos de protecao individual para operacoes seguras.",
-    icon: ShieldPlus
-  },
-  {
-    title: "LIMPEZA E HIGIENE",
-    description: "Solucoes para limpeza, higienizacao e manutencao diaria.",
-    icon: SprayCan
-  },
-  {
-    title: "DISPENSER",
-    description: "Dispensers e suportes para ambientes profissionais.",
-    icon: PackageCheck
-  },
-  {
-    title: "GERENCIAMENTO DE RESÍDUOS",
-    description: "Produtos para descarte, coleta e gestao de residuos.",
-    icon: Trash2
-  },
-  {
-    title: "PANOS",
-    description: "Panos e acessorios texteis para limpeza profissional.",
-    icon: Waves
-  }
-];
+const categoryIcons = {
+  package: PackageCheck,
+  spray: SprayCan,
+  shield: ShieldPlus,
+  sparkles: Sparkles,
+  trash: Trash2,
+  waves: Waves
+};
 
 const units = [
   {
@@ -149,6 +106,7 @@ export default async function Home({ searchParams }: HomeProps) {
   const params = await searchParams;
   const selectedCompany = params?.empresa?.trim();
   const selectedSearch = params?.busca?.trim();
+  const categories = await getCategories();
   const products = await getProducts({ company: selectedCompany, search: selectedSearch });
 
   return (
@@ -214,13 +172,13 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {categories.map((category) => (
-            <Card key={category.title} className="shadow-soft">
+            <Card key={category.id} className="shadow-soft">
               <CardContent className="flex h-full flex-col items-center p-7 text-center">
-                <category.icon className="h-14 w-14 text-brand-blue" strokeWidth={1.5} />
-                <h3 className="mt-5 text-lg font-semibold text-brand-ink">{category.title}</h3>
+                <CategoryIcon icon={category.icon} className="h-14 w-14 text-brand-blue" />
+                <h3 className="mt-5 text-lg font-semibold text-brand-ink">{category.name}</h3>
                 <p className="mt-4 min-h-20 text-sm leading-6 text-slate-600">{category.description}</p>
                 <Link
-                  href={{ pathname: "/produtos", query: { categoria: category.title } }}
+                  href={{ pathname: "/produtos", query: { categoria: category.name } }}
                   className="mt-auto inline-flex items-center gap-2 pt-4 text-sm font-semibold text-brand-green"
                 >
                   Ver produtos <ArrowRight className="h-4 w-4" />
@@ -436,9 +394,15 @@ export default async function Home({ searchParams }: HomeProps) {
           ))}
         </div>
       </section>
-      <Footer />
+      <Footer categories={categories} />
     </main>
   );
+}
+
+function CategoryIcon({ icon, className }: { icon: string; className?: string }) {
+  const Icon = categoryIcons[icon as keyof typeof categoryIcons] ?? PackageCheck;
+
+  return <Icon className={className} strokeWidth={1.5} />;
 }
 
 function Header() {
@@ -486,7 +450,7 @@ function Header() {
   );
 }
 
-function Footer() {
+function Footer({ categories }: { categories: Category[] }) {
   return (
     <footer className="mt-6 border-t">
       <div className="container grid gap-9 py-10 md:grid-cols-4">
@@ -504,7 +468,7 @@ function Footer() {
           <h3 className="mb-4 font-semibold">Categorias</h3>
           <div className="grid gap-2 text-sm text-slate-600">
             {categories.map((category) => (
-              <span key={category.title}>{category.title}</span>
+              <span key={category.id}>{category.name}</span>
             ))}
           </div>
         </div>

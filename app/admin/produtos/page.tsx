@@ -1,7 +1,29 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Database, LogOut, Plus, Save, Search, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Database,
+  LogOut,
+  PackageCheck,
+  Plus,
+  Save,
+  Search,
+  ShieldPlus,
+  Sparkles,
+  SprayCan,
+  Trash2,
+  Waves
+} from "lucide-react";
 import { logoutAction, requireAdminUser } from "@/auth";
-import { createProductAction, deleteProductAction, updateProductAction } from "@/lib/actions";
+import {
+  createCategoryAction,
+  createProductAction,
+  deleteCategoryAction,
+  deleteProductAction,
+  updateCategoryAction,
+  updateProductAction
+} from "@/lib/actions";
+import { getCategories, type Category } from "@/lib/categories";
 import { getPaginatedProducts, type Product } from "@/lib/products";
 import { productCompanies } from "@/lib/companies";
 import { Button } from "@/components/ui/button";
@@ -13,17 +35,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
 
-const categories = [
-  "ALTOLIM",
-  "EQUIPAMENTOS E ACESSÓRIOS",
-  "DESCARTÁVEIS",
-  "HIGIENE PESSOAL",
-  "COPA/COZINHA",
-  "EPI",
-  "LIMPEZA E HIGIENE",
-  "DISPENSER",
-  "GERENCIAMENTO DE RESÍDUOS",
-  "PANOS"
+const categoryIconOptions = [
+  { value: "package", label: "Pacote", icon: PackageCheck },
+  { value: "spray", label: "Limpeza", icon: SprayCan },
+  { value: "shield", label: "Protecao", icon: ShieldPlus },
+  { value: "sparkles", label: "Brilho", icon: Sparkles },
+  { value: "trash", label: "Residuos", icon: Trash2 },
+  { value: "waves", label: "Panos", icon: Waves }
 ];
 const pageSize = 5;
 
@@ -61,6 +79,8 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
   const params = await searchParams;
   const selectedSearch = params?.busca?.trim();
   const currentPage = parsePage(params?.page);
+  const categories = await getCategories({ includeInactive: true });
+  const activeCategories = categories.filter((category) => category.active);
   const { products, total, page, totalPages } = await getPaginatedProducts({
     includeInactive: true,
     search: selectedSearch,
@@ -93,15 +113,33 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
       <section className="container py-10">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-4xl font-bold tracking-normal text-brand-ink">Admin de produtos</h1>
+            <h1 className="text-4xl font-bold tracking-normal text-brand-ink">Admin do catalogo</h1>
             <p className="mt-3 text-slate-600">
-              Cadastre, edite e remova produtos exibidos no catalogo. {total} {total === 1 ? "produto cadastrado" : "produtos cadastrados"}.
+              Cadastre produtos e organize as categorias exibidas no site.
             </p>
             {selectedSearch ? <p className="mt-2 text-sm font-semibold text-brand-green">Busca: {selectedSearch}</p> : null}
           </div>
           <div className="inline-flex items-center gap-2 rounded-md border bg-white px-4 py-3 text-sm text-slate-600">
             <Database className="h-4 w-4 text-brand-green" />
             {isConfigured ? "Supabase conectado" : "Modo demo: configure o Supabase para salvar"}
+          </div>
+        </div>
+
+        <div className="mb-6 grid gap-4 md:grid-cols-3">
+          <div className="rounded-lg border bg-white p-5 shadow-soft">
+            <span className="text-sm font-semibold text-slate-500">Produtos</span>
+            <strong className="mt-2 block text-3xl text-brand-ink">{total}</strong>
+            <p className="mt-1 text-sm text-slate-600">{total === 1 ? "item cadastrado" : "itens cadastrados"}</p>
+          </div>
+          <div className="rounded-lg border bg-white p-5 shadow-soft">
+            <span className="text-sm font-semibold text-slate-500">Categorias ativas</span>
+            <strong className="mt-2 block text-3xl text-brand-ink">{activeCategories.length}</strong>
+            <p className="mt-1 text-sm text-slate-600">visiveis no site</p>
+          </div>
+          <div className="rounded-lg border bg-white p-5 shadow-soft">
+            <span className="text-sm font-semibold text-slate-500">Total de categorias</span>
+            <strong className="mt-2 block text-3xl text-brand-ink">{categories.length}</strong>
+            <p className="mt-1 text-sm text-slate-600">incluindo inativas</p>
           </div>
         </div>
 
@@ -129,15 +167,32 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
         </form>
 
         <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Novo produto</CardTitle>
-              <CardDescription>Os campos alimentam a tabela `products` no Supabase.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProductForm action={createProductAction} submitLabel="Criar produto" submitIcon={<Plus className="h-4 w-4" />} />
-            </CardContent>
-          </Card>
+          <div className="grid gap-6">
+            <Card className="shadow-soft">
+              <CardHeader>
+                <CardTitle>Novo produto</CardTitle>
+                <CardDescription>Os campos alimentam a tabela products no Supabase.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProductForm
+                  action={createProductAction}
+                  categories={categories}
+                  submitLabel="Criar produto"
+                  submitIcon={<Plus className="h-4 w-4" />}
+                />
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-soft">
+              <CardHeader>
+                <CardTitle>Nova categoria</CardTitle>
+                <CardDescription>As categorias ativas aparecem na vitrine e no cadastro de produtos.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CategoryForm action={createCategoryAction} submitLabel="Criar categoria" submitIcon={<Plus className="h-4 w-4" />} />
+              </CardContent>
+            </Card>
+          </div>
 
           <div className="grid gap-5">
             {products.length === 0 ? (
@@ -172,6 +227,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                   <ProductForm
                     product={product}
                     action={updateProductAction}
+                    categories={categories}
                     submitLabel="Salvar alteracoes"
                     submitIcon={<Save className="h-4 w-4" />}
                   />
@@ -188,6 +244,50 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
             ) : null}
           </div>
         </div>
+
+        <section id="categorias" className="mt-10">
+          <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold tracking-normal text-brand-ink">Categorias</h2>
+              <p className="mt-2 text-slate-600">Edite nome, descricao, icone, ordem e visibilidade no site.</p>
+            </div>
+          </div>
+          <div className="grid gap-5 lg:grid-cols-2">
+            {categories.map((category) => (
+              <Card key={category.id} className="shadow-soft">
+                <CardHeader className="pb-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-100 text-brand-blue">
+                        <CategoryIcon icon={category.icon} />
+                      </span>
+                      <div>
+                        <CardTitle>{category.name}</CardTitle>
+                        <CardDescription>
+                          Ordem {category.sort_order} · {category.active ? "Ativa" : "Inativa"}
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <form action={deleteCategoryAction}>
+                      <input type="hidden" name="id" value={category.id} />
+                      <SubmitButton pendingLabel="Excluindo..." variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" /> Excluir
+                      </SubmitButton>
+                    </form>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CategoryForm
+                    category={category}
+                    action={updateCategoryAction}
+                    submitLabel="Salvar categoria"
+                    submitIcon={<Save className="h-4 w-4" />}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
       </section>
     </main>
   );
@@ -240,14 +340,21 @@ function Pagination({
 function ProductForm({
   product,
   action,
+  categories,
   submitLabel,
   submitIcon
 }: {
   product?: Product;
   action: (formData: FormData) => Promise<void>;
+  categories: Category[];
   submitLabel: string;
   submitIcon: React.ReactNode;
 }) {
+  const activeCategories = categories.filter((category) => category.active);
+  const categoryOptions = product?.category && !activeCategories.some((category) => category.name === product.category)
+    ? [{ id: `current-${product.id}`, name: product.category, description: "", icon: "package", active: true, sort_order: -1 }, ...activeCategories]
+    : activeCategories;
+
   return (
     <form action={action} encType="multipart/form-data" className="grid gap-4">
       {product ? <input type="hidden" name="id" value={product.id} /> : null}
@@ -260,12 +367,13 @@ function ProductForm({
         <select
           id={`category-${product?.id ?? "new"}`}
           name="category"
-          defaultValue={product?.category ?? categories[0]}
+          defaultValue={product?.category ?? categoryOptions[0]?.name}
           className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          required
         >
-          {categories.map((category) => (
-            <option key={category} value={category}>
-              {category}
+          {categoryOptions.map((category) => (
+            <option key={category.id} value={category.name}>
+              {category.name}
             </option>
           ))}
         </select>
@@ -325,6 +433,82 @@ function ProductForm({
         Produto ativo
       </label>
       <SubmitButton className="w-full" pendingLabel={product ? "Salvando..." : "Criando..."}>
+        {submitIcon} {submitLabel}
+      </SubmitButton>
+    </form>
+  );
+}
+
+function CategoryIcon({ icon }: { icon: string }) {
+  const option = categoryIconOptions.find((item) => item.value === icon) ?? categoryIconOptions[0];
+  const Icon = option.icon;
+
+  return <Icon className="h-5 w-5" />;
+}
+
+function CategoryForm({
+  category,
+  action,
+  submitLabel,
+  submitIcon
+}: {
+  category?: Category;
+  action: (formData: FormData) => Promise<void>;
+  submitLabel: string;
+  submitIcon: React.ReactNode;
+}) {
+  return (
+    <form action={action} className="grid gap-4">
+      {category ? <input type="hidden" name="id" value={category.id} /> : null}
+      <div className="grid gap-2">
+        <Label htmlFor={`category-name-${category?.id ?? "new"}`}>Nome</Label>
+        <Input id={`category-name-${category?.id ?? "new"}`} name="name" defaultValue={category?.name} required />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor={`category-description-${category?.id ?? "new"}`}>Descricao</Label>
+        <Textarea
+          id={`category-description-${category?.id ?? "new"}`}
+          name="description"
+          defaultValue={category?.description}
+          required
+        />
+      </div>
+      <div className="grid gap-4 md:grid-cols-[1fr_120px]">
+        <div className="grid gap-2">
+          <Label htmlFor={`category-icon-${category?.id ?? "new"}`}>Icone</Label>
+          <select
+            id={`category-icon-${category?.id ?? "new"}`}
+            name="icon"
+            defaultValue={category?.icon ?? categoryIconOptions[0].value}
+            className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {categoryIconOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor={`category-order-${category?.id ?? "new"}`}>Ordem</Label>
+          <Input
+            id={`category-order-${category?.id ?? "new"}`}
+            name="sort_order"
+            type="number"
+            defaultValue={category?.sort_order ?? 0}
+          />
+        </div>
+      </div>
+      <label className="flex items-center gap-3 text-sm font-medium">
+        <input
+          type="checkbox"
+          name="active"
+          defaultChecked={category?.active ?? true}
+          className="h-4 w-4 rounded border-input accent-brand-green"
+        />
+        Categoria ativa
+      </label>
+      <SubmitButton className="w-full" pendingLabel={category ? "Salvando..." : "Criando..."}>
         {submitIcon} {submitLabel}
       </SubmitButton>
     </form>

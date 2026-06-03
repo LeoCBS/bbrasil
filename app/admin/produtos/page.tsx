@@ -47,6 +47,7 @@ const pageSize = 5;
 
 type AdminProductsPageProps = {
   searchParams?: Promise<{
+    aba?: string;
     busca?: string;
     page?: string;
   }>;
@@ -58,8 +59,12 @@ function parsePage(value: string | undefined) {
   return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
-function buildAdminProductsHref(page: number, search?: string) {
+function buildAdminProductsHref(page: number, search?: string, tab = "produtos") {
   const params = new URLSearchParams();
+
+  if (tab !== "produtos") {
+    params.set("aba", tab);
+  }
 
   if (search) {
     params.set("busca", search);
@@ -79,6 +84,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
   const params = await searchParams;
   const selectedSearch = params?.busca?.trim();
   const currentPage = parsePage(params?.page);
+  const selectedTab = params?.aba === "categorias" ? "categorias" : "produtos";
   const categories = await getCategories({ includeInactive: true });
   const activeCategories = categories.filter((category) => category.active);
   const { products, total, page, totalPages } = await getPaginatedProducts({
@@ -144,6 +150,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
         </div>
 
         <form className="mb-6 grid gap-3 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1fr_auto_auto]" action="/admin/produtos">
+          <input type="hidden" name="aba" value="produtos" />
           <label className="grid gap-2 text-sm font-medium text-brand-ink">
             Buscar produto
             <div className="relative">
@@ -166,8 +173,21 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
           ) : null}
         </form>
 
-        <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-          <div className="grid gap-6">
+        <nav className="mb-6 grid gap-2 rounded-lg border bg-white p-2 shadow-soft sm:inline-grid sm:grid-cols-2" aria-label="Abas do admin">
+          <Button asChild variant={selectedTab === "produtos" ? "secondary" : "ghost"} className="justify-start sm:justify-center">
+            <Link href={buildAdminProductsHref(1, selectedSearch, "produtos")}>
+              <PackageCheck className="h-4 w-4" /> Produtos
+            </Link>
+          </Button>
+          <Button asChild variant={selectedTab === "categorias" ? "secondary" : "ghost"} className="justify-start sm:justify-center">
+            <Link href="/admin/produtos?aba=categorias">
+              <Sparkles className="h-4 w-4" /> Categorias
+            </Link>
+          </Button>
+        </nav>
+
+        {selectedTab === "produtos" ? (
+          <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
             <Card className="shadow-soft">
               <CardHeader>
                 <CardTitle>Novo produto</CardTitle>
@@ -183,111 +203,113 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
               </CardContent>
             </Card>
 
-            <Card className="shadow-soft">
-              <CardHeader>
-                <CardTitle>Nova categoria</CardTitle>
-                <CardDescription>As categorias ativas aparecem na vitrine e no cadastro de produtos.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CategoryForm action={createCategoryAction} submitLabel="Criar categoria" submitIcon={<Plus className="h-4 w-4" />} />
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid gap-5">
-            {products.length === 0 ? (
-              <Card className="shadow-soft">
-                <CardContent className="p-8 text-center">
-                  <h2 className="text-xl font-bold text-brand-ink">Nenhum produto cadastrado</h2>
-                  <p className="mt-3 text-slate-600">
-                    {selectedSearch ? "Nao encontramos produtos cadastrados para esta busca." : "Use o formulario ao lado para criar o primeiro produto."}
-                  </p>
-                </CardContent>
-              </Card>
-            ) : null}
-            {products.map((product) => (
-              <Card key={product.id} className="shadow-soft">
-                <CardHeader className="pb-4">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <CardTitle>{product.name}</CardTitle>
-                      <CardDescription>
-                        {product.company} · {product.category} · {product.size} · {product.active ? "Ativo" : "Inativo"}
-                      </CardDescription>
-                    </div>
-                    <form action={deleteProductAction}>
-                      <input type="hidden" name="id" value={product.id} />
-                      <SubmitButton pendingLabel="Excluindo..." variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" /> Excluir
-                      </SubmitButton>
-                    </form>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ProductForm
-                    product={product}
-                    action={updateProductAction}
-                    categories={categories}
-                    submitLabel="Salvar alteracoes"
-                    submitIcon={<Save className="h-4 w-4" />}
-                  />
-                </CardContent>
-              </Card>
-            ))}
-            {totalPages > 1 ? (
-              <Pagination
-                page={page}
-                totalPages={totalPages}
-                previousHref={buildAdminProductsHref(page - 1, selectedSearch)}
-                nextHref={buildAdminProductsHref(page + 1, selectedSearch)}
-              />
-            ) : null}
-          </div>
-        </div>
-
-        <section id="categorias" className="mt-10">
-          <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h2 className="text-2xl font-bold tracking-normal text-brand-ink">Categorias</h2>
-              <p className="mt-2 text-slate-600">Edite nome, descricao, icone, ordem e visibilidade no site.</p>
-            </div>
-          </div>
-          <div className="grid gap-5 lg:grid-cols-2">
-            {categories.map((category) => (
-              <Card key={category.id} className="shadow-soft">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-100 text-brand-blue">
-                        <CategoryIcon icon={category.icon} />
-                      </span>
+            <div className="grid gap-5">
+              {products.length === 0 ? (
+                <Card className="shadow-soft">
+                  <CardContent className="p-8 text-center">
+                    <h2 className="text-xl font-bold text-brand-ink">Nenhum produto cadastrado</h2>
+                    <p className="mt-3 text-slate-600">
+                      {selectedSearch ? "Nao encontramos produtos cadastrados para esta busca." : "Use o formulario ao lado para criar o primeiro produto."}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : null}
+              {products.map((product) => (
+                <Card key={product.id} className="shadow-soft">
+                  <CardHeader className="pb-4">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                       <div>
-                        <CardTitle>{category.name}</CardTitle>
+                        <CardTitle>{product.name}</CardTitle>
                         <CardDescription>
-                          Ordem {category.sort_order} · {category.active ? "Ativa" : "Inativa"}
+                          {product.company} · {product.category} · {product.size} · {product.active ? "Ativo" : "Inativo"}
                         </CardDescription>
                       </div>
+                      <form action={deleteProductAction}>
+                        <input type="hidden" name="id" value={product.id} />
+                        <SubmitButton pendingLabel="Excluindo..." variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" /> Excluir
+                        </SubmitButton>
+                      </form>
                     </div>
-                    <form action={deleteCategoryAction}>
-                      <input type="hidden" name="id" value={category.id} />
-                      <SubmitButton pendingLabel="Excluindo..." variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" /> Excluir
-                      </SubmitButton>
-                    </form>
-                  </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ProductForm
+                      product={product}
+                      action={updateProductAction}
+                      categories={categories}
+                      submitLabel="Salvar alteracoes"
+                      submitIcon={<Save className="h-4 w-4" />}
+                    />
+                  </CardContent>
+                </Card>
+              ))}
+              {totalPages > 1 ? (
+                <Pagination
+                  page={page}
+                  totalPages={totalPages}
+                  previousHref={buildAdminProductsHref(page - 1, selectedSearch, "produtos")}
+                  nextHref={buildAdminProductsHref(page + 1, selectedSearch, "produtos")}
+                />
+              ) : null}
+            </div>
+          </div>
+        ) : (
+          <section id="categorias">
+            <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-2xl font-bold tracking-normal text-brand-ink">Categorias</h2>
+                <p className="mt-2 text-slate-600">Edite nome, descricao, icone, ordem e visibilidade no site.</p>
+              </div>
+            </div>
+            <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
+              <Card className="shadow-soft">
+                <CardHeader>
+                  <CardTitle>Nova categoria</CardTitle>
+                  <CardDescription>As categorias ativas aparecem na vitrine e no cadastro de produtos.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <CategoryForm
-                    category={category}
-                    action={updateCategoryAction}
-                    submitLabel="Salvar categoria"
-                    submitIcon={<Save className="h-4 w-4" />}
-                  />
+                  <CategoryForm action={createCategoryAction} submitLabel="Criar categoria" submitIcon={<Plus className="h-4 w-4" />} />
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </section>
+
+              <div className="grid gap-5">
+                {categories.map((category) => (
+                  <Card key={category.id} className="shadow-soft">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-100 text-brand-blue">
+                            <CategoryIcon icon={category.icon} />
+                          </span>
+                          <div>
+                            <CardTitle>{category.name}</CardTitle>
+                            <CardDescription>
+                              Ordem {category.sort_order} · {category.active ? "Ativa" : "Inativa"}
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <form action={deleteCategoryAction}>
+                          <input type="hidden" name="id" value={category.id} />
+                          <SubmitButton pendingLabel="Excluindo..." variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" /> Excluir
+                          </SubmitButton>
+                        </form>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <CategoryForm
+                        category={category}
+                        action={updateCategoryAction}
+                        submitLabel="Salvar categoria"
+                        submitIcon={<Save className="h-4 w-4" />}
+                      />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
       </section>
     </main>
   );

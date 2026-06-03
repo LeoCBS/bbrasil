@@ -88,7 +88,7 @@ export async function createCategoryAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/produtos");
   revalidatePath("/admin/produtos");
-  redirect("/admin/produtos");
+  redirect("/admin/produtos?aba=categorias");
 }
 
 export async function updateCategoryAction(formData: FormData) {
@@ -98,7 +98,7 @@ export async function updateCategoryAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/produtos");
   revalidatePath("/admin/produtos");
-  redirect("/admin/produtos");
+  redirect("/admin/produtos?aba=categorias");
 }
 
 export async function deleteCategoryAction(formData: FormData) {
@@ -108,5 +108,5 @@ export async function deleteCategoryAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/produtos");
   revalidatePath("/admin/produtos");
-  redirect("/admin/produtos");
+  redirect("/admin/produtos?aba=categorias");
 }

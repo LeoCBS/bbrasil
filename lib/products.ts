@@ -1,5 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from 'crypto';
 
 export type Product = {
   id: string;
@@ -322,25 +323,87 @@ export async function getProduct(id: string, { includeInactive = false } = {}) {
   return normalizeProduct(data as ProductRecord);
 }
 
-export async function createProduct(input: ProductMutationInput) {
+export async function createProduct(input: ProductMutationInput, imageFile: FormDataEntryValue) {
   const supabase = getSupabase();
 
   if (!supabase) {
     throw new Error("Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para usar o admin.");
   }
+  const id = randomUUID();
+  
+  const imageURL = await uploadImageToBucket(imageFile, id, input.company);
 
-  const { error } = await supabase.from("products").insert(input);
+  if (imageURL) {
+    input.image_url = imageURL;
+  }
+
+  const { error } = await supabase.from("products").insert({...input, id});
 
   if (error) {
     throw new Error(error.message);
   }
 }
 
-export async function updateProduct(id: string, input: ProductMutationInput) {
+function sanitizeFileName(fileName: string): string {
+  return fileName
+    .toLowerCase() // Converter para minúsculas
+    .normalize('NFD') // Remover acentos
+    .replace(/[\u0300-\u036f]/g, '') // Completar remoção de acentos
+    .replace(/[^\w.-]/g, '-') // Substituir caracteres inválidos por hífen
+    .replace(/\s+/g, '-') // Espaços em branco por hífen
+    .replace(/-+/g, '-') // Múltiplos hífens por um só
+    .replace(/^-|-$/g, ''); // Remover hífens das extremidades
+}
+
+async function uploadImageToBucket(imageFile:FormDataEntryValue, id: string, company: string = "default") {
   const supabase = getSupabase();
 
   if (!supabase) {
     throw new Error("Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para usar o admin.");
+  }
+
+  const imageURL = "";
+  const hasImageFile =
+    typeof imageFile === "object" &&
+    imageFile !== null &&
+    "arrayBuffer" in imageFile &&
+    "size" in imageFile &&
+    Number(imageFile.size) > 0;
+
+  if (hasImageFile) {
+    const file = imageFile as File;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const imagePath = `${sanitizeFileName(company)}/${id}-${sanitizeFileName(file.name)}`;
+    const { data, error } = await supabase
+    .storage
+    .from('images')
+    .upload(imagePath, buffer, {
+      contentType: file.type,
+      upsert: true
+    })
+
+    if (error) throw new Error(error.message)
+    const  dataURL = supabase
+    .storage
+    .from('images')
+    .getPublicUrl(imagePath)
+
+    return dataURL.data.publicUrl;
+  }
+  return imageURL
+}
+
+export async function updateProduct(id: string, input: ProductMutationInput, imageFile: FormDataEntryValue) {
+  const supabase = getSupabase();
+
+  if (!supabase) {
+    throw new Error("Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para usar o admin.");
+  }
+
+  const imageURL = await uploadImageToBucket(imageFile, id, input.company);
+
+  if (imageURL) {
+    input.image_url = imageURL;
   }
 
   const { error } = await supabase.from("products").update(input).eq("id", id);

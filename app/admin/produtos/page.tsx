@@ -34,6 +34,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
+import { ProductForm } from "@/components/product-form";
 
 const categoryIconOptions = [
   { value: "package", label: "Pacote", icon: PackageCheck },
@@ -359,107 +360,7 @@ function Pagination({
   );
 }
 
-function ProductForm({
-  product,
-  action,
-  categories,
-  submitLabel,
-  submitIcon
-}: {
-  product?: Product;
-  action: (formData: FormData) => Promise<void>;
-  categories: Category[];
-  submitLabel: string;
-  submitIcon: React.ReactNode;
-}) {
-  const activeCategories = categories.filter((category) => category.active);
-  const categoryOptions = product?.category && !activeCategories.some((category) => category.name === product.category)
-    ? [{ id: `current-${product.id}`, name: product.category, description: "", icon: "package", active: true, sort_order: -1 }, ...activeCategories]
-    : activeCategories;
 
-  return (
-    <form action={action} encType="multipart/form-data" className="grid gap-4">
-      {product ? <input type="hidden" name="id" value={product.id} /> : null}
-      <div className="grid gap-2">
-        <Label htmlFor={`name-${product?.id ?? "new"}`}>Nome</Label>
-        <Input id={`name-${product?.id ?? "new"}`} name="name" defaultValue={product?.name} required />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor={`category-${product?.id ?? "new"}`}>Categoria</Label>
-        <select
-          id={`category-${product?.id ?? "new"}`}
-          name="category"
-          defaultValue={product?.category ?? categoryOptions[0]?.name}
-          className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          required
-        >
-          {categoryOptions.map((category) => (
-            <option key={category.id} value={category.name}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor={`company-${product?.id ?? "new"}`}>Empresa</Label>
-        <select
-          id={`company-${product?.id ?? "new"}`}
-          name="company"
-          defaultValue={product?.company ?? productCompanies[0]}
-          className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {productCompanies.map((company) => (
-            <option key={company} value={company}>
-              {company}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor={`description-${product?.id ?? "new"}`}>Descricao</Label>
-        <Textarea id={`description-${product?.id ?? "new"}`} name="description" defaultValue={product?.description} required />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor={`size-${product?.id ?? "new"}`}>Volume</Label>
-          <Input id={`size-${product?.id ?? "new"}`} name="size" defaultValue={product?.size} placeholder="5L" required />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor={`price-${product?.id ?? "new"}`}>Preco</Label>
-          <Input
-            id={`price-${product?.id ?? "new"}`}
-            name="price"
-            type="number"
-            step="0.01"
-            defaultValue={product?.price ?? ""}
-            placeholder="0.00"
-          />
-        </div>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor={`image-${product?.id ?? "new"}`}>Imagem do produto</Label>
-        {product?.image_url ? (
-          <div className="flex justify-center rounded-md border border-dashed bg-white p-3">
-            <ProductVisual name={product.name} imageSrc={product.image_url} compact />
-          </div>
-        ) : null}
-        <Input id={`image-${product?.id ?? "new"}`} name="image_blob" type="file" accept="image/*" />
-      </div>
-      <label className="flex items-center gap-3 text-sm font-medium">
-        <input
-          type="checkbox"
-          name="active"
-          defaultChecked={product?.active ?? true}
-          className="h-4 w-4 rounded border-input accent-brand-green"
-        />
-        Produto ativo
-      </label>
-      <SubmitButton className="w-full" pendingLabel={product ? "Salvando..." : "Criando..."}>
-        {submitIcon} {submitLabel}
-      </SubmitButton>
-    </form>
-  );
-}
 
 function CategoryIcon({ icon }: { icon: string }) {
   const option = categoryIconOptions.find((item) => item.value === icon) ?? categoryIconOptions[0];

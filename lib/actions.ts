@@ -24,13 +24,6 @@ function parseCategory(formData: FormData): CategoryMutationInput {
 
 async function parseProduct(formData: FormData): Promise<ProductMutationInput> {
   const priceValue = String(formData.get("price") ?? "").replace(",", ".");
-  const imageFile = formData.get("image_blob");
-  const hasImageFile =
-    typeof imageFile === "object" &&
-    imageFile !== null &&
-    "arrayBuffer" in imageFile &&
-    "size" in imageFile &&
-    Number(imageFile.size) > 0;
 
   const product: ProductMutationInput = {
     name: String(formData.get("name") ?? "").trim(),
@@ -44,33 +37,26 @@ async function parseProduct(formData: FormData): Promise<ProductMutationInput> {
     image_url: String(formData.get("image_url") ?? "")
   };
 
-  if (hasImageFile) {
-    const file = imageFile as Blob;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    product.image_blob = `\\x${buffer.toString("hex")}`;
-    product.image_mime_type = file.type || "application/octet-stream";
-  }
-
   return product;
 }
 
 export async function createProductAction(formData: FormData) {
   await requireAdminUser();
-  await createProduct(await parseProduct(formData));
+  const imageFile = formData.get("image_blob") ?? "";
+  await createProduct(await parseProduct(formData), imageFile);
   revalidatePath("/");
   revalidatePath("/produtos");
   revalidatePath("/admin/produtos");
-  redirect("/admin/produtos");
 }
 
 export async function updateProductAction(formData: FormData) {
   await requireAdminUser();
   const id = String(formData.get("id") ?? "");
-  await updateProduct(id, await parseProduct(formData));
+  const imageFile = formData.get("image_blob") ?? "";
+  await updateProduct(id, await parseProduct(formData), imageFile);
   revalidatePath("/");
   revalidatePath("/produtos");
   revalidatePath("/admin/produtos");
-  redirect("/admin/produtos");
 }
 
 export async function deleteProductAction(formData: FormData) {

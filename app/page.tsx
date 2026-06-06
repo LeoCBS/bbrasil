@@ -251,9 +251,7 @@ export default async function Home({ searchParams }: HomeProps) {
                       {product.description && product.description.length > 150 ? (
                         <>
                           {product.description.substring(0, 150)}...{' '}
-                          <Link href={`/produtos/${product.id}`} className="font-semibold text-brand-blue hover:underline">
-                            leia mais
-                          </Link>
+                          <span className="font-semibold text-brand-blue">leia mais</span>
                         </>
                       ) : (
                         product.description

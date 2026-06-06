@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
 import { getPaginatedProducts } from "@/lib/products";
 import { productCompanies } from "@/lib/companies";
+import { getCategories } from "@/lib/categories";
 
 const pageSize = 10;
 
@@ -60,11 +61,19 @@ function buildProductsHref({
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
+
+  const productCategoriesRaw = await getCategories();
+  const productCategories = productCategoriesRaw.map((cat) => cat.name);
+  console.log("Categorias disponiveis:", params);
   
   const selectedCategory = params?.categoria?.trim();
   const selectedCompany = params?.empresa?.trim();
   const selectedSearch = params?.busca?.trim();
   const currentPage = parsePage(params?.page);
+
+  console.log("Filtros aplicados:", { selectedCategory, selectedCompany, selectedSearch, currentPage });
+
+
   const { products, total, page, totalPages } = await getPaginatedProducts({
     category: selectedCategory,
     company: selectedCompany,
@@ -106,8 +115,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             </Button>
           ) : null}
         </div>
-        <form className="mt-6 grid gap-4 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1.2fr_1fr_auto]" action="/produtos">
-          {selectedCategory ? <input type="hidden" name="categoria" value={selectedCategory} /> : null}
+        <form className="mt-6 grid gap-4 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1.2fr_1fr_1fr_auto] md:items-end" action="/produtos">
           <label className="grid gap-2 text-sm font-medium text-brand-ink">
             Buscar produto
             <div className="relative">
@@ -123,6 +131,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <label className="grid gap-2 text-sm font-medium text-brand-ink">
             Empresa
             <select
+              key={selectedCompany}
               name="empresa"
               defaultValue={selectedCompany ?? ""}
               className="h-11 rounded-md border border-input bg-background px-3 text-sm font-normal text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -135,7 +144,23 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               ))}
             </select>
           </label>
-          <Button type="submit" className="md:self-end">
+          <label className="grid gap-2 text-sm font-medium text-brand-ink">
+            Categorias
+            <select
+              key={selectedCategory}
+              name="categoria"
+              defaultValue={selectedCategory ?? ""}
+              className="h-11 rounded-md border border-input bg-background px-3 text-sm font-normal text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">Todas as categorias</option>
+              {productCategories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button type="submit">
             <Search className="h-4 w-4" /> Filtrar produtos
           </Button>
         </form>

@@ -6,13 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
 import { getPaginatedProducts } from "@/lib/products";
 import { productCompanies } from "@/lib/companies";
-import { getCategories } from "@/lib/categories";
 
 const pageSize = 10;
 
 type ProductsPageProps = {
   searchParams?: Promise<{
-    categoria?: string;
     empresa?: string;
     busca?: string;
     page?: string;
@@ -27,20 +25,14 @@ function parsePage(value: string | undefined) {
 
 function buildProductsHref({
   page,
-  category,
   company,
   search
 }: {
   page: number;
-  category?: string;
   company?: string;
   search?: string;
 }) {
   const params = new URLSearchParams();
-
-  if (category) {
-    params.set("categoria", category);
-  }
 
   if (company) {
     params.set("empresa", company);
@@ -61,27 +53,17 @@ function buildProductsHref({
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
-
-  const productCategoriesRaw = await getCategories();
-  const productCategories = productCategoriesRaw.map((cat) => cat.name);
-  console.log("Categorias disponiveis:", params);
-  
-  const selectedCategory = params?.categoria?.trim();
   const selectedCompany = params?.empresa?.trim();
   const selectedSearch = params?.busca?.trim();
   const currentPage = parsePage(params?.page);
 
-  console.log("Filtros aplicados:", { selectedCategory, selectedCompany, selectedSearch, currentPage });
-
-
   const { products, total, page, totalPages } = await getPaginatedProducts({
-    category: selectedCategory,
     company: selectedCompany,
     search: selectedSearch,
     page: currentPage,
     pageSize
   });
-  const hasFilters = Boolean(selectedCategory || selectedCompany || selectedSearch);
+  const hasFilters = Boolean(selectedCompany || selectedSearch);
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -99,7 +81,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-4xl font-bold tracking-normal text-brand-ink">
-              {selectedCategory ? `Produtos de ${selectedCategory}` : "Produtos"}
+              Produtos
             </h1>
             <p className="mt-3 text-slate-600">
               {total > 0
@@ -115,7 +97,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             </Button>
           ) : null}
         </div>
-        <form className="mt-6 grid gap-4 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1.2fr_1fr_1fr_auto] md:items-end" action="/produtos">
+        <form className="mt-6 grid gap-4 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1.2fr_1fr_auto] md:items-end" action="/produtos">
           <label className="grid gap-2 text-sm font-medium text-brand-ink">
             Buscar produto
             <div className="relative">
@@ -123,7 +105,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               <input
                 name="busca"
                 defaultValue={selectedSearch ?? ""}
-                placeholder="Titulo, descricao, categoria ou loja"
+                placeholder="Titulo, descricao ou loja"
                 className="h-11 w-full rounded-md border border-input bg-background pl-10 pr-3 text-sm font-normal text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
@@ -144,22 +126,6 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               ))}
             </select>
           </label>
-          <label className="grid gap-2 text-sm font-medium text-brand-ink">
-            Categorias
-            <select
-              key={selectedCategory}
-              name="categoria"
-              defaultValue={selectedCategory ?? ""}
-              className="h-11 rounded-md border border-input bg-background px-3 text-sm font-normal text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="">Todas as categorias</option>
-              {productCategories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-          </label>
           <Button type="submit">
             <Search className="h-4 w-4" /> Filtrar produtos
           </Button>
@@ -172,7 +138,6 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   <div className="flex justify-center">
                     <ProductVisual name={product.name} imageSrc={product.image_url} compact />
                   </div>
-                  <span className="mt-5 block text-sm font-semibold text-brand-green">{product.category}</span>
                   <span className="mt-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">{product.company}</span>
                   <h2 className="mt-2 text-xl font-bold text-brand-ink">{product.name}</h2>
                   <p className="mt-3 text-sm leading-6 text-slate-600">{product.description}</p>
@@ -201,8 +166,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <Pagination
             page={page}
             totalPages={totalPages}
-            previousHref={buildProductsHref({ page: page - 1, category: selectedCategory, company: selectedCompany, search: selectedSearch })}
-            nextHref={buildProductsHref({ page: page + 1, category: selectedCategory, company: selectedCompany, search: selectedSearch })}
+            previousHref={buildProductsHref({ page: page - 1, company: selectedCompany, search: selectedSearch })}
+            nextHref={buildProductsHref({ page: page + 1, company: selectedCompany, search: selectedSearch })}
           />
         ) : null}
       </section>

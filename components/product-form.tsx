@@ -2,7 +2,6 @@
 
 import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Category } from '@/lib/categories';
 import { Product } from '@/lib/products';
 import { productCompanies } from '@/lib/companies';
 import { Input } from '@/components/ui/input';
@@ -33,13 +32,11 @@ function validateImage(file: File | null): string {
 export function ProductForm({
   product,
   action,
-  categories,
   submitLabel,
   submitIcon
 }: {
   product?: Product;
   action: (formData: FormData) => Promise<void>;
-  categories: Category[];
   submitLabel: string;
   submitIcon: React.ReactNode;
 }) {
@@ -48,11 +45,6 @@ export function ProductForm({
   const [imageError, setImageError] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [isPending, startTransition] = useTransition();
-
-  const activeCategories = categories.filter((category) => category.active);
-  const categoryOptions = product?.category && !activeCategories.some((category) => category.name === product.category)
-    ? [{ id: `current-${product.id}`, name: product.category, description: '', icon: 'package', active: true, sort_order: -1 }, ...activeCategories]
-    : activeCategories;
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] || null;
@@ -106,23 +98,6 @@ export function ProductForm({
       <div className="grid gap-2">
         <Label htmlFor={`name-${product?.id ?? 'new'}`}>Nome</Label>
         <Input id={`name-${product?.id ?? 'new'}`} name="name" defaultValue={product?.name} required />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor={`category-${product?.id ?? 'new'}`}>Categoria</Label>
-        <select
-          id={`category-${product?.id ?? 'new'}`}
-          name="category"
-          defaultValue={product?.category ?? categoryOptions[0]?.name}
-          className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          required
-        >
-          {categoryOptions.map((category) => (
-            <option key={category.id} value={category.name}>
-              {category.name}
-            </option>
-          ))}
-        </select>
       </div>
 
       <div className="grid gap-2">

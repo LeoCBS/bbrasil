@@ -62,11 +62,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             <Link href="/produtos" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-green">
               <ArrowLeft className="h-4 w-4" /> Voltar para produtos
             </Link>
-            <span className="mt-6 block text-sm font-semibold text-brand-green">{product.category}</span>
-            <h1 className="mt-3 text-4xl font-bold tracking-normal text-brand-ink md:text-5xl">{product.name}</h1>
+            <h1 className="mt-6 text-4xl font-bold tracking-normal text-brand-ink md:text-5xl">{product.name}</h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">{product.description}</p>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <Card className="shadow-soft">
                 <CardContent className="p-5">
                   <Building2 className="h-6 w-6 text-brand-blue" />
@@ -79,13 +78,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                   <PackageCheck className="h-6 w-6 text-brand-blue" />
                   <span className="mt-4 block text-sm text-slate-500">Volume</span>
                   <strong className="mt-1 block text-lg text-brand-ink">{product.size}</strong>
-                </CardContent>
-              </Card>
-              <Card className="shadow-soft">
-                <CardContent className="p-5">
-                  <Tag className="h-6 w-6 text-brand-blue" />
-                  <span className="mt-4 block text-sm text-slate-500">Categoria</span>
-                  <strong className="mt-1 block text-lg text-brand-ink">{product.category}</strong>
                 </CardContent>
               </Card>
               <Card className="shadow-soft">
@@ -105,7 +97,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                   id: product.id,
                   name: product.name,
                   company: product.company,
-                  category: product.category,
                   size: product.size
                 }}
               />

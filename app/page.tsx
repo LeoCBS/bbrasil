@@ -7,15 +7,29 @@ import {
   MapPin,
   MessageCircle,
   PackageCheck,
+  ShieldPlus,
+  Sparkles,
+  SprayCan,
   Search,
+  Trash2,
   Waves
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
+import { getCategories, type Category } from "@/lib/categories";
 import { getProducts } from "@/lib/products";
 import { productCompanies } from "@/lib/companies";
+
+const categoryIcons = {
+  package: PackageCheck,
+  spray: SprayCan,
+  shield: ShieldPlus,
+  sparkles: Sparkles,
+  trash: Trash2,
+  waves: Waves
+};
 
 const units = [
   {
@@ -92,6 +106,7 @@ export default async function Home({ searchParams }: HomeProps) {
   const params = await searchParams;
   const selectedCompany = params?.empresa?.trim();
   const selectedSearch = params?.busca?.trim();
+  const categories = await getCategories();
   const products = await getProducts({ company: selectedCompany, search: selectedSearch });
 
   return (
@@ -150,34 +165,27 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
       </section>
 
-      <section id="catalogo" className="container py-11">
-        <div className="grid overflow-hidden rounded-lg border bg-white shadow-soft lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="relative min-h-[280px] lg:min-h-[380px]">
-            <Image
-              src="/products-showcase.png"
-              alt="Produtos profissionais de higiene e limpeza organizados em prateleiras"
-              fill
-              className="object-cover"
-              sizes="(min-width: 1024px) 560px, 100vw"
-            />
-          </div>
-          <div className="flex flex-col justify-center p-7 md:p-10">
-            <span className="text-sm font-bold uppercase tracking-wide text-brand-green">Catalogo completo</span>
-            <h2 className="mt-3 text-3xl font-bold tracking-normal text-brand-ink">Produtos profissionais para cada rotina</h2>
-            <p className="mt-4 max-w-xl leading-7 text-slate-600">
-              Consulte o portfólio completo, filtre pela unidade de atendimento e encontre rapidamente os itens ideais para limpeza, higiene e conservação.
-            </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Button asChild>
-                <Link href="/produtos">
+      <section id="categorias" className="container py-11">
+        <div className="mb-5">
+          <h2 className="text-3xl font-bold tracking-normal text-brand-ink">Categorias</h2>
+          <p className="mt-2 text-slate-600">Encontre a solucao ideal para sua necessidade</p>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+          {categories.map((category) => (
+            <Card key={category.id} className="shadow-soft">
+              <CardContent className="flex h-full flex-col items-center p-7 text-center">
+                <CategoryIcon icon={category.icon} className="h-14 w-14 text-brand-blue" />
+                <h3 className="mt-5 text-lg font-semibold text-brand-ink">{category.name}</h3>
+                <p className="mt-4 min-h-20 text-sm leading-6 text-slate-600">{category.description}</p>
+                <Link
+                  href={{ pathname: "/produtos", query: { categoria: category.name } }}
+                  className="mt-auto inline-flex items-center gap-2 pt-4 text-sm font-semibold text-brand-green"
+                >
                   Ver produtos <ArrowRight className="h-4 w-4" />
                 </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="#contato">Falar com uma unidade</Link>
-              </Button>
-            </div>
-          </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </section>
 
@@ -220,7 +228,7 @@ export default async function Home({ searchParams }: HomeProps) {
               <input
                 name="busca"
                 defaultValue={selectedSearch ?? ""}
-                placeholder="Titulo, descricao ou loja"
+                placeholder="Titulo, descricao, categoria ou loja"
                 className="h-11 w-full rounded-md border border-input bg-background pl-10 pr-3 text-sm font-normal text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
@@ -236,6 +244,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 <CardContent className="grid h-full grid-cols-[120px_1fr] gap-5 p-5">
                   <ProductVisual name={product.name} imageSrc={product.image_url} compact />
                   <div className="flex flex-col py-2">
+                    <span className="text-sm font-semibold text-brand-green">{product.category}</span>
                     <span className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{product.company}</span>
                     <h3 className="mt-2 text-xl font-bold text-brand-ink">{product.name}</h3>
                     <p className="mt-3 text-sm leading-6 text-slate-600">
@@ -258,7 +267,7 @@ export default async function Home({ searchParams }: HomeProps) {
         {products.length === 0 ? (
           <div className="rounded-lg border bg-white p-8 text-center shadow-soft">
             <h3 className="text-xl font-bold text-brand-ink">Nenhum produto encontrado</h3>
-            <p className="mt-3 text-slate-600">Tente buscar por outro titulo, descricao ou loja.</p>
+            <p className="mt-3 text-slate-600">Tente buscar por outro titulo, descricao, categoria ou loja.</p>
           </div>
         ) : null}
         <div className="mt-5 flex justify-end">
@@ -383,9 +392,15 @@ export default async function Home({ searchParams }: HomeProps) {
           ))}
         </div>
       </section>
-      <Footer />
+      <Footer categories={categories} />
     </main>
   );
+}
+
+function CategoryIcon({ icon, className }: { icon: string; className?: string }) {
+  const Icon = categoryIcons[icon as keyof typeof categoryIcons] ?? PackageCheck;
+
+  return <Icon className={className} strokeWidth={1.5} />;
 }
 
 function Header() {
@@ -397,7 +412,7 @@ function Header() {
           <Link className="border-b-2 border-brand-green pb-1 text-brand-blue" href="/">
             Inicio
           </Link>
-          <Link href="#catalogo">Produtos</Link>
+          <Link href="#categorias">Produtos</Link>
           <Link href="#sobre">Quem somos</Link>
           <Link href="#contato">Contato</Link>
         </nav>
@@ -433,18 +448,26 @@ function Header() {
   );
 }
 
-function Footer() {
+function Footer({ categories }: { categories: Category[] }) {
   return (
     <footer className="mt-6 border-t">
-      <div className="container grid gap-9 py-10 md:grid-cols-3">
+      <div className="container grid gap-9 py-10 md:grid-cols-4">
         <Logo />
         <div>
           <h3 className="mb-4 font-semibold">Navegacao</h3>
           <div className="grid gap-2 text-sm text-slate-600">
             <Link href="/">Inicio</Link>
-            <Link href="#catalogo">Produtos</Link>
+            <Link href="#categorias">Categorias</Link>
             <Link href="#sobre">Sobre nos</Link>
             <Link href="#contato">Contato</Link>
+          </div>
+        </div>
+        <div>
+          <h3 className="mb-4 font-semibold">Categorias</h3>
+          <div className="grid gap-2 text-sm text-slate-600">
+            {categories.map((category) => (
+              <span key={category.id}>{category.name}</span>
+            ))}
           </div>
         </div>
         <div>

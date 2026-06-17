@@ -27,7 +27,7 @@ function writeCart(items: QuoteCartItem[], company: string) {
 
 function buildWhatsappHref(items: QuoteCartItem[], company: string) {
   const contact = productCompanyContacts.find((item) => item.name === company) ?? productCompanyContacts[0];
-  const productLines = items.map((item) => `- ${item.quantity}x ${item.name} (${item.size}) - ${item.company}`);
+  const productLines = items.map((item) => `- ${item.quantity}x ${item.name} (${item.size}) - ${item.category} - ${item.company}`);
   const message = [
     "Ola, gostaria de solicitar um orcamento para os produtos abaixo:",
     "",
@@ -139,7 +139,7 @@ export function QuoteCart() {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <h3 className="font-bold text-brand-ink">{item.name}</h3>
-                          <p className="mt-1 text-sm text-slate-600">{item.size}</p>
+                          <p className="mt-1 text-sm text-slate-600">{item.size} · {item.category}</p>
                           <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{item.company}</p>
                         </div>
                         <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(item.id)} aria-label="Remover produto">

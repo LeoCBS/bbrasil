@@ -6,6 +6,7 @@ export type Product = {
   id: string;
   name: string;
   company: string;
+  category: string;
   description: string;
   size: string;
   price: number | null;
@@ -39,6 +40,7 @@ type GetProductsOptions = {
 type GetPaginatedProductsOptions = GetProductsOptions & {
   page?: number;
   pageSize?: number;
+  category?: string;
 };
 
 type ProductRecord = Omit<ProductInput, "company"> & {
@@ -52,6 +54,7 @@ const fallbackProducts: Product[] = [
     id: "demo-1",
     name: "Detergente Profissional",
     company: "FLORIANOPOLIS SC",
+    category: "LIMPEZA E HIGIENE",
     description: "Alto rendimento para cozinhas, pisos lavaveis e manutencao diaria.",
     size: "5L",
     price: 48.9,
@@ -64,6 +67,7 @@ const fallbackProducts: Product[] = [
     id: "demo-2",
     name: "Limpador Multiuso",
     company: "JOINVILLE SC",
+    category: "ALTOLIM",
     description: "Solucao pratica para superficies corporativas e ambientes de alto fluxo.",
     size: "750ml",
     price: 18.5,
@@ -76,6 +80,7 @@ const fallbackProducts: Product[] = [
     id: "demo-3",
     name: "Desinfetante Concentrado",
     company: "ITAJAI SC",
+    category: "HIGIENE PESSOAL",
     description: "Formula concentrada para limpeza profunda e controle de odores.",
     size: "1L",
     price: 24.9,
@@ -125,7 +130,7 @@ function matchesSearch(product: Product, search?: string) {
   }
 
   const normalizedSearch = normalizeText(search);
-  const searchableText = [product.name, product.description, product.company].map(normalizeText).join(" ");
+  const searchableText = [product.name, product.description, product.category, product.company].map(normalizeText).join(" ");
 
   return searchableText.includes(normalizedSearch);
 }
@@ -187,7 +192,7 @@ export async function getProducts({ includeInactive = false, company, search }: 
 
   if (search) {
     const pattern = `%${escapeSearchPattern(search.trim())}%`;
-    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},company.ilike.${pattern}`);
+    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},category.ilike.${pattern},company.ilike.${pattern}`);
   }
 
   const { data, error } = await query;
@@ -206,6 +211,7 @@ export async function getPaginatedProducts({
   includeInactive = false,
   page = 1,
   pageSize = 9,
+  category,
   company,
   search
 }: GetPaginatedProductsOptions = {}) {
@@ -219,10 +225,11 @@ export async function getPaginatedProducts({
   if (!supabase) {
     const products = fallbackProducts.filter((product) => {
       const isVisible = includeInactive || product.active;
+      const isInCategory = matchesText(product.category, category);
       const isFromCompany = matchesText(product.company, company);
       const isSearchMatch = matchesSearch(product, search);
 
-      return isVisible && isFromCompany && isSearchMatch;
+      return isVisible && isInCategory && isFromCompany && isSearchMatch;
     });
 
     return paginateProducts(products, safePage, safePageSize);
@@ -234,13 +241,18 @@ export async function getPaginatedProducts({
     query = query.eq("active", true);
   }
 
+  if (category) {
+    console.log("Filtering by category:", category);
+    query = query.eq("category", category);
+  }
+
   if (company) {
     query = query.eq("company", company);
   }
 
   if (search) {
     const pattern = `%${escapeSearchPattern(search.trim())}%`;
-    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},company.ilike.${pattern}`);
+    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},category.ilike.${pattern},company.ilike.${pattern}`);
   }
   
   
@@ -251,6 +263,7 @@ export async function getPaginatedProducts({
     const products = fallbackProducts.filter((product) => {
       return (
         (includeInactive || product.active) &&
+        matchesText(product.category, category) &&
         matchesText(product.company, company) &&
         matchesSearch(product, search)
       );
@@ -267,6 +280,7 @@ export async function getPaginatedProducts({
       includeInactive,
       page: totalPages,
       pageSize: safePageSize,
+      category,
       company,
       search
     });
@@ -360,7 +374,7 @@ async function uploadImageToBucket(imageFile:FormDataEntryValue, id: string, com
     const file = imageFile as File;
     const buffer = Buffer.from(await file.arrayBuffer());
     const imagePath = `${sanitizeFileName(company)}/${id}-${sanitizeFileName(file.name)}`;
-    const { error } = await supabase
+    const { data, error } = await supabase
     .storage
     .from('images')
     .upload(imagePath, buffer, {

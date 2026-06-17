@@ -8,6 +8,7 @@ export type QuoteCartItem = {
   id: string;
   name: string;
   company: string;
+  category: string;
   size: string;
   quantity: number;
 };

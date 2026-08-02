@@ -1,0 +1,11 @@
+name,description,icon,active,sort_order
+"COPA/COZINHA","Categoria COPA/COZINHA.","sparkles","TRUE","10"
+"DESCARTÁVEIS","Categoria DESCARTÁVEIS.","trash","TRUE","20"
+"DIVERSOS","Categoria DIVERSOS.","package","TRUE","30"
+"EPI","Categoria EPI.","shield","TRUE","40"
+"EQUIPAMENTOS, ACESSÓRIOS E DISPENSERS","Categoria EQUIPAMENTOS, ACESSÓRIOS E DISPENSERS.","package","TRUE","50"
+"GERENCIMENTO DE RESÍDUOS","Categoria GERENCIMENTO DE RESÍDUOS.","trash","TRUE","60"
+"HIGIENE PESSOAL","Categoria HIGIENE PESSOAL.","shield","TRUE","70"
+"LIMPEZA E HIGIENE","Categoria LIMPEZA E HIGIENE.","spray","TRUE","80"
+"PANOS","Categoria PANOS.","waves","TRUE","90"
+"PERFUMARIA","Categoria PERFUMARIA.","sparkles","TRUE","100"

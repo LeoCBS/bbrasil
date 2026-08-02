@@ -6,6 +6,7 @@ export type Product = {
   id: string;
   name: string;
   company: string;
+  category_id: string;
   category: string;
   description: string;
   size: string;
@@ -17,7 +18,7 @@ export type Product = {
   created_at?: string;
 };
 
-export type ProductInput = Omit<Product, "id" | "created_at" | "image_src">;
+export type ProductInput = Omit<Product, "id" | "created_at" | "category">;
 export type ProductMutationInput = Omit<ProductInput, "image_blob" | "image_mime_type"> & {
   image_blob?: string | null;
   image_mime_type?: string | null;
@@ -47,6 +48,7 @@ type ProductRecord = Omit<ProductInput, "company"> & {
   id: string;
   company?: string | null;
   created_at?: string;
+  categories?: { name?: string | null } | { name?: string | null }[] | null;
 };
 
 const fallbackProducts: Product[] = [
@@ -54,6 +56,7 @@ const fallbackProducts: Product[] = [
     id: "demo-1",
     name: "Detergente Profissional",
     company: "FLORIANOPOLIS SC",
+    category_id: "demo-limpeza-higiene",
     category: "LIMPEZA E HIGIENE",
     description: "Alto rendimento para cozinhas, pisos lavaveis e manutencao diaria.",
     size: "5L",
@@ -67,7 +70,8 @@ const fallbackProducts: Product[] = [
     id: "demo-2",
     name: "Limpador Multiuso",
     company: "JOINVILLE SC",
-    category: "ALTOLIM",
+    category_id: "demo-limpeza-higiene",
+    category: "LIMPEZA E HIGIENE",
     description: "Solucao pratica para superficies corporativas e ambientes de alto fluxo.",
     size: "750ml",
     price: 18.5,
@@ -80,6 +84,7 @@ const fallbackProducts: Product[] = [
     id: "demo-3",
     name: "Desinfetante Concentrado",
     company: "ITAJAI SC",
+    category_id: "demo-higiene-pessoal",
     category: "HIGIENE PESSOAL",
     description: "Formula concentrada para limpeza profunda e controle de odores.",
     size: "1L",
@@ -103,9 +108,12 @@ function byteaToDataUrl(imageBlob: string | null, mimeType: string | null) {
 }
 
 function normalizeProduct(product: ProductRecord): Product {
+  const relatedCategory = Array.isArray(product.categories) ? product.categories[0] : product.categories;
+
   return {
     ...product,
     company: product.company ?? "FLORIANOPOLIS SC",
+    category: relatedCategory?.name ?? "Sem categoria",
     image_blob: product.image_blob ?? null,
     image_mime_type: product.image_mime_type ?? null,
     image_url: product.image_url ?? byteaToDataUrl(product.image_blob ?? null, product.image_mime_type ?? null)
@@ -180,7 +188,7 @@ export async function getProducts({ includeInactive = false, company, search }: 
     );
   }
 
-  let query = supabase.from("products").select("*").order("created_at", { ascending: false });
+  let query = supabase.from("products").select("*, categories!products_category_id_fkey(name)").order("created_at", { ascending: false });
 
   if (!includeInactive) {
     query = query.eq("active", true);
@@ -192,7 +200,7 @@ export async function getProducts({ includeInactive = false, company, search }: 
 
   if (search) {
     const pattern = `%${escapeSearchPattern(search.trim())}%`;
-    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},category.ilike.${pattern},company.ilike.${pattern}`);
+    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},company.ilike.${pattern}`);
   }
 
   const { data, error } = await query;
@@ -235,15 +243,14 @@ export async function getPaginatedProducts({
     return paginateProducts(products, safePage, safePageSize);
   }
 
-  let query = supabase.from("products").select("*", { count: "exact" }).order("created_at", { ascending: false });
+  let query = supabase.from("products").select("*, categories!products_category_id_fkey!inner(name)", { count: "exact" }).order("created_at", { ascending: false });
 
   if (!includeInactive) {
     query = query.eq("active", true);
   }
 
   if (category) {
-    console.log("Filtering by category:", category);
-    query = query.eq("category", category);
+    query = query.eq("categories.name", category);
   }
 
   if (company) {
@@ -252,7 +259,7 @@ export async function getPaginatedProducts({
 
   if (search) {
     const pattern = `%${escapeSearchPattern(search.trim())}%`;
-    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},category.ilike.${pattern},company.ilike.${pattern}`);
+    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},company.ilike.${pattern}`);
   }
   
   
@@ -303,7 +310,7 @@ export async function getProduct(id: string, { includeInactive = false } = {}) {
     return fallbackProducts.find((product) => product.id === id && (includeInactive || product.active)) ?? null;
   }
 
-  let query = supabase.from("products").select("*").eq("id", id).limit(1);
+  let query = supabase.from("products").select("*, categories!products_category_id_fkey(name)").eq("id", id).limit(1);
 
   if (!includeInactive) {
     query = query.eq("active", true);

@@ -20,16 +20,16 @@ using (active = true);
 
 insert into public.categories (name, description, icon, sort_order)
 values
-  ('ALTOLIM', 'Linha Altolim para rotinas profissionais de limpeza.', 'spray', 10),
-  ('EQUIPAMENTOS E ACESSÓRIOS', 'Equipamentos e acessorios para limpeza profissional.', 'package', 20),
-  ('DESCARTÁVEIS', 'Descartaveis para empresas, cozinhas e ambientes de alto fluxo.', 'trash', 30),
-  ('HIGIENE PESSOAL', 'Itens para cuidado, assepsia e higiene pessoal.', 'shield', 40),
-  ('COPA/COZINHA', 'Produtos para copa, cozinha e areas de preparo.', 'sparkles', 50),
-  ('EPI', 'Equipamentos de protecao individual para operacoes seguras.', 'shield', 60),
-  ('LIMPEZA E HIGIENE', 'Solucoes para limpeza, higienizacao e manutencao diaria.', 'spray', 70),
-  ('DISPENSER', 'Dispensers e suportes para ambientes profissionais.', 'package', 80),
-  ('GERENCIAMENTO DE RESÍDUOS', 'Produtos para descarte, coleta e gestao de residuos.', 'trash', 90),
-  ('PANOS', 'Panos e acessorios texteis para limpeza profissional.', 'waves', 100)
+  ('COPA/COZINHA', 'Categoria COPA/COZINHA.', 'sparkles', 10),
+  ('DESCARTÁVEIS', 'Categoria DESCARTÁVEIS.', 'trash', 20),
+  ('DIVERSOS', 'Categoria DIVERSOS.', 'package', 30),
+  ('EPI', 'Categoria EPI.', 'shield', 40),
+  ('EQUIPAMENTOS, ACESSÓRIOS E DISPENSERS', 'Categoria EQUIPAMENTOS, ACESSÓRIOS E DISPENSERS.', 'package', 50),
+  ('GERENCIMENTO DE RESÍDUOS', 'Categoria GERENCIMENTO DE RESÍDUOS.', 'trash', 60),
+  ('HIGIENE PESSOAL', 'Categoria HIGIENE PESSOAL.', 'shield', 70),
+  ('LIMPEZA E HIGIENE', 'Categoria LIMPEZA E HIGIENE.', 'spray', 80),
+  ('PANOS', 'Categoria PANOS.', 'waves', 90),
+  ('PERFUMARIA', 'Categoria PERFUMARIA.', 'sparkles', 100)
 on conflict (name) do update set
   description = excluded.description,
   icon = excluded.icon,

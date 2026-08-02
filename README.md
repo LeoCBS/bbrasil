@@ -31,7 +31,7 @@ Crie a tabela:
 create table public.products (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  category text not null,
+  category_id uuid not null,
   description text not null,
   size text not null,
   price numeric(10, 2),
@@ -50,6 +50,10 @@ create table public.categories (
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
 );
+
+alter table public.products
+  add constraint products_category_id_fkey
+  foreign key (category_id) references public.categories(id);
 
 alter table public.products enable row level security;
 alter table public.categories enable row level security;

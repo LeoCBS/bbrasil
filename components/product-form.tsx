@@ -50,8 +50,8 @@ export function ProductForm({
   const [isPending, startTransition] = useTransition();
 
   const activeCategories = categories.filter((category) => category.active);
-  const categoryOptions = product?.category && !activeCategories.some((category) => category.name === product.category)
-    ? [{ id: `current-${product.id}`, name: product.category, description: '', icon: 'package', active: true, sort_order: -1 }, ...activeCategories]
+  const categoryOptions = product?.category_id && !activeCategories.some((category) => category.id === product.category_id)
+    ? [{ id: product.category_id, name: product.category, description: '', icon: 'package', active: true, sort_order: -1 }, ...activeCategories]
     : activeCategories;
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -112,13 +112,13 @@ export function ProductForm({
         <Label htmlFor={`category-${product?.id ?? 'new'}`}>Categoria</Label>
         <select
           id={`category-${product?.id ?? 'new'}`}
-          name="category"
-          defaultValue={product?.category ?? categoryOptions[0]?.name}
+          name="category_id"
+          defaultValue={product?.category_id ?? categoryOptions[0]?.id}
           className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           required
         >
           {categoryOptions.map((category) => (
-            <option key={category.id} value={category.name}>
+            <option key={category.id} value={category.id}>
               {category.name}
             </option>
           ))}

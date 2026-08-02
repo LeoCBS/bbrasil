@@ -28,7 +28,7 @@ async function parseProduct(formData: FormData): Promise<ProductMutationInput> {
   const product: ProductMutationInput = {
     name: String(formData.get("name") ?? "").trim(),
     company: String(formData.get("company") ?? "").trim(),
-    category: String(formData.get("category") ?? "").trim(),
+    category_id: String(formData.get("category_id") ?? "").trim(),
     description: String(formData.get("description") ?? "").trim(),
     size: String(formData.get("size") ?? "").trim(),
     price: priceValue ? Number(priceValue) : null,

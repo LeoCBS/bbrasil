@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { cookies } from "next/headers";
 import {
   ArrowRight,
   ChevronDown,
@@ -21,6 +22,7 @@ import { ProductVisual } from "@/components/site/product-visual";
 import { getCategories, type Category } from "@/lib/categories";
 import { getProducts } from "@/lib/products";
 import { productCompanies } from "@/lib/companies";
+import { CompanySelector } from "@/components/site/company-selector";
 
 const categoryIcons = {
   package: PackageCheck,
@@ -86,32 +88,20 @@ type HomeProps = {
   }>;
 };
 
-function buildHomeCompanyHref(company?: string, search?: string) {
-  const params = new URLSearchParams();
-
-  if (company) {
-    params.set("empresa", company);
-  }
-
-  if (search) {
-    params.set("busca", search);
-  }
-
-  const query = params.toString();
-
-  return query ? `/?${query}#produtos` : "/#produtos";
-}
-
 export default async function Home({ searchParams }: HomeProps) {
   const params = await searchParams;
-  const selectedCompany = params?.empresa?.trim();
+  const cookieStore = await cookies();
+  const requestedCompany = params?.empresa?.trim();
+  const storedCompanyValue = cookieStore.get("bbrasil_selected_company")?.value;
+  const storedCompany = storedCompanyValue ? decodeURIComponent(storedCompanyValue) : undefined;
+  const selectedCompany = [requestedCompany, storedCompany].find((company) => company && productCompanies.includes(company));
   const selectedSearch = params?.busca?.trim();
   const categories = await getCategories();
   const products = await getProducts({ company: selectedCompany, search: selectedSearch });
 
   return (
     <main className="min-h-screen bg-white">
-      <Header />
+      <Header selectedCompany={selectedCompany} />
       <section className="border-b bg-slate-50 py-6">
         <div className="container">
           <details className="group relative">
@@ -178,7 +168,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 <h3 className="mt-5 text-lg font-semibold text-brand-ink">{category.name}</h3>
                 <p className="mt-4 min-h-20 text-sm leading-6 text-slate-600">{category.description}</p>
                 <Link
-                  href={{ pathname: "/produtos", query: { categoria: category.name } }}
+                  href={{ pathname: "/produtos", query: { categoria: category.name, ...(selectedCompany ? { empresa: selectedCompany } : {}) } }}
                   className="mt-auto inline-flex items-center gap-2 pt-4 text-sm font-semibold text-brand-green"
                 >
                   Ver produtos <ArrowRight className="h-4 w-4" />
@@ -201,22 +191,10 @@ export default async function Home({ searchParams }: HomeProps) {
                 : "Conheca nossos produtos mais populares e recomendados"}
             </p>
           </div>
-          <div className="grid gap-3">
-            <div className="flex flex-wrap gap-2">
-              <Button asChild variant={selectedCompany ? "outline" : "secondary"} size="sm">
-                <Link href={buildHomeCompanyHref(undefined, selectedSearch)}>Todas</Link>
-              </Button>
-              {productCompanies.map((company) => (
-                <Button key={company} asChild variant={selectedCompany === company ? "secondary" : "outline"} size="sm">
-                  <Link href={buildHomeCompanyHref(company, selectedSearch)}>{company}</Link>
-                </Button>
-              ))}
-            </div>
-            <div className="flex justify-start lg:justify-end">
-              <Button asChild variant="outline">
-                <Link href="/admin/produtos">Admin</Link>
-              </Button>
-            </div>
+          <div className="flex justify-start lg:justify-end">
+            <Button asChild variant="outline">
+              <Link href="/admin/produtos">Admin</Link>
+            </Button>
           </div>
         </div>
         <form className="mb-6 grid gap-3 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1fr_auto]" action="/#produtos">
@@ -403,7 +381,7 @@ function CategoryIcon({ icon, className }: { icon: string; className?: string })
   return <Icon className={className} strokeWidth={1.5} />;
 }
 
-function Header() {
+function Header({ selectedCompany }: { selectedCompany?: string }) {
   return (
     <header className="sticky top-0 z-30 border-b bg-white/95 backdrop-blur">
       <div className="container flex h-24 items-center justify-between gap-6">
@@ -416,7 +394,9 @@ function Header() {
           <Link href="#sobre">Quem somos</Link>
           <Link href="#contato">Contato</Link>
         </nav>
-        <details className="group relative hidden md:block">
+        <div className="hidden items-center gap-3 md:flex">
+          <CompanySelector selectedCompany={selectedCompany} companies={productCompanies} />
+          <details className="group relative">
           <summary className={buttonVariants({ variant: "secondary", className: "cursor-pointer list-none" })}>
             <MessageCircle className="h-5 w-5" /> Fale conosco
             <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
@@ -442,7 +422,11 @@ function Header() {
               </div>
             ))}
           </div>
-        </details>
+          </details>
+        </div>
+        <div className="md:hidden">
+          <CompanySelector selectedCompany={selectedCompany} companies={productCompanies} />
+        </div>
       </div>
     </header>
   );

@@ -32,6 +32,10 @@ function writeCart(items: QuoteCartItem[], company: string) {
   window.dispatchEvent(new CustomEvent("bbrasil:quote-cart-updated", { detail: { open: true } }));
 }
 
+function readSelectedCompany(items: QuoteCartItem[]) {
+  return window.localStorage.getItem(currentCompanyStorageKey) ?? items[0]?.company ?? "";
+}
+
 export function AddToQuoteButton({ item }: { item: Omit<QuoteCartItem, "quantity"> }) {
   const [added, setAdded] = useState(false);
 
@@ -42,7 +46,7 @@ export function AddToQuoteButton({ item }: { item: Omit<QuoteCartItem, "quantity
       ? cart.map((cartItem) => (cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem))
       : [...cart, { ...item, quantity: 1 }];
 
-    writeCart(nextCart, item.company);
+    writeCart(nextCart, readSelectedCompany(cart) || item.company);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1800);
   }

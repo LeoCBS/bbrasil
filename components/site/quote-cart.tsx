@@ -94,11 +94,6 @@ export function QuoteCart() {
     updateItems([]);
   }
 
-  function handleCompanyChange(company: string) {
-    setSelectedCompany(company);
-    writeCart(items, company);
-  }
-
   return (
     <>
       <Button
@@ -167,20 +162,9 @@ export function QuoteCart() {
               <Button type="button" className="mb-4 w-full bg-brand-green text-white hover:bg-brand-greenDark" onClick={() => setIsOpen(false)}>
                 <ArrowLeft className="h-4 w-4" /> Continuar comprando
               </Button>
-              <label className="grid gap-2 text-sm font-medium text-brand-ink">
-                Empresa para envio
-                <select
-                  value={selectedCompany}
-                  onChange={(event) => handleCompanyChange(event.target.value)}
-                  className="h-11 rounded-md border border-input bg-background px-3 text-sm font-normal text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {productCompanyContacts.map((company) => (
-                    <option key={company.name} value={company.name}>
-                      {company.name} - {company.phoneLabel}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                Empresa para envio: <strong className="text-brand-ink">{selectedCompany}</strong>
+              </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
                 {items.length === 0 ? (
                   <Button disabled>

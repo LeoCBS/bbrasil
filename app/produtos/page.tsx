@@ -1,12 +1,14 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { ArrowLeft, ArrowRight, Search } from "lucide-react";
 import { ProductVisual } from "@/components/site/product-visual";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
 import { getPaginatedProducts } from "@/lib/products";
-import { productCompanies } from "@/lib/companies";
 import { getCategories } from "@/lib/categories";
+import { productCompanies } from "@/lib/companies";
+import { CompanySelector } from "@/components/site/company-selector";
 
 const pageSize = 10;
 
@@ -61,18 +63,17 @@ function buildProductsHref({
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
+  const cookieStore = await cookies();
 
   const productCategoriesRaw = await getCategories();
   const productCategories = productCategoriesRaw.map((cat) => cat.name);
-  console.log("Categorias disponiveis:", params);
-  
   const selectedCategory = params?.categoria?.trim();
-  const selectedCompany = params?.empresa?.trim();
+  const requestedCompany = params?.empresa?.trim();
+  const storedCompanyValue = cookieStore.get("bbrasil_selected_company")?.value;
+  const storedCompany = storedCompanyValue ? decodeURIComponent(storedCompanyValue) : undefined;
+  const selectedCompany = [requestedCompany, storedCompany].find((company) => company && productCompanies.includes(company));
   const selectedSearch = params?.busca?.trim();
   const currentPage = parsePage(params?.page);
-
-  console.log("Filtros aplicados:", { selectedCategory, selectedCompany, selectedSearch, currentPage });
-
 
   const { products, total, page, totalPages } = await getPaginatedProducts({
     category: selectedCategory,
@@ -81,18 +82,21 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     page: currentPage,
     pageSize
   });
-  const hasFilters = Boolean(selectedCategory || selectedCompany || selectedSearch);
+  const hasFilters = Boolean(selectedCategory || selectedSearch);
 
   return (
     <main className="min-h-screen bg-slate-50">
       <header className="border-b bg-white">
-        <div className="container flex h-24 items-center justify-between">
+        <div className="container flex h-24 items-center justify-between gap-3">
           <Logo />
-          <Button asChild variant="outline">
-            <Link href="/">
-              <ArrowLeft className="h-4 w-4" /> Voltar
-            </Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            <CompanySelector selectedCompany={selectedCompany} companies={productCompanies} />
+            <Button asChild variant="outline">
+              <Link href={selectedCompany ? `/?empresa=${encodeURIComponent(selectedCompany)}` : "/"}>
+                <ArrowLeft className="h-4 w-4" /> Voltar
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
       <section className="container py-10">
@@ -111,11 +115,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           </div>
           {hasFilters ? (
             <Button asChild variant="outline">
-              <Link href="/produtos">Ver todos</Link>
+              <Link href={buildProductsHref({ page: 1, company: selectedCompany })}>Limpar filtros</Link>
             </Button>
           ) : null}
         </div>
-        <form className="mt-6 grid gap-4 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1.2fr_1fr_1fr_auto] md:items-end" action="/produtos">
+        <form className="mt-6 grid gap-4 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1.2fr_1fr_auto] md:items-end" action="/produtos">
+          {selectedCompany ? <input type="hidden" name="empresa" value={selectedCompany} /> : null}
           <label className="grid gap-2 text-sm font-medium text-brand-ink">
             Buscar produto
             <div className="relative">
@@ -127,22 +132,6 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 className="h-11 w-full rounded-md border border-input bg-background pl-10 pr-3 text-sm font-normal text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
-          </label>
-          <label className="grid gap-2 text-sm font-medium text-brand-ink">
-            Empresa
-            <select
-              key={selectedCompany}
-              name="empresa"
-              defaultValue={selectedCompany ?? ""}
-              className="h-11 rounded-md border border-input bg-background px-3 text-sm font-normal text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="">Todas as empresas</option>
-              {productCompanies.map((company) => (
-                <option key={company} value={company}>
-                  {company}
-                </option>
-              ))}
-            </select>
           </label>
           <label className="grid gap-2 text-sm font-medium text-brand-ink">
             Categorias
@@ -193,7 +182,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             <h2 className="text-xl font-bold text-brand-ink">Nenhum produto encontrado</h2>
             <p className="mt-3 text-slate-600">Nao encontramos produtos cadastrados para esta busca.</p>
             <Button asChild className="mt-6">
-              <Link href="/produtos">Ver todos os produtos</Link>
+              <Link href={buildProductsHref({ page: 1, company: selectedCompany })}>Limpar filtros</Link>
             </Button>
           </div>
         ) : null}

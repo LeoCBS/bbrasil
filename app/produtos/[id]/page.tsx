@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Building2, PackageCheck, Tag } from "lucide-react";
 import { ProductVisual } from "@/components/site/product-visual";
@@ -8,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
 import { getProduct } from "@/lib/products";
+import { productCompanies } from "@/lib/companies";
+import { CompanySelector } from "@/components/site/company-selector";
 
 type ProductDetailPageProps = {
   params: Promise<{
@@ -33,6 +36,10 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { id } = await params;
+  const cookieStore = await cookies();
+  const storedCompanyValue = cookieStore.get("bbrasil_selected_company")?.value;
+  const storedCompany = storedCompanyValue ? decodeURIComponent(storedCompanyValue) : undefined;
+  const selectedCompany = productCompanies.includes(storedCompany ?? "") ? storedCompany : undefined;
   const product = await getProduct(id);
 
   if (!product) {
@@ -42,13 +49,16 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   return (
     <main className="min-h-screen bg-slate-50">
       <header className="border-b bg-white">
-        <div className="container flex h-24 items-center justify-between">
+        <div className="container flex h-24 items-center justify-between gap-3">
           <Logo />
-          <Button asChild variant="outline">
-            <Link href="/produtos">
-              <ArrowLeft className="h-4 w-4" /> Produtos
-            </Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            <CompanySelector selectedCompany={selectedCompany} companies={productCompanies} />
+            <Button asChild variant="outline">
+              <Link href={selectedCompany ? `/produtos?empresa=${encodeURIComponent(selectedCompany)}` : "/produtos"}>
+                <ArrowLeft className="h-4 w-4" /> Produtos
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -59,7 +69,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </div>
 
           <div>
-            <Link href="/produtos" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-green">
+            <Link href={selectedCompany ? `/produtos?empresa=${encodeURIComponent(selectedCompany)}` : "/produtos"} className="inline-flex items-center gap-2 text-sm font-semibold text-brand-green">
               <ArrowLeft className="h-4 w-4" /> Voltar para produtos
             </Link>
             <span className="mt-6 block text-sm font-semibold text-brand-green">{product.category}</span>
@@ -110,7 +120,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 }}
               />
               <Button asChild variant="outline" size="lg">
-                <Link href="/produtos">Ver outros produtos</Link>
+                <Link href={selectedCompany ? `/produtos?empresa=${encodeURIComponent(selectedCompany)}` : "/produtos"}>Ver outros produtos</Link>
               </Button>
             </div>
           </div>

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { cookies } from "next/headers";
 import {
   ArrowRight,
@@ -23,6 +22,7 @@ import { getCategories, type Category } from "@/lib/categories";
 import { getProducts } from "@/lib/products";
 import { productCompanies } from "@/lib/companies";
 import { CompanySelector } from "@/components/site/company-selector";
+import { HeroCarousel } from "@/components/site/hero-carousel";
 
 const categoryIcons = {
   package: PackageCheck,
@@ -102,58 +102,7 @@ export default async function Home({ searchParams }: HomeProps) {
   return (
     <main className="min-h-screen bg-white">
       <Header selectedCompany={selectedCompany} />
-      <section className="border-b bg-slate-50 py-6">
-        <div className="container">
-          <details className="group relative">
-            <summary className="block cursor-pointer list-none overflow-hidden rounded-lg shadow-soft outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <div className="relative min-h-[280px] overflow-hidden md:min-h-[350px]">
-                <Image
-                  src="/hero-specialist.png"
-                  alt="Especialista em higiene profissional pronta para atendimento"
-                  fill
-                  priority
-                  className="object-cover"
-                  sizes="(min-width: 1280px) 1180px, 100vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-brand-blue/90 via-brand-green/70 to-brand-green/20" />
-                <div className="relative z-10 flex min-h-[280px] max-w-2xl flex-col justify-center p-7 text-white md:min-h-[350px] md:p-12">
-                  <span className="text-2xl font-semibold md:text-4xl">Fale com um</span>
-                  <h1 className="mt-1 text-4xl font-bold leading-none tracking-normal md:text-6xl">
-                    Especialista
-                  </h1>
-                  <p className="mt-4 max-w-md text-sm leading-6 text-white/90 md:text-base">
-                    Conheça nosso portfólio completo de higiene profissional e escolha a loja ideal para falar agora.
-                  </p>
-                  <span className="mt-6 inline-flex w-fit items-center gap-2 rounded-md bg-white px-5 py-3 text-sm font-bold text-brand-green shadow">
-                    Escolher loja <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
-                  </span>
-                </div>
-              </div>
-            </summary>
-            <div className="absolute left-4 right-4 top-full z-40 mt-3 grid gap-2 rounded-lg border bg-white p-3 shadow-lg md:left-auto md:w-96">
-              {units.map((unit) => (
-                <div key={unit.name} className="rounded-md border p-3">
-                  <p className="text-xs font-bold uppercase tracking-wide text-brand-ink">Unidade {unit.name}</p>
-                  <div className="mt-2 grid gap-2">
-                    {unit.phones.map((phone) => (
-                      <Link
-                        key={phone.label}
-                        href={phone.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2 text-sm font-semibold text-brand-green hover:bg-accent hover:text-brand-blue"
-                      >
-                        <span>{phone.label}</span>
-                        <MessageCircle className="h-4 w-4 shrink-0" />
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </details>
-        </div>
-      </section>
+      <HeroCarousel selectedCompany={selectedCompany} />
 
       <section id="categorias" className="container py-11">
         <div className="mb-5">
@@ -446,6 +395,7 @@ function Footer({ categories }: { categories: Category[] }) {
             <Link href="#contato">Contato</Link>
           </div>
         </div>
+        {/*
         <div>
           <h3 className="mb-4 font-semibold">Categorias</h3>
           <div className="grid gap-2 text-sm text-slate-600">
@@ -467,7 +417,7 @@ function Footer({ categories }: { categories: Category[] }) {
               <MapPin className="h-4 w-4" /> Ver todas as unidades
             </Link>
           </div>
-        </div>
+        </div>*/}
       </div>
       <div className="bg-brand-blue py-5 text-center text-sm text-white">
         © 2026 B.Brasil Higiene Profissional. Todos os direitos reservados.

@@ -2,10 +2,10 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import {
   ArrowRight,
-  ChevronDown,
   Mail,
   MapPin,
   MessageCircle,
+  Instagram,
   PackageCheck,
   ShieldPlus,
   Sparkles,
@@ -14,15 +14,15 @@ import {
   Trash2,
   Waves
 } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
 import { getCategories, type Category } from "@/lib/categories";
 import { getProducts } from "@/lib/products";
 import { productCompanies } from "@/lib/companies";
-import { CompanySelector } from "@/components/site/company-selector";
 import { HeroCarousel } from "@/components/site/hero-carousel";
+import { SiteHeader } from "@/components/site/site-header";
 
 const categoryIcons = {
   package: PackageCheck,
@@ -101,7 +101,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <main className="min-h-screen bg-white">
-      <Header selectedCompany={selectedCompany} />
+      <SiteHeader selectedCompany={selectedCompany} selectedSearch={selectedSearch} />
       <HeroCarousel selectedCompany={selectedCompany} />
 
       <section id="categorias" className="container py-11">
@@ -330,57 +330,6 @@ function CategoryIcon({ icon, className }: { icon: string; className?: string })
   return <Icon className={className} strokeWidth={1.5} />;
 }
 
-function Header({ selectedCompany }: { selectedCompany?: string }) {
-  return (
-    <header className="sticky top-0 z-30 border-b bg-white/95 backdrop-blur">
-      <div className="container flex h-24 items-center justify-between gap-6">
-        <Logo />
-        <nav className="hidden items-center gap-10 text-sm font-medium md:flex">
-          <Link className="border-b-2 border-brand-green pb-1 text-brand-blue" href="/">
-            Inicio
-          </Link>
-          <Link href="#categorias">Produtos</Link>
-          <Link href="#sobre">Quem somos</Link>
-          <Link href="#contato">Contato</Link>
-        </nav>
-        <div className="hidden items-center gap-3 md:flex">
-          <CompanySelector selectedCompany={selectedCompany} companies={productCompanies} />
-          <details className="group relative">
-          <summary className={buttonVariants({ variant: "secondary", className: "cursor-pointer list-none" })}>
-            <MessageCircle className="h-5 w-5" /> Fale conosco
-            <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
-          </summary>
-          <div className="absolute right-0 top-full z-40 mt-3 w-80 overflow-hidden rounded-lg border bg-white py-2 shadow-lg">
-            {units.map((unit) => (
-              <div key={unit.name} className="border-b px-3 py-2 last:border-b-0">
-                <p className="px-2 text-xs font-bold uppercase tracking-wide text-brand-ink">Unidade {unit.name}</p>
-                <div className="mt-1 grid gap-1">
-                  {unit.phones.map((phone) => (
-                    <Link
-                      key={phone.label}
-                      href={phone.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-between gap-3 rounded-md px-2 py-2 text-sm text-slate-600 hover:bg-accent hover:text-brand-green"
-                    >
-                      <span>{phone.label}</span>
-                      <MessageCircle className="h-4 w-4 shrink-0" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-          </details>
-        </div>
-        <div className="md:hidden">
-          <CompanySelector selectedCompany={selectedCompany} companies={productCompanies} />
-        </div>
-      </div>
-    </header>
-  );
-}
-
 function Footer({ categories }: { categories: Category[] }) {
   return (
     <footer className="mt-6 border-t">
@@ -394,6 +343,17 @@ function Footer({ categories }: { categories: Category[] }) {
             <Link href="#sobre">Sobre nos</Link>
             <Link href="#contato">Contato</Link>
           </div>
+        </div>
+        <div>
+          <h3 className="mb-4 font-semibold">Siga a B.Brasil</h3>
+          <Link
+            href="https://www.instagram.com/b.brasilhigieneprofissional/"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-3 text-sm text-slate-600 transition hover:text-brand-green"
+          >
+            <Instagram className="h-5 w-5" /> Instagram
+          </Link>
         </div>
         {/*
         <div>

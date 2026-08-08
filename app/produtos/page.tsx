@@ -4,11 +4,10 @@ import { ArrowLeft, ArrowRight, Search } from "lucide-react";
 import { ProductVisual } from "@/components/site/product-visual";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Logo } from "@/components/site/logo";
 import { getPaginatedProducts } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
 import { productCompanies } from "@/lib/companies";
-import { CompanySelector } from "@/components/site/company-selector";
+import { SiteHeader } from "@/components/site/site-header";
 
 const pageSize = 10;
 
@@ -86,19 +85,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white">
-        <div className="container flex h-24 items-center justify-between gap-3">
-          <Logo />
-          <div className="flex items-center gap-3">
-            <CompanySelector selectedCompany={selectedCompany} companies={productCompanies} />
-            <Button asChild variant="outline">
-              <Link href={selectedCompany ? `/?empresa=${encodeURIComponent(selectedCompany)}` : "/"}>
-                <ArrowLeft className="h-4 w-4" /> Voltar
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <SiteHeader selectedCompany={selectedCompany} selectedSearch={selectedSearch} />
       <section className="container py-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>

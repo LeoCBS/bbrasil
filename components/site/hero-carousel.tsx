@@ -16,7 +16,7 @@ const banners = [
     showSpecialistContent: true,
   },
   {
-    image: "/hero-limpeza-institucional.png",
+    image: "/hero-limpeza-institucional-cropped.png",
     alt: "Linha de limpeza institucional Alto Lim",
     showSpecialistContent: false,
   },

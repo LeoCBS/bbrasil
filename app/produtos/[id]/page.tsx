@@ -7,10 +7,9 @@ import { ProductVisual } from "@/components/site/product-visual";
 import { AddToQuoteButton } from "@/components/site/add-to-quote-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Logo } from "@/components/site/logo";
 import { getProduct } from "@/lib/products";
 import { productCompanies } from "@/lib/companies";
-import { CompanySelector } from "@/components/site/company-selector";
+import { SiteHeader } from "@/components/site/site-header";
 
 type ProductDetailPageProps = {
   params: Promise<{
@@ -48,19 +47,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white">
-        <div className="container flex h-24 items-center justify-between gap-3">
-          <Logo />
-          <div className="flex items-center gap-3">
-            <CompanySelector selectedCompany={selectedCompany} companies={productCompanies} />
-            <Button asChild variant="outline">
-              <Link href={selectedCompany ? `/produtos?empresa=${encodeURIComponent(selectedCompany)}` : "/produtos"}>
-                <ArrowLeft className="h-4 w-4" /> Produtos
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <SiteHeader selectedCompany={selectedCompany} />
 
       <section className="container py-10">
         <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">

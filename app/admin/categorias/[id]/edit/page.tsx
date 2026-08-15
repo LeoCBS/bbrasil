@@ -7,10 +7,17 @@ import { Button } from "@/components/ui/button";
 import CategoryForm from "@/components/admin/category-form";
 import { updateCategoryAction } from "@/lib/actions";
 
-export default async function EditCategoryPage({ params }: { params: { id: string } }) {
+export default async function EditCategoryPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const user = await requireAdminUser("/admin/categorias");
+
+  const { id } = await params;
+
   const categories = await getCategories({ includeInactive: true });
-  const category = categories.find((c) => c.id === params.id);
+  const category = categories.find((c) => c.id === id);
 
   if (!category) {
     return <div className="p-8">Categoria não encontrada.</div>;

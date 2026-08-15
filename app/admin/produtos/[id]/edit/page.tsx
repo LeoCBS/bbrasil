@@ -9,9 +9,20 @@ import { ProductForm } from "@/components/product-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export default async function EditProductPage({ params }: { params: { id: string } }) {
+export default async function EditProductPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const user = await requireAdminUser("/admin/produtos");
-  const [product, categories, units] = await Promise.all([getProduct(params.id, { includeInactive: true }), getCategories({ includeInactive: true }), getUnits()]);
+
+  const { id } = await params;
+
+  const [product, categories, units] = await Promise.all([
+    getProduct(id, { includeInactive: true }),
+    getCategories({ includeInactive: true }),
+    getUnits(),
+  ]);
 
   if (!product) {
     return <div className="p-8">Produto não encontrado.</div>;

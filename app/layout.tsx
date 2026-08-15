@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { QuoteCart } from "@/components/site/quote-cart";
+import { getUnits } from "@/lib/units";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,16 +8,17 @@ export const metadata: Metadata = {
   description: "Solucoes profissionais em higiene e limpeza para empresas, instituicoes e profissionais exigentes."
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const units = await getUnits();
   return (
     <html lang="pt-BR">
       <body>
         {children}
-        <QuoteCart />
+        <QuoteCart units={units} />
       </body>
     </html>
   );

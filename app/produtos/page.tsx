@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPaginatedProducts } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
-import { productCompanies } from "@/lib/companies";
+import { getUnits } from "@/lib/units";
 import { SiteHeader } from "@/components/site/site-header";
 
 const pageSize = 10;
@@ -14,7 +14,7 @@ const pageSize = 10;
 type ProductsPageProps = {
   searchParams?: Promise<{
     categoria?: string;
-    empresa?: string;
+    unidade?: string;
     busca?: string;
     page?: string;
   }>;
@@ -29,12 +29,12 @@ function parsePage(value: string | undefined) {
 function buildProductsHref({
   page,
   category,
-  company,
+  unitId,
   search
 }: {
   page: number;
   category?: string;
-  company?: string;
+  unitId?: string;
   search?: string;
 }) {
   const params = new URLSearchParams();
@@ -43,8 +43,8 @@ function buildProductsHref({
     params.set("categoria", category);
   }
 
-  if (company) {
-    params.set("empresa", company);
+  if (unitId) {
+    params.set("unidade", unitId);
   }
 
   if (search) {
@@ -63,20 +63,20 @@ function buildProductsHref({
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
   const cookieStore = await cookies();
+  const units = await getUnits();
 
   const productCategoriesRaw = await getCategories();
   const productCategories = productCategoriesRaw.map((cat) => cat.name);
   const selectedCategory = params?.categoria?.trim();
-  const requestedCompany = params?.empresa?.trim();
-  const storedCompanyValue = cookieStore.get("bbrasil_selected_company")?.value;
-  const storedCompany = storedCompanyValue ? decodeURIComponent(storedCompanyValue) : undefined;
-  const selectedCompany = [requestedCompany, storedCompany].find((company) => company && productCompanies.includes(company));
+  const requestedUnitId = params?.unidade?.trim();
+  const storedUnitId = cookieStore.get("bbrasil_selected_unit_id")?.value;
+  const selectedUnit = units.find((unit) => unit.id === requestedUnitId) ?? units.find((unit) => unit.id === storedUnitId);
   const selectedSearch = params?.busca?.trim();
   const currentPage = parsePage(params?.page);
 
   const { products, total, page, totalPages } = await getPaginatedProducts({
     category: selectedCategory,
-    company: selectedCompany,
+    unitId: selectedUnit?.id,
     search: selectedSearch,
     page: currentPage,
     pageSize
@@ -85,7 +85,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <SiteHeader selectedCompany={selectedCompany} selectedSearch={selectedSearch} />
+      <SiteHeader selectedUnit={selectedUnit} selectedSearch={selectedSearch} units={units} />
       <section className="container py-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -97,17 +97,17 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 ? `${total} ${total === 1 ? "produto encontrado" : "produtos encontrados"}.`
                 : "Confira as solucoes profissionais da B.Brasil."}
             </p>
-            {selectedCompany ? <p className="mt-2 text-sm font-semibold text-brand-green">Empresa: {selectedCompany}</p> : null}
+            {selectedUnit ? <p className="mt-2 text-sm font-semibold text-brand-green">Unidade: {selectedUnit.name}</p> : null}
             {selectedSearch ? <p className="mt-2 text-sm font-semibold text-brand-green">Busca: {selectedSearch}</p> : null}
           </div>
           {hasFilters ? (
             <Button asChild variant="outline">
-              <Link href={buildProductsHref({ page: 1, company: selectedCompany })}>Limpar filtros</Link>
+              <Link href={buildProductsHref({ page: 1, unitId: selectedUnit?.id })}>Limpar filtros</Link>
             </Button>
           ) : null}
         </div>
         <form className="mt-6 grid gap-4 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1.2fr_1fr_auto] md:items-end" action="/produtos">
-          {selectedCompany ? <input type="hidden" name="empresa" value={selectedCompany} /> : null}
+          {selectedUnit ? <input type="hidden" name="unidade" value={selectedUnit.id} /> : null}
           <label className="grid gap-2 text-sm font-medium text-brand-ink">
             Buscar produto
             <div className="relative">
@@ -149,7 +149,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                     <ProductVisual name={product.name} imageSrc={product.image_url} compact />
                   </div>
                   <span className="mt-5 block text-sm font-semibold text-brand-green">{product.category}</span>
-                  <span className="mt-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">{product.company}</span>
+                  <span className="mt-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">{product.unit_name}</span>
                   <h2 className="mt-2 text-xl font-bold text-brand-ink">{product.name}</h2>
                   <p className="mt-3 text-sm leading-6 text-slate-600">{product.description}</p>
                   <div className="mt-auto flex items-center justify-between pt-5">
@@ -169,7 +169,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             <h2 className="text-xl font-bold text-brand-ink">Nenhum produto encontrado</h2>
             <p className="mt-3 text-slate-600">Nao encontramos produtos cadastrados para esta busca.</p>
             <Button asChild className="mt-6">
-              <Link href={buildProductsHref({ page: 1, company: selectedCompany })}>Limpar filtros</Link>
+              <Link href={buildProductsHref({ page: 1, unitId: selectedUnit?.id })}>Limpar filtros</Link>
             </Button>
           </div>
         ) : null}
@@ -177,8 +177,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <Pagination
             page={page}
             totalPages={totalPages}
-            previousHref={buildProductsHref({ page: page - 1, category: selectedCategory, company: selectedCompany, search: selectedSearch })}
-            nextHref={buildProductsHref({ page: page + 1, category: selectedCategory, company: selectedCompany, search: selectedSearch })}
+            previousHref={buildProductsHref({ page: page - 1, category: selectedCategory, unitId: selectedUnit?.id, search: selectedSearch })}
+            nextHref={buildProductsHref({ page: page + 1, category: selectedCategory, unitId: selectedUnit?.id, search: selectedSearch })}
           />
         ) : null}
       </section>

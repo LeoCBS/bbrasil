@@ -8,7 +8,7 @@ import { AddToQuoteButton } from "@/components/site/add-to-quote-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProduct } from "@/lib/products";
-import { productCompanies } from "@/lib/companies";
+import { getUnits } from "@/lib/units";
 import { SiteHeader } from "@/components/site/site-header";
 
 type ProductDetailPageProps = {
@@ -36,9 +36,9 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { id } = await params;
   const cookieStore = await cookies();
-  const storedCompanyValue = cookieStore.get("bbrasil_selected_company")?.value;
-  const storedCompany = storedCompanyValue ? decodeURIComponent(storedCompanyValue) : undefined;
-  const selectedCompany = productCompanies.includes(storedCompany ?? "") ? storedCompany : undefined;
+  const units = await getUnits();
+  const storedUnitId = cookieStore.get("bbrasil_selected_unit_id")?.value;
+  const selectedUnit = units.find((unit) => unit.id === storedUnitId);
   const product = await getProduct(id);
 
   if (!product) {
@@ -47,7 +47,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <SiteHeader selectedCompany={selectedCompany} />
+      <SiteHeader selectedUnit={selectedUnit} units={units} />
 
       <section className="container py-10">
         <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
@@ -56,7 +56,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </div>
 
           <div>
-            <Link href={selectedCompany ? `/produtos?empresa=${encodeURIComponent(selectedCompany)}` : "/produtos"} className="inline-flex items-center gap-2 text-sm font-semibold text-brand-green">
+            <Link href={selectedUnit ? `/produtos?unidade=${encodeURIComponent(selectedUnit.id)}` : "/produtos"} className="inline-flex items-center gap-2 text-sm font-semibold text-brand-green">
               <ArrowLeft className="h-4 w-4" /> Voltar para produtos
             </Link>
             <span className="mt-6 block text-sm font-semibold text-brand-green">{product.category}</span>
@@ -68,7 +68,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 <CardContent className="p-5">
                   <Building2 className="h-6 w-6 text-brand-blue" />
                   <span className="mt-4 block text-sm text-slate-500">Empresa</span>
-                  <strong className="mt-1 block text-lg text-brand-ink">{product.company}</strong>
+                  <strong className="mt-1 block text-lg text-brand-ink">{product.unit_name}</strong>
                 </CardContent>
               </Card>
               <Card className="shadow-soft">
@@ -101,13 +101,14 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 item={{
                   id: product.id,
                   name: product.name,
-                  company: product.company,
+                  unit_id: product.unit_id,
+                  unit_name: product.unit_name,
                   category: product.category,
                   size: product.size
                 }}
               />
               <Button asChild variant="outline" size="lg">
-                <Link href={selectedCompany ? `/produtos?empresa=${encodeURIComponent(selectedCompany)}` : "/produtos"}>Ver outros produtos</Link>
+                <Link href={selectedUnit ? `/produtos?unidade=${encodeURIComponent(selectedUnit.id)}` : "/produtos"}>Ver outros produtos</Link>
               </Button>
             </div>
           </div>

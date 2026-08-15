@@ -5,7 +5,8 @@ import { randomUUID } from 'crypto';
 export type Product = {
   id: string;
   name: string;
-  company: string;
+  unit_name: string;
+  unit_id: string;
   category_id: string;
   category: string;
   description: string;
@@ -18,7 +19,7 @@ export type Product = {
   created_at?: string;
 };
 
-export type ProductInput = Omit<Product, "id" | "created_at" | "category">;
+export type ProductInput = Omit<Product, "id" | "created_at" | "category" | "unit_name">;
 export type ProductMutationInput = Omit<ProductInput, "image_blob" | "image_mime_type"> & {
   image_blob?: string | null;
   image_mime_type?: string | null;
@@ -34,7 +35,7 @@ export type ProductsPage = {
 
 type GetProductsOptions = {
   includeInactive?: boolean;
-  company?: string;
+  unitId?: string;
   search?: string;
 };
 
@@ -44,9 +45,10 @@ type GetPaginatedProductsOptions = GetProductsOptions & {
   category?: string;
 };
 
-type ProductRecord = Omit<ProductInput, "company"> & {
+type ProductRecord = Omit<ProductInput, "unit_name"> & {
   id: string;
-  company?: string | null;
+  unit_id?: string | null;
+  units?: { name?: string | null } | { name?: string | null }[] | null;
   created_at?: string;
   categories?: { name?: string | null } | { name?: string | null }[] | null;
 };
@@ -55,7 +57,8 @@ const fallbackProducts: Product[] = [
   {
     id: "demo-1",
     name: "Detergente Profissional",
-    company: "FLORIANOPOLIS SC",
+    unit_name: "FLORIANOPOLIS SC",
+    unit_id: "unit-florianopolis",
     category_id: "demo-limpeza-higiene",
     category: "LIMPEZA E HIGIENE",
     description: "Alto rendimento para cozinhas, pisos lavaveis e manutencao diaria.",
@@ -69,7 +72,8 @@ const fallbackProducts: Product[] = [
   {
     id: "demo-2",
     name: "Limpador Multiuso",
-    company: "JOINVILLE SC",
+    unit_name: "JOINVILLE SC",
+    unit_id: "unit-joinville",
     category_id: "demo-limpeza-higiene",
     category: "LIMPEZA E HIGIENE",
     description: "Solucao pratica para superficies corporativas e ambientes de alto fluxo.",
@@ -83,7 +87,8 @@ const fallbackProducts: Product[] = [
   {
     id: "demo-3",
     name: "Desinfetante Concentrado",
-    company: "ITAJAI SC",
+    unit_name: "ITAJAI SC",
+    unit_id: "unit-itajai",
     category_id: "demo-higiene-pessoal",
     category: "HIGIENE PESSOAL",
     description: "Formula concentrada para limpeza profunda e controle de odores.",
@@ -109,10 +114,12 @@ function byteaToDataUrl(imageBlob: string | null, mimeType: string | null) {
 
 function normalizeProduct(product: ProductRecord): Product {
   const relatedCategory = Array.isArray(product.categories) ? product.categories[0] : product.categories;
+  const relatedUnit = Array.isArray(product.units) ? product.units[0] : product.units;
 
   return {
     ...product,
-    company: product.company ?? "FLORIANOPOLIS SC",
+    unit_name: relatedUnit?.name ?? "Unidade não definida",
+    unit_id: product.unit_id ?? "",
     category: relatedCategory?.name ?? "Sem categoria",
     image_blob: product.image_blob ?? null,
     image_mime_type: product.image_mime_type ?? null,
@@ -138,7 +145,7 @@ function matchesSearch(product: Product, search?: string) {
   }
 
   const normalizedSearch = normalizeText(search);
-  const searchableText = [product.name, product.description, product.category, product.company].map(normalizeText).join(" ");
+  const searchableText = [product.name, product.description, product.category, product.unit_name].map(normalizeText).join(" ");
 
   return searchableText.includes(normalizedSearch);
 }
@@ -178,29 +185,29 @@ function getSupabase() {
   });
 }
 
-export async function getProducts({ includeInactive = false, company, search }: GetProductsOptions = {}) {
+export async function getProducts({ includeInactive = false, unitId, search }: GetProductsOptions = {}) {
   noStore();
   const supabase = getSupabase();
 
   if (!supabase) {
     return fallbackProducts.filter(
-      (product) => (includeInactive || product.active) && matchesText(product.company, company) && matchesSearch(product, search)
+      (product) => (includeInactive || product.active) && (!unitId || product.unit_id === unitId) && matchesSearch(product, search)
     );
   }
 
-  let query = supabase.from("products").select("*, categories!products_category_id_fkey(name)").order("created_at", { ascending: false });
+  let query = supabase.from("products").select("*, categories!products_category_id_fkey(name), units!products_unit_id_fkey(name)").order("created_at", { ascending: false });
 
   if (!includeInactive) {
     query = query.eq("active", true);
   }
 
-  if (company) {
-    query = query.eq("company", company);
+  if (unitId) {
+    query = query.eq("unit_id", unitId);
   }
 
   if (search) {
     const pattern = `%${escapeSearchPattern(search.trim())}%`;
-    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},company.ilike.${pattern}`);
+    query = query.or(`name.ilike.${pattern},description.ilike.${pattern}`);
   }
 
   const { data, error } = await query;
@@ -208,7 +215,7 @@ export async function getProducts({ includeInactive = false, company, search }: 
   if (error) {
     console.error("Supabase products fetch failed:", error.message);
     return fallbackProducts.filter(
-      (product) => (includeInactive || product.active) && matchesText(product.company, company) && matchesSearch(product, search)
+      (product) => (includeInactive || product.active) && (!unitId || product.unit_id === unitId) && matchesSearch(product, search)
     );
   }
 
@@ -220,7 +227,7 @@ export async function getPaginatedProducts({
   page = 1,
   pageSize = 9,
   category,
-  company,
+  unitId,
   search
 }: GetPaginatedProductsOptions = {}) {
   noStore();
@@ -234,7 +241,7 @@ export async function getPaginatedProducts({
     const products = fallbackProducts.filter((product) => {
       const isVisible = includeInactive || product.active;
       const isInCategory = matchesText(product.category, category);
-      const isFromCompany = matchesText(product.company, company);
+      const isFromCompany = !unitId || product.unit_id === unitId;
       const isSearchMatch = matchesSearch(product, search);
 
       return isVisible && isInCategory && isFromCompany && isSearchMatch;
@@ -243,7 +250,7 @@ export async function getPaginatedProducts({
     return paginateProducts(products, safePage, safePageSize);
   }
 
-  let query = supabase.from("products").select("*, categories!products_category_id_fkey!inner(name)", { count: "exact" }).order("created_at", { ascending: false });
+  let query = supabase.from("products").select("*, categories!products_category_id_fkey!inner(name), units!products_unit_id_fkey(name)", { count: "exact" }).order("created_at", { ascending: false });
 
   if (!includeInactive) {
     query = query.eq("active", true);
@@ -253,13 +260,13 @@ export async function getPaginatedProducts({
     query = query.eq("categories.name", category);
   }
 
-  if (company) {
-    query = query.eq("company", company);
+  if (unitId) {
+    query = query.eq("unit_id", unitId);
   }
 
   if (search) {
     const pattern = `%${escapeSearchPattern(search.trim())}%`;
-    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},company.ilike.${pattern}`);
+    query = query.or(`name.ilike.${pattern},description.ilike.${pattern}`);
   }
   
   
@@ -271,7 +278,7 @@ export async function getPaginatedProducts({
       return (
         (includeInactive || product.active) &&
         matchesText(product.category, category) &&
-        matchesText(product.company, company) &&
+        (!unitId || product.unit_id === unitId) &&
         matchesSearch(product, search)
       );
     });
@@ -288,7 +295,7 @@ export async function getPaginatedProducts({
       page: totalPages,
       pageSize: safePageSize,
       category,
-      company,
+      unitId,
       search
     });
   }
@@ -310,7 +317,7 @@ export async function getProduct(id: string, { includeInactive = false } = {}) {
     return fallbackProducts.find((product) => product.id === id && (includeInactive || product.active)) ?? null;
   }
 
-  let query = supabase.from("products").select("*, categories!products_category_id_fkey(name)").eq("id", id).limit(1);
+  let query = supabase.from("products").select("*, categories!products_category_id_fkey(name), units!products_unit_id_fkey(name)").eq("id", id).limit(1);
 
   if (!includeInactive) {
     query = query.eq("active", true);
@@ -338,7 +345,7 @@ export async function createProduct(input: ProductMutationInput, imageFile: Form
   }
   const id = randomUUID();
   
-  const imageURL = await uploadImageToBucket(imageFile, id, input.company);
+  const imageURL = await uploadImageToBucket(imageFile, id, input.unit_id);
 
   if (imageURL) {
     input.image_url = imageURL;
@@ -362,7 +369,7 @@ function sanitizeFileName(fileName: string): string {
     .replace(/^-|-$/g, ''); // Remover hífens das extremidades
 }
 
-async function uploadImageToBucket(imageFile:FormDataEntryValue, id: string, company: string = "default") {
+async function uploadImageToBucket(imageFile:FormDataEntryValue, id: string, unitId: string = "default") {
   const supabase = getSupabase();
 
   if (!supabase) {
@@ -380,7 +387,7 @@ async function uploadImageToBucket(imageFile:FormDataEntryValue, id: string, com
   if (hasImageFile) {
     const file = imageFile as File;
     const buffer = Buffer.from(await file.arrayBuffer());
-    const imagePath = `${sanitizeFileName(company)}/${id}-${sanitizeFileName(file.name)}`;
+    const imagePath = `${sanitizeFileName(unitId)}/${id}-${sanitizeFileName(file.name)}`;
     const { data, error } = await supabase
     .storage
     .from('images')
@@ -407,7 +414,7 @@ export async function updateProduct(id: string, input: ProductMutationInput, ima
     throw new Error("Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para usar o admin.");
   }
 
-  const imageURL = await uploadImageToBucket(imageFile, id, input.company);
+  const imageURL = await uploadImageToBucket(imageFile, id, input.unit_id);
 
   if (imageURL) {
     input.image_url = imageURL;

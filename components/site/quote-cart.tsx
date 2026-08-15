@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Minus, MessageCircle, Plus, ShoppingCart, Trash2, X } from "lucide-react";
-import { productCompanyContacts } from "@/lib/companies";
+import type { Unit } from "@/lib/units";
 import { Button } from "@/components/ui/button";
-import { cartStorageKey, currentCompanyStorageKey, type QuoteCartItem } from "@/components/site/add-to-quote-button";
+import { cartStorageKey, currentUnitStorageKey, type QuoteCartItem } from "@/components/site/add-to-quote-button";
 
 function readCart() {
   try {
@@ -16,18 +16,19 @@ function readCart() {
   }
 }
 
-function readCurrentCompany(items: QuoteCartItem[]) {
-  return window.localStorage.getItem(currentCompanyStorageKey) ?? items[0]?.company ?? productCompanyContacts[0].name;
+function readCurrentUnitId(items: QuoteCartItem[], units: Unit[]) {
+  return window.localStorage.getItem(currentUnitStorageKey) ?? items[0]?.unit_id ?? units[0]?.id ?? "";
 }
 
-function writeCart(items: QuoteCartItem[], company: string) {
+function writeCart(items: QuoteCartItem[], unitId: string) {
   window.localStorage.setItem(cartStorageKey, JSON.stringify(items));
-  window.localStorage.setItem(currentCompanyStorageKey, company);
+  window.localStorage.setItem(currentUnitStorageKey, unitId);
 }
 
-function buildWhatsappHref(items: QuoteCartItem[], company: string) {
-  const contact = productCompanyContacts.find((item) => item.name === company) ?? productCompanyContacts[0];
-  const productLines = items.map((item) => `- ${item.quantity}x ${item.name} (${item.size}) - ${item.category} - ${item.company}`);
+function buildWhatsappHref(items: QuoteCartItem[], unitId: string, units: Unit[]) {
+  const contact = units.find((unit) => unit.id === unitId) ?? units[0];
+  if (!contact?.whatsapp_number) return "#";
+  const productLines = items.map((item) => `- ${item.quantity}x ${item.name} (${item.size}) - ${item.category} - ${item.unit_name}`);
   const message = [
     "Ola, gostaria de solicitar um orcamento para os produtos abaixo:",
     "",
@@ -36,28 +37,28 @@ function buildWhatsappHref(items: QuoteCartItem[], company: string) {
     `Empresa para atendimento: ${contact.name}`
   ].join("\n");
 
-  return `https://wa.me/${contact.whatsappNumber}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${contact.whatsapp_number}?text=${encodeURIComponent(message)}`;
 }
 
-export function QuoteCart() {
+export function QuoteCart({ units }: { units: Unit[] }) {
   const [items, setItems] = useState<QuoteCartItem[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState(productCompanyContacts[0].name);
+  const [selectedUnitId, setSelectedUnitId] = useState(units[0]?.id ?? "");
   const [isOpen, setIsOpen] = useState(false);
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
-  const whatsappHref = useMemo(() => buildWhatsappHref(items, selectedCompany), [items, selectedCompany]);
+  const whatsappHref = useMemo(() => buildWhatsappHref(items, selectedUnitId, units), [items, selectedUnitId, units]);
 
   useEffect(() => {
     const storedItems = readCart();
 
     setItems(storedItems);
-    setSelectedCompany(readCurrentCompany(storedItems));
+    setSelectedUnitId(readCurrentUnitId(storedItems, units));
 
     function handleCartUpdated(event: Event) {
       const updatedItems = readCart();
       const shouldOpen = event instanceof CustomEvent ? Boolean(event.detail?.open) : false;
 
       setItems(updatedItems);
-      setSelectedCompany(readCurrentCompany(updatedItems));
+      setSelectedUnitId(readCurrentUnitId(updatedItems, units));
 
       if (shouldOpen) {
         setIsOpen(true);
@@ -71,11 +72,11 @@ export function QuoteCart() {
       window.removeEventListener("storage", handleCartUpdated);
       window.removeEventListener("bbrasil:quote-cart-updated", handleCartUpdated);
     };
-  }, []);
+  }, [units]);
 
   function updateItems(nextItems: QuoteCartItem[]) {
     setItems(nextItems);
-    writeCart(nextItems, selectedCompany);
+    writeCart(nextItems, selectedUnitId);
   }
 
   function updateQuantity(id: string, quantity: number) {
@@ -135,7 +136,7 @@ export function QuoteCart() {
                         <div>
                           <h3 className="font-bold text-brand-ink">{item.name}</h3>
                           <p className="mt-1 text-sm text-slate-600">{item.size} · {item.category}</p>
-                          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{item.company}</p>
+                          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{item.unit_name}</p>
                         </div>
                         <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(item.id)} aria-label="Remover produto">
                           <Trash2 className="h-4 w-4 text-destructive" />
@@ -163,7 +164,7 @@ export function QuoteCart() {
                 <ArrowLeft className="h-4 w-4" /> Continuar comprando
               </Button>
               <p className="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                Empresa para envio: <strong className="text-brand-ink">{selectedCompany}</strong>
+                Unidade para envio: <strong className="text-brand-ink">{units.find((unit) => unit.id === selectedUnitId)?.name ?? "—"}</strong>
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
                 {items.length === 0 ? (

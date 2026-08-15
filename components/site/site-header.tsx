@@ -1,24 +1,24 @@
 import Link from "next/link";
 import { BookOpen, MessageCircle, PackageSearch, Search } from "lucide-react";
 import { Logo } from "@/components/site/logo";
-import { CompanySelector } from "@/components/site/company-selector";
-import { productCompanies, productCompanyContacts } from "@/lib/companies";
+import type { Unit } from "@/lib/units";
+import { UnitSelector } from "@/components/site/unit-selector";
 
 type SiteHeaderProps = {
-  selectedCompany?: string;
+  selectedUnit?: Unit;
   selectedSearch?: string;
+  units: Unit[];
 };
 
-export function SiteHeader({ selectedCompany, selectedSearch }: SiteHeaderProps) {
-  const contact = productCompanyContacts.find((company) => company.name === selectedCompany);
-  const catalogHref = selectedCompany ? `/produtos?empresa=${encodeURIComponent(selectedCompany)}` : "/produtos";
+export function SiteHeader({ selectedUnit, selectedSearch, units }: SiteHeaderProps) {
+  const catalogHref = selectedUnit ? `/produtos?unidade=${encodeURIComponent(selectedUnit.id)}` : "/produtos";
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
       <div className="container flex h-24 items-center justify-between gap-4 md:gap-6">
         <Logo />
         <form className="hidden max-w-xl flex-1 md:block" action="/produtos">
-          {selectedCompany ? <input type="hidden" name="empresa" value={selectedCompany} /> : null}
+          {selectedUnit ? <input type="hidden" name="unidade" value={selectedUnit.id} /> : null}
           <label className="sr-only" htmlFor="site-search">Buscar produtos</label>
           <div className="relative">
             <input
@@ -34,10 +34,10 @@ export function SiteHeader({ selectedCompany, selectedSearch }: SiteHeaderProps)
           </div>
         </form>
         <div className="flex items-center gap-3">
-          <CompanySelector selectedCompany={selectedCompany} companies={productCompanies} />
-          {contact ? (
+          <UnitSelector selectedUnit={selectedUnit} units={units} />
+          {selectedUnit?.whatsapp_number ? (
             <a
-              href={`https://wa.me/${contact.whatsappNumber}`}
+              href={`https://wa.me/${selectedUnit.whatsapp_number}`}
               target="_blank"
               rel="noreferrer"
               className="hidden items-center gap-2 rounded-md bg-brand-green px-4 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-brand-greenDark lg:inline-flex"

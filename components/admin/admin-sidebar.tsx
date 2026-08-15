@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Boxes, Building2, FileText, LayoutDashboard, Package, Settings, ShoppingCart, Users, UserRound } from "lucide-react";
+import { BarChart3, Boxes, Building2, FileText, Package, Settings, ShoppingCart, Users, UserRound, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const sections = [
@@ -7,9 +7,10 @@ const sections = [
     title: "Cadastros",
     items: [
       { label: "Produtos", href: "/admin/produtos", icon: Package },
-      { label: "Clientes", href: "/admin/clientes", icon: Users },
-      { label: "Vendedores", href: "/admin/vendedores", icon: UserRound },
-      { label: "Unidades", href: "/admin/unidades", icon: Building2 }
+  { label: "Categorias", href: "/admin/categorias", icon: Sparkles },
+  { label: "Clientes", href: "/admin/clientes", icon: Users },
+  { label: "Vendedores", href: "/admin/vendedores", icon: UserRound },
+  { label: "Unidades", href: "/admin/unidades", icon: Building2 }
     ]
   },
   {
@@ -32,7 +33,7 @@ const footerItems = [
   { label: "Configurações", href: "/admin/produtos", icon: Settings, disabled: true }
 ];
 
-export function AdminSidebar({ current }: { current: "produtos" | "clientes" | "vendedores" | "unidades" }) {
+export function AdminSidebar({ current }: { current: "produtos" | "clientes" | "vendedores" | "unidades" | "categorias" }) {
   return (
     <aside className="p-4 lg:w-64 lg:shrink-0">
       <div className="rounded-lg border bg-white p-3">

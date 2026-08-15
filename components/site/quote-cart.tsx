@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { ArrowLeft, Minus, MessageCircle, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import type { Unit } from "@/lib/units";
 import { Button } from "@/components/ui/button";
@@ -95,18 +96,24 @@ export function QuoteCart({ units }: { units: Unit[] }) {
     updateItems([]);
   }
 
+  const pathname = usePathname();
+
+  const isAdmin = typeof pathname === "string" && pathname.startsWith("/admin");
+
   return (
     <>
-      <Button
-        type="button"
-        className="fixed bottom-5 right-5 z-50 h-14 rounded-full px-5 shadow-lg"
-        onClick={() => setIsOpen(true)}
-      >
-        <ShoppingCart className="h-5 w-5" /> Orçamento
-        {totalItems > 0 ? (
-          <span className="ml-1 rounded-full bg-white px-2 py-0.5 text-xs font-bold text-brand-blue">{totalItems}</span>
-        ) : null}
-      </Button>
+      {!isAdmin ? (
+        <Button
+          type="button"
+          className="fixed bottom-5 right-5 z-50 h-14 rounded-full px-5 shadow-lg"
+          onClick={() => setIsOpen(true)}
+        >
+          <ShoppingCart className="h-5 w-5" /> Orçamento
+          {totalItems > 0 ? (
+            <span className="ml-1 rounded-full bg-white px-2 py-0.5 text-xs font-bold text-brand-blue">{totalItems}</span>
+          ) : null}
+        </Button>
+      ) : null}
 
       {isOpen ? (
         <div className="fixed inset-0 z-50 bg-slate-900/35">

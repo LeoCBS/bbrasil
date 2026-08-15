@@ -1,429 +1,215 @@
 import Link from "next/link";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Database,
-  PackageCheck,
-  Plus,
-  Save,
-  Search,
-  ShieldPlus,
-  Sparkles,
-  SprayCan,
-  Trash2,
-  Waves
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Search } from "lucide-react";
 import { requireAdminUser } from "@/auth";
-import {
-  createCategoryAction,
-  createProductAction,
-  deleteCategoryAction,
-  deleteProductAction,
-  updateCategoryAction,
-  updateProductAction
-} from "@/lib/actions";
-import { getCategories, type Category } from "@/lib/categories";
+import { deleteProductAction } from "@/lib/actions";
 import { getPaginatedProducts, type Product } from "@/lib/products";
-import { getUnits } from "@/lib/units";
+import { getCategories } from "@/lib/categories";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Textarea } from "@/components/ui/textarea";
-import { Logo } from "@/components/site/logo";
 import AdminHeader from "@/components/admin/admin-header";
-import { ProductVisual } from "@/components/site/product-visual";
-import { ProductForm } from "@/components/product-form";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
-const categoryIconOptions = [
-  { value: "package", label: "Pacote", icon: PackageCheck },
-  { value: "spray", label: "Limpeza", icon: SprayCan },
-  { value: "shield", label: "Protecao", icon: ShieldPlus },
-  { value: "sparkles", label: "Brilho", icon: Sparkles },
-  { value: "trash", label: "Residuos", icon: Trash2 },
-  { value: "waves", label: "Panos", icon: Waves }
-];
-const pageSize = 5;
+const pageSize = 10;
 
 type AdminProductsPageProps = {
   searchParams?: Promise<{
-    aba?: string;
     busca?: string;
     page?: string;
+    categoria?: string;
   }>;
 };
 
 function parsePage(value: string | undefined) {
   const page = Number(value);
-
   return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
-function buildAdminProductsHref(page: number, search?: string, tab = "produtos") {
+function buildHref(page: number, search?: string, category?: string) {
   const params = new URLSearchParams();
-
-  if (tab !== "produtos") {
-    params.set("aba", tab);
-  }
-
-  if (search) {
-    params.set("busca", search);
-  }
-
-  if (page > 1) {
-    params.set("page", String(page));
-  }
-
-  const query = params.toString();
-
-  return query ? `/admin/produtos?${query}` : "/admin/produtos";
+  if (search) params.set("busca", search);
+  if (category) params.set("categoria", category);
+  if (page > 1) params.set("page", String(page));
+  const q = params.toString();
+  return q ? `/admin/produtos?${q}` : "/admin/produtos";
 }
 
 export default async function AdminProductsPage({ searchParams }: AdminProductsPageProps) {
   const user = await requireAdminUser();
   const params = await searchParams;
-  const selectedSearch = params?.busca?.trim();
-  const currentPage = parsePage(params?.page);
-  const selectedTab = params?.aba === "categorias" ? "categorias" : "produtos";
+  const search = params?.busca?.trim();
+  const page = parsePage(params?.page);
+  const category = params?.categoria;
+
   const categories = await getCategories({ includeInactive: true });
-  const units = await getUnits();
-  const activeCategories = categories.filter((category) => category.active);
-  const { products, total, page, totalPages } = await getPaginatedProducts({
-    includeInactive: true,
-    search: selectedSearch,
-    page: currentPage,
-    pageSize
-  });
-  const isConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const { products, total, totalPages } = await getPaginatedProducts({ includeInactive: true, page, pageSize, category: category ?? undefined, search });
 
   return (
     <main className="min-h-screen bg-slate-50">
       <AdminHeader email={user.email} />
-
       <div className="lg:flex">
-      <AdminSidebar current="produtos" />
-      <section className="min-w-0 flex-1 p-4 md:p-8">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h1 className="text-4xl font-bold tracking-normal text-brand-ink">Admin do catalogo</h1>
-            <p className="mt-3 text-slate-600">
-              Cadastre produtos e organize as categorias exibidas no site.
-            </p>
-            {selectedSearch ? <p className="mt-2 text-sm font-semibold text-brand-green">Busca: {selectedSearch}</p> : null}
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-md border bg-white px-4 py-3 text-sm text-slate-600">
-            <Database className="h-4 w-4 text-brand-green" />
-            {isConfigured ? "Supabase conectado" : "Modo demo: configure o Supabase para salvar"}
-          </div>
-        </div>
-
-        <div className="mb-6 grid gap-4 md:grid-cols-3">
-          <div className="rounded-lg border bg-white p-5 shadow-soft">
-            <span className="text-sm font-semibold text-slate-500">Produtos</span>
-            <strong className="mt-2 block text-3xl text-brand-ink">{total}</strong>
-            <p className="mt-1 text-sm text-slate-600">{total === 1 ? "item cadastrado" : "itens cadastrados"}</p>
-          </div>
-          <div className="rounded-lg border bg-white p-5 shadow-soft">
-            <span className="text-sm font-semibold text-slate-500">Categorias ativas</span>
-            <strong className="mt-2 block text-3xl text-brand-ink">{activeCategories.length}</strong>
-            <p className="mt-1 text-sm text-slate-600">visiveis no site</p>
-          </div>
-          <div className="rounded-lg border bg-white p-5 shadow-soft">
-            <span className="text-sm font-semibold text-slate-500">Total de categorias</span>
-            <strong className="mt-2 block text-3xl text-brand-ink">{categories.length}</strong>
-            <p className="mt-1 text-sm text-slate-600">incluindo inativas</p>
-          </div>
-        </div>
-
-        <form className="mb-6 grid gap-3 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1fr_auto_auto]" action="/admin/produtos">
-          <input type="hidden" name="aba" value="produtos" />
-          <label className="grid gap-2 text-sm font-medium text-brand-ink">
-            Buscar produto
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                name="busca"
-                defaultValue={selectedSearch ?? ""}
-                placeholder="Titulo, descricao, categoria ou loja"
-                className="pl-10"
-              />
+        <AdminSidebar current="produtos" />
+        <section className="flex-1 p-4 md:p-8">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-brand-ink">Produtos</h1>
+              <p className="mt-1 text-slate-600">Listagem de produtos</p>
             </div>
-          </label>
-          <Button type="submit" className="md:self-end">
-            <Search className="h-4 w-4" /> Pesquisar
-          </Button>
-          {selectedSearch ? (
-            <Button asChild variant="outline" className="md:self-end">
-              <Link href="/admin/produtos">Limpar</Link>
+            <Button asChild>
+              <Link href="/admin/produtos/novo">+ Novo produto</Link>
             </Button>
-          ) : null}
-        </form>
-
-        <nav className="mb-6 grid gap-2 rounded-lg border bg-white p-2 shadow-soft sm:inline-grid sm:grid-cols-2" aria-label="Abas do admin">
-          <Button asChild variant={selectedTab === "produtos" ? "secondary" : "ghost"} className="justify-start sm:justify-center">
-            <Link href={buildAdminProductsHref(1, selectedSearch, "produtos")}>
-              <PackageCheck className="h-4 w-4" /> Produtos
-            </Link>
-          </Button>
-          <Button asChild variant={selectedTab === "categorias" ? "secondary" : "ghost"} className="justify-start sm:justify-center">
-            <Link href="/admin/produtos?aba=categorias">
-              <Sparkles className="h-4 w-4" /> Categorias
-            </Link>
-          </Button>
-        </nav>
-
-        {selectedTab === "produtos" ? (
-          <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-            <Card className="shadow-soft">
-              <CardHeader>
-                <CardTitle>Novo produto</CardTitle>
-                <CardDescription>Os campos alimentam a tabela products no Supabase.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ProductForm
-                  action={createProductAction}
-                  categories={categories}
-                  units={units}
-                  submitLabel="Criar produto"
-                  submitIcon={<Plus className="h-4 w-4" />}
-                />
-              </CardContent>
-            </Card>
-
-            <div className="grid gap-5">
-              {products.length === 0 ? (
-                <Card className="shadow-soft">
-                  <CardContent className="p-8 text-center">
-                    <h2 className="text-xl font-bold text-brand-ink">Nenhum produto cadastrado</h2>
-                    <p className="mt-3 text-slate-600">
-                      {selectedSearch ? "Nao encontramos produtos cadastrados para esta busca." : "Use o formulario ao lado para criar o primeiro produto."}
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : null}
-              {products.map((product) => (
-                <Card key={product.id} className="shadow-soft">
-                  <CardHeader className="pb-4">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <CardTitle>{product.name}</CardTitle>
-                        <CardDescription>
-                          {product.unit_name} · {product.category} · {product.size} · {product.active ? "Ativo" : "Inativo"}
-                        </CardDescription>
-                      </div>
-                      <form action={deleteProductAction}>
-                        <input type="hidden" name="id" value={product.id} />
-                        <SubmitButton pendingLabel="Excluindo..." variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" /> Excluir
-                        </SubmitButton>
-                      </form>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ProductForm
-                      product={product}
-                      action={updateProductAction}
-                      categories={categories}
-                      units={units}
-                      submitLabel="Salvar alteracoes"
-                      submitIcon={<Save className="h-4 w-4" />}
-                    />
-                  </CardContent>
-                </Card>
-              ))}
-              {totalPages > 1 ? (
-                <Pagination
-                  page={page}
-                  totalPages={totalPages}
-                  previousHref={buildAdminProductsHref(page - 1, selectedSearch, "produtos")}
-                  nextHref={buildAdminProductsHref(page + 1, selectedSearch, "produtos")}
-                />
-              ) : null}
-            </div>
           </div>
-        ) : (
-          <section id="categorias">
-            <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h2 className="text-2xl font-bold tracking-normal text-brand-ink">Categorias</h2>
-                <p className="mt-2 text-slate-600">Edite nome, descricao, icone, ordem e visibilidade no site.</p>
-              </div>
-            </div>
-            <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-              <Card className="shadow-soft">
-                <CardHeader>
-                  <CardTitle>Nova categoria</CardTitle>
-                  <CardDescription>As categorias ativas aparecem na vitrine e no cadastro de produtos.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <CategoryForm action={createCategoryAction} submitLabel="Criar categoria" submitIcon={<Plus className="h-4 w-4" />} />
-                </CardContent>
-              </Card>
 
-              <div className="grid gap-5">
-                {categories.map((category) => (
-                  <Card key={category.id} className="shadow-soft">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-3">
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-100 text-brand-blue">
-                            <CategoryIcon icon={category.icon} />
-                          </span>
-                          <div>
-                            <CardTitle>{category.name}</CardTitle>
-                            <CardDescription>
-                              Ordem {category.sort_order} · {category.active ? "Ativa" : "Inativa"}
-                            </CardDescription>
-                          </div>
-                        </div>
-                        <form action={deleteCategoryAction}>
-                          <input type="hidden" name="id" value={category.id} />
-                          <SubmitButton pendingLabel="Excluindo..." variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" /> Excluir
-                          </SubmitButton>
-                        </form>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <CategoryForm
-                        category={category}
-                        action={updateCategoryAction}
-                        submitLabel="Salvar categoria"
-                        submitIcon={<Save className="h-4 w-4" />}
-                      />
-                    </CardContent>
-                  </Card>
-                ))}
+          <form className="mb-4 flex gap-3" action="/admin/produtos">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input name="busca" defaultValue={search ?? ""} placeholder="Buscar produto..." className="pl-10" />
               </div>
             </div>
-          </section>
-        )}
-      </section>
+            <select name="categoria" defaultValue={category ?? ""} className="h-11 rounded-md border border-input bg-background px-3 text-sm">
+              <option value="">Todas as categorias</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.name}>{c.name}</option>
+              ))}
+            </select>
+            <Button type="submit">Pesquisar</Button>
+          </form>
+
+          <Card>
+            <CardContent className="p-0">
+
+
+<table className="w-full table-fixed border-collapse">
+  <thead>
+    <tr className="bg-slate-50 text-left text-sm text-slate-600">
+      <th className="w-[10%] p-4 whitespace-nowrap">Cod</th>
+      <th className="w-[6%] p-4 whitespace-nowrap">UN</th>
+      <th className="w-[36%] p-4 whitespace-nowrap">Descrição</th>
+      <th className="w-[10%] p-4 whitespace-nowrap">Estoque</th>
+      <th className="w-[12%] p-4 whitespace-nowrap">VL. Custo</th>
+      <th className="w-[12%] p-4 whitespace-nowrap">VL. Venda</th>
+      <th className="w-[8%] p-4 text-right whitespace-nowrap">%Marg.Luc</th>
+      <th className="w-[10%] p-4 text-right whitespace-nowrap">Ações</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {products.map((p: Product) => (
+      <tr key={p.id} className="border-t">
+        <td className="p-4 whitespace-nowrap overflow-hidden">
+          <div className="truncate" title={p.code ?? p.id}>
+            {p.code ?? p.id}
+          </div>
+        </td>
+
+        <td className="p-4 whitespace-nowrap overflow-hidden">
+          <div className="truncate" title={p.unit ?? p.unit_name}>
+            {p.unit ?? p.unit_name.split(" ")[0] ?? "--"}
+          </div>
+        </td>
+
+        <td className="p-4 overflow-hidden">
+          <div
+            className="truncate whitespace-nowrap overflow-hidden cursor-help"
+            title={p.name}
+          >
+            {p.name}
+          </div>
+        </td>
+
+        <td className="p-4 whitespace-nowrap">
+          {typeof p.stock === 'number' ? p.stock : "-"}
+        </td>
+
+        <td className="p-4 whitespace-nowrap">
+          {typeof p.cost_price === 'number' ? `R$ ${p.cost_price.toFixed(2)}` : "-"}
+        </td>
+
+        <td className="p-4 whitespace-nowrap">
+          {p.price ? `R$ ${p.price.toFixed(2)}` : "-"}
+        </td>
+
+        <td className="p-4 text-right whitespace-nowrap">
+          {typeof p.cost_price === 'number' && p.price ? `${(((p.price - p.cost_price) / (p.cost_price || 1)) * 100).toFixed(2)}%` : "-"}
+        </td>
+
+        <td className="p-4 text-right whitespace-nowrap">
+          <Link
+            href={`/admin/produtos/${p.id}/edit`}
+            className="mr-3 text-slate-600 hover:text-brand-ink"
+          >
+            ✏️
+          </Link>
+
+          <form action={deleteProductAction} className="inline-block">
+            <input type="hidden" name="id" value={p.id} />
+
+            <button
+              type="submit"
+              className="text-destructive"
+            >
+              🗑️
+            </button>
+          </form>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+            </CardContent>
+          </Card>
+
+          {total > 0 ? (
+            <nav className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-slate-600">Mostrando {products.length} de {total} produtos</div>
+              <div className="flex items-center gap-2">
+                <Button asChild variant="outline" disabled={page <= 1}>
+                  <Link href={buildHref(page - 1, search ?? undefined, category ?? undefined)}>
+                    <ArrowLeft className="h-4 w-4" />
+                  </Link>
+                </Button>
+
+                {/* Numeric pagination: show a window around current page with first/last and ellipses */}
+                <div className="flex items-center gap-1">
+                  {(() => {
+                    const pages: (number | "dots")[] = [];
+                    const start = Math.max(1, page - 2);
+                    const end = Math.min(totalPages, page + 2);
+
+                    if (start > 1) {
+                      pages.push(1);
+                      if (start > 2) pages.push("dots");
+                    }
+
+                    for (let p = start; p <= end; p++) pages.push(p);
+
+                    if (end < totalPages) {
+                      if (end < totalPages - 1) pages.push("dots");
+                      pages.push(totalPages);
+                    }
+
+                    return pages.map((p, idx) => {
+                      if (p === "dots") return <span key={`dots-${idx}`} className="px-2">…</span>;
+                      return (
+                        <Button asChild size="sm" key={p} variant={p === page ? "default" : "ghost"}>
+                          <Link href={buildHref(p as number, search ?? undefined, category ?? undefined)} className={p === page ? "font-semibold" : undefined}>{p}</Link>
+                        </Button>
+                      );
+                    });
+                  })()}
+                </div>
+
+                <Button asChild variant="outline" disabled={page >= totalPages}>
+                  <Link href={buildHref(page + 1, search ?? undefined, category ?? undefined)}>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </nav>
+          ) : null}
+        </section>
       </div>
     </main>
-  );
-}
-
-function Pagination({
-  page,
-  totalPages,
-  previousHref,
-  nextHref
-}: {
-  page: number;
-  totalPages: number;
-  previousHref: string;
-  nextHref: string;
-}) {
-  return (
-    <nav className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Paginacao do admin de produtos">
-      <span className="text-sm text-slate-600">
-        Pagina {page} de {totalPages}
-      </span>
-      <div className="flex gap-3">
-        {page > 1 ? (
-          <Button asChild variant="outline">
-            <Link href={previousHref}>
-              <ArrowLeft className="h-4 w-4" /> Anterior
-            </Link>
-          </Button>
-        ) : (
-          <Button variant="outline" disabled>
-            <ArrowLeft className="h-4 w-4" /> Anterior
-          </Button>
-        )}
-        {page < totalPages ? (
-          <Button asChild>
-            <Link href={nextHref}>
-              Proxima <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        ) : (
-          <Button disabled>
-            Proxima <ArrowRight className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-    </nav>
-  );
-}
-
-
-
-function CategoryIcon({ icon }: { icon: string }) {
-  const option = categoryIconOptions.find((item) => item.value === icon) ?? categoryIconOptions[0];
-  const Icon = option.icon;
-
-  return <Icon className="h-5 w-5" />;
-}
-
-function CategoryForm({
-  category,
-  action,
-  submitLabel,
-  submitIcon
-}: {
-  category?: Category;
-  action: (formData: FormData) => Promise<void>;
-  submitLabel: string;
-  submitIcon: React.ReactNode;
-}) {
-  return (
-    <form action={action} className="grid gap-4">
-      {category ? <input type="hidden" name="id" value={category.id} /> : null}
-      <div className="grid gap-2">
-        <Label htmlFor={`category-name-${category?.id ?? "new"}`}>Nome</Label>
-        <Input id={`category-name-${category?.id ?? "new"}`} name="name" defaultValue={category?.name} required />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor={`category-description-${category?.id ?? "new"}`}>Descricao</Label>
-        <Textarea
-          id={`category-description-${category?.id ?? "new"}`}
-          name="description"
-          defaultValue={category?.description}
-          required
-        />
-      </div>
-      <div className="grid gap-4 md:grid-cols-[1fr_120px]">
-        <div className="grid gap-2">
-          <Label htmlFor={`category-icon-${category?.id ?? "new"}`}>Icone</Label>
-          <select
-            id={`category-icon-${category?.id ?? "new"}`}
-            name="icon"
-            defaultValue={category?.icon ?? categoryIconOptions[0].value}
-            className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {categoryIconOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor={`category-order-${category?.id ?? "new"}`}>Ordem</Label>
-          <Input
-            id={`category-order-${category?.id ?? "new"}`}
-            name="sort_order"
-            type="number"
-            defaultValue={category?.sort_order ?? 0}
-          />
-        </div>
-      </div>
-      <label className="flex items-center gap-3 text-sm font-medium">
-        <input
-          type="checkbox"
-          name="active"
-          defaultChecked={category?.active ?? true}
-          className="h-4 w-4 rounded border-input accent-brand-green"
-        />
-        Categoria ativa
-      </label>
-      <SubmitButton className="w-full" pendingLabel={category ? "Salvando..." : "Criando..."}>
-        {submitIcon} {submitLabel}
-      </SubmitButton>
-    </form>
   );
 }

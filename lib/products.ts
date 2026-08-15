@@ -4,6 +4,8 @@ import { randomUUID } from 'crypto';
 
 export type Product = {
   id: string;
+  code?: string | null;
+  unit?: string | null;
   name: string;
   unit_name: string;
   unit_id: string;
@@ -11,6 +13,8 @@ export type Product = {
   category: string;
   description: string;
   size: string;
+  stock?: number | null;
+  cost_price?: number | null;
   price: number | null;
   image_blob: string | null;
   image_mime_type: string | null;
@@ -51,6 +55,10 @@ type ProductRecord = Omit<ProductInput, "unit_name"> & {
   units?: { name?: string | null } | { name?: string | null }[] | null;
   created_at?: string;
   categories?: { name?: string | null } | { name?: string | null }[] | null;
+  code?: string | null;
+  unit?: string | null;
+  stock?: number | null;
+  cost_price?: number | null;
 };
 
 const fallbackProducts: Product[] = [
@@ -118,6 +126,10 @@ function normalizeProduct(product: ProductRecord): Product {
 
   return {
     ...product,
+    code: product.code ?? null,
+    unit: product.unit ?? null,
+    stock: product.stock ?? null,
+    cost_price: product.cost_price ?? null,
     unit_name: relatedUnit?.name ?? "Unidade não definida",
     unit_id: product.unit_id ?? "",
     category: relatedCategory?.name ?? "Sem categoria",

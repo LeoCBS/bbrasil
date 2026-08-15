@@ -22,7 +22,7 @@ const errorMessages: Record<string, string> = {
 
 export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  const next = params.next || "/admin/produtos";
+  const next = params.next || "/admin/clientes";
   const errorMessage = params.error ? errorMessages[params.error] : null;
 
   return (

@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { requireAdminUser } from "@/auth";
 import { createCategory, deleteCategory, updateCategory, type CategoryMutationInput } from "@/lib/categories";
 import { createProduct, deleteProduct, updateProduct, type ProductMutationInput } from "@/lib/products";
+import { createClient, deleteClient, updateClient, type ClientMutationInput } from "@/lib/clients";
+import { createSalesperson, deleteSalesperson, updateSalesperson, type SalespersonInput } from "@/lib/salespeople";
 
 function parseSortOrder(value: FormDataEntryValue | null) {
   const sortOrder = Number(value);
@@ -95,4 +97,80 @@ export async function deleteCategoryAction(formData: FormData) {
   revalidatePath("/produtos");
   revalidatePath("/admin/produtos");
   redirect("/admin/produtos?aba=categorias");
+}
+
+function parseClient(formData: FormData): ClientMutationInput {
+  const field = (name: string) => String(formData.get(name) ?? "").trim();
+  return {
+    corporate_name: field("corporate_name"), cnpj: field("cnpj"), state_registration: field("state_registration"),
+    address: field("address"), neighborhood: field("neighborhood"), notes: field("notes"), city: field("city"),
+    state: field("state").toUpperCase(), zip_code: field("zip_code"), email: field("email"), phone: field("phone"),
+    salesperson: field("salesperson"), unit: field("unit"), active: formData.get("active") === "on"
+  };
+}
+
+function onlyDigits(value: string) { return value.replace(/\D/g, ""); }
+
+function isValidCnpj(value: string) {
+  const digits = onlyDigits(value);
+  if (digits.length !== 14 || /^(\d)\1+$/.test(digits)) return false;
+  const digit = (length: number) => {
+    let sum = 0;
+    let weight = length - 7;
+    for (let index = 0; index < length; index += 1) { sum += Number(digits[index]) * weight; weight = weight === 2 ? 9 : weight - 1; }
+    const remainder = sum % 11;
+    return remainder < 2 ? 0 : 11 - remainder;
+  };
+  return digit(12) === Number(digits[12]) && digit(13) === Number(digits[13]);
+}
+
+function parseSalesperson(formData: FormData): SalespersonInput {
+  const field = (name: string) => String(formData.get(name) ?? "").trim();
+  return { name: field("name"), email: field("email"), phone: field("phone"), active: formData.get("active") === "on" };
+}
+
+export async function createClientAction(formData: FormData) {
+  await requireAdminUser("/admin/clientes");
+  const client = parseClient(formData);
+  if (!isValidCnpj(client.cnpj)) throw new Error("Informe um CNPJ válido.");
+  await createClient(client);
+  revalidatePath("/admin/clientes");
+}
+
+export async function updateClientAction(formData: FormData) {
+  await requireAdminUser("/admin/clientes");
+  const client = parseClient(formData);
+  if (!isValidCnpj(client.cnpj)) throw new Error("Informe um CNPJ válido.");
+  await updateClient(String(formData.get("id") ?? ""), client);
+  revalidatePath("/admin/clientes");
+}
+
+export async function createSalespersonAction(formData: FormData) {
+  await requireAdminUser("/admin/vendedores");
+  const salesperson = parseSalesperson(formData);
+  if (!salesperson.name) throw new Error("Informe o nome do vendedor.");
+  await createSalesperson(salesperson);
+  revalidatePath("/admin/vendedores"); revalidatePath("/admin/clientes");
+}
+
+export async function updateSalespersonAction(formData: FormData) {
+  await requireAdminUser("/admin/vendedores");
+  const salesperson = parseSalesperson(formData);
+  if (!salesperson.name) throw new Error("Informe o nome do vendedor.");
+  await updateSalesperson(String(formData.get("id") ?? ""), salesperson);
+  revalidatePath("/admin/vendedores"); revalidatePath("/admin/clientes");
+}
+
+export async function deleteSalespersonAction(formData: FormData) {
+  await requireAdminUser("/admin/vendedores");
+  await deleteSalesperson(String(formData.get("id") ?? ""));
+  revalidatePath("/admin/vendedores"); revalidatePath("/admin/clientes");
+  redirect("/admin/vendedores");
+}
+
+export async function deleteClientAction(formData: FormData) {
+  await requireAdminUser("/admin/clientes");
+  await deleteClient(String(formData.get("id") ?? ""));
+  revalidatePath("/admin/clientes");
+  redirect("/admin/clientes");
 }

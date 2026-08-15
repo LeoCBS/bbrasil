@@ -6,11 +6,11 @@ const sections = [
   {
     title: "Cadastros",
     items: [
-      { label: "Produtos", href: "/admin/produtos", icon: Package },
-  { label: "Categorias", href: "/admin/categorias", icon: Sparkles },
-  { label: "Clientes", href: "/admin/clientes", icon: Users },
-  { label: "Vendedores", href: "/admin/vendedores", icon: UserRound },
-  { label: "Unidades", href: "/admin/unidades", icon: Building2 }
+      { label: "Produtos", href: "/admin/produtos", icon: Package ,disabled: false},
+  { label: "Categorias", href: "/admin/categorias", icon: Sparkles ,disabled: false},
+  { label: "Clientes", href: "/admin/clientes", icon: Users ,disabled: false},
+  { label: "Vendedores", href: "/admin/vendedores", icon: UserRound ,disabled: false},
+  { label: "Unidades", href: "/admin/unidades", icon: Building2 ,disabled: false}
     ]
   },
   {

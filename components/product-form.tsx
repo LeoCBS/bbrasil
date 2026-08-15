@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Category } from '@/lib/categories';
 import { Product } from '@/lib/products';
-import { productCompanies } from '@/lib/companies';
+import { Unit } from '@/lib/units';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SubmitButton } from '@/components/ui/submit-button';
@@ -34,12 +34,14 @@ export function ProductForm({
   product,
   action,
   categories,
+  units,
   submitLabel,
   submitIcon
 }: {
   product?: Product;
   action: (formData: FormData) => Promise<void>;
   categories: Category[];
+  units: Unit[];
   submitLabel: string;
   submitIcon: React.ReactNode;
 }) {
@@ -126,16 +128,17 @@ export function ProductForm({
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor={`company-${product?.id ?? 'new'}`}>Empresa</Label>
+        <Label htmlFor={`unit-${product?.id ?? 'new'}`}>Unidade</Label>
         <select
-          id={`company-${product?.id ?? 'new'}`}
-          name="company"
-          defaultValue={product?.company ?? productCompanies[0]}
+          id={`unit-${product?.id ?? 'new'}`}
+          name="unit_id"
+          defaultValue={product?.unit_id ?? units[0]?.id}
           className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {productCompanies.map((company) => (
-            <option key={company} value={company}>
-              {company}
+          <option value="">Selecione uma unidade</option>
+          {units.map((unit) => (
+            <option key={unit.id} value={unit.id}>
+              {unit.name}
             </option>
           ))}
         </select>

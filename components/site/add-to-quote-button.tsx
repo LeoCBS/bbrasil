@@ -7,14 +7,15 @@ import { Button } from "@/components/ui/button";
 export type QuoteCartItem = {
   id: string;
   name: string;
-  company: string;
+  unit_id: string;
+  unit_name: string;
   category: string;
   size: string;
   quantity: number;
 };
 
 const cartStorageKey = "bbrasil_quote_cart";
-const currentCompanyStorageKey = "bbrasil_quote_company";
+const currentUnitStorageKey = "bbrasil_quote_unit_id";
 
 function readCart() {
   try {
@@ -26,14 +27,14 @@ function readCart() {
   }
 }
 
-function writeCart(items: QuoteCartItem[], company: string) {
+function writeCart(items: QuoteCartItem[], unitId: string) {
   window.localStorage.setItem(cartStorageKey, JSON.stringify(items));
-  window.localStorage.setItem(currentCompanyStorageKey, company);
+  window.localStorage.setItem(currentUnitStorageKey, unitId);
   window.dispatchEvent(new CustomEvent("bbrasil:quote-cart-updated", { detail: { open: true } }));
 }
 
-function readSelectedCompany(items: QuoteCartItem[]) {
-  return window.localStorage.getItem(currentCompanyStorageKey) ?? items[0]?.company ?? "";
+function readSelectedUnit(items: QuoteCartItem[]) {
+  return window.localStorage.getItem(currentUnitStorageKey) ?? items[0]?.unit_id ?? "";
 }
 
 export function AddToQuoteButton({ item }: { item: Omit<QuoteCartItem, "quantity"> }) {
@@ -46,7 +47,7 @@ export function AddToQuoteButton({ item }: { item: Omit<QuoteCartItem, "quantity
       ? cart.map((cartItem) => (cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem))
       : [...cart, { ...item, quantity: 1 }];
 
-    writeCart(nextCart, readSelectedCompany(cart) || item.company);
+    writeCart(nextCart, readSelectedUnit(cart) || item.unit_id);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1800);
   }
@@ -58,4 +59,4 @@ export function AddToQuoteButton({ item }: { item: Omit<QuoteCartItem, "quantity
   );
 }
 
-export { cartStorageKey, currentCompanyStorageKey };
+export { cartStorageKey, currentUnitStorageKey };

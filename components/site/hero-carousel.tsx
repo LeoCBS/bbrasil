@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import { useState } from "react";
-import { productCompanyContacts } from "@/lib/companies";
+import type { Unit } from "@/lib/units";
 
 const banners = [
   {
@@ -22,12 +22,11 @@ const banners = [
   },
 ];
 
-export function HeroCarousel({ selectedCompany }: { selectedCompany?: string }) {
+export function HeroCarousel({ selectedUnit, units }: { selectedUnit?: Unit; units: Unit[] }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const banner = banners[activeSlide];
-  const contact = productCompanyContacts.find((company) => company.name === selectedCompany);
-  const whatsappUrl = contact ? `https://wa.me/${contact.whatsappNumber}` : "#";
-  const catalogHref = selectedCompany ? `/produtos?empresa=${encodeURIComponent(selectedCompany)}` : "/produtos";
+  const whatsappUrl = selectedUnit?.whatsapp_number ? `https://wa.me/${selectedUnit.whatsapp_number}` : "#";
+  const catalogHref = selectedUnit ? `/produtos?unidade=${encodeURIComponent(selectedUnit.id)}` : "/produtos";
 
   function move(direction: 1 | -1) {
     setActiveSlide((current) => (current + direction + banners.length) % banners.length);
@@ -51,7 +50,7 @@ export function HeroCarousel({ selectedCompany }: { selectedCompany?: string }) 
               <span className="text-2xl font-semibold md:text-4xl">{banner.eyebrow}</span>
               <h1 className="mt-1 text-4xl font-bold leading-none tracking-normal md:text-6xl">{banner.title}</h1>
               <p className="mt-4 max-w-md text-sm leading-6 text-white/90 md:text-base">{banner.description}</p>
-              {contact ? (
+              {selectedUnit ? (
                 <a
                   href={whatsappUrl}
                   target="_blank"
@@ -62,7 +61,7 @@ export function HeroCarousel({ selectedCompany }: { selectedCompany?: string }) 
                 </a>
               ) : (
                 <span className="mt-6 inline-flex w-fit rounded-md bg-white px-5 py-3 text-sm font-bold text-brand-green shadow">
-                  Selecione sua empresa para falar com um especialista
+                  Selecione sua unidade para falar com um especialista
                 </span>
               )}
             </div>

@@ -25,7 +25,7 @@ import {
 } from "@/lib/actions";
 import { getCategories, type Category } from "@/lib/categories";
 import { getPaginatedProducts, type Product } from "@/lib/products";
-import { productCompanies } from "@/lib/companies";
+import { getUnits } from "@/lib/units";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -88,6 +88,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
   const currentPage = parsePage(params?.page);
   const selectedTab = params?.aba === "categorias" ? "categorias" : "produtos";
   const categories = await getCategories({ includeInactive: true });
+  const units = await getUnits();
   const activeCategories = categories.filter((category) => category.active);
   const { products, total, page, totalPages } = await getPaginatedProducts({
     includeInactive: true,
@@ -201,6 +202,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                 <ProductForm
                   action={createProductAction}
                   categories={categories}
+                  units={units}
                   submitLabel="Criar produto"
                   submitIcon={<Plus className="h-4 w-4" />}
                 />
@@ -225,7 +227,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                       <div>
                         <CardTitle>{product.name}</CardTitle>
                         <CardDescription>
-                          {product.company} · {product.category} · {product.size} · {product.active ? "Ativo" : "Inativo"}
+                          {product.unit_name} · {product.category} · {product.size} · {product.active ? "Ativo" : "Inativo"}
                         </CardDescription>
                       </div>
                       <form action={deleteProductAction}>
@@ -241,6 +243,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                       product={product}
                       action={updateProductAction}
                       categories={categories}
+                      units={units}
                       submitLabel="Salvar alteracoes"
                       submitIcon={<Save className="h-4 w-4" />}
                     />

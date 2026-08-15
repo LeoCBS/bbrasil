@@ -2,12 +2,12 @@ import { randomUUID } from "crypto";
 import { unstable_noStore as noStore } from "next/cache";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
-export type Salesperson = { id: string; name: string; email: string; phone: string; active: boolean; created_at?: string };
+export type Salesperson = { id: string; name: string; email: string; phone: string; unit_id: string; active: boolean; created_at?: string };
 export type SalespersonInput = Omit<Salesperson, "id" | "created_at">;
 
 const fallbackSalespeople: Salesperson[] = [
-  { id: "demo-salesperson-1", name: "João da Silva", email: "", phone: "", active: true },
-  { id: "demo-salesperson-2", name: "Maria Santos", email: "", phone: "", active: true }
+  { id: "demo-salesperson-1", name: "João da Silva", email: "", phone: "", unit_id: "unit-joinville", active: true },
+  { id: "demo-salesperson-2", name: "Maria Santos", email: "", phone: "", unit_id: "unit-joinville", active: true }
 ];
 
 function getSupabase() {

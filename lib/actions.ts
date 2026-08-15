@@ -7,6 +7,7 @@ import { createCategory, deleteCategory, updateCategory, type CategoryMutationIn
 import { createProduct, deleteProduct, updateProduct, type ProductMutationInput } from "@/lib/products";
 import { createClient, deleteClient, updateClient, type ClientMutationInput } from "@/lib/clients";
 import { createSalesperson, deleteSalesperson, updateSalesperson, type SalespersonInput } from "@/lib/salespeople";
+import { createUnit, deleteUnit, updateUnit, type UnitInput } from "@/lib/units";
 
 function parseSortOrder(value: FormDataEntryValue | null) {
   const sortOrder = Number(value);
@@ -29,7 +30,7 @@ async function parseProduct(formData: FormData): Promise<ProductMutationInput> {
 
   const product: ProductMutationInput = {
     name: String(formData.get("name") ?? "").trim(),
-    company: String(formData.get("company") ?? "").trim(),
+    unit_id: String(formData.get("unit_id") ?? "").trim(),
     category_id: String(formData.get("category_id") ?? "").trim(),
     description: String(formData.get("description") ?? "").trim(),
     size: String(formData.get("size") ?? "").trim(),
@@ -105,7 +106,7 @@ function parseClient(formData: FormData): ClientMutationInput {
     corporate_name: field("corporate_name"), cnpj: field("cnpj"), state_registration: field("state_registration"),
     address: field("address"), neighborhood: field("neighborhood"), notes: field("notes"), city: field("city"),
     state: field("state").toUpperCase(), zip_code: field("zip_code"), email: field("email"), phone: field("phone"),
-    salesperson: field("salesperson"), unit: field("unit"), active: formData.get("active") === "on"
+    salesperson: field("salesperson"), unit: "", unit_id: field("unit_id"), active: formData.get("active") === "on"
   };
 }
 
@@ -126,8 +127,10 @@ function isValidCnpj(value: string) {
 
 function parseSalesperson(formData: FormData): SalespersonInput {
   const field = (name: string) => String(formData.get(name) ?? "").trim();
-  return { name: field("name"), email: field("email"), phone: field("phone"), active: formData.get("active") === "on" };
+  return { name: field("name"), email: field("email"), phone: field("phone"), unit_id: field("unit_id"), active: formData.get("active") === "on" };
 }
+
+function parseUnit(formData: FormData): UnitInput { const field = (name: string) => String(formData.get(name) ?? "").trim(); return { name: field("name"), address: field("address"), phone: field("phone"), whatsapp_number: field("whatsapp_number").replace(/\D/g, ""), email: field("email"), active: formData.get("active") === "on" }; }
 
 export async function createClientAction(formData: FormData) {
   await requireAdminUser("/admin/clientes");
@@ -167,6 +170,10 @@ export async function deleteSalespersonAction(formData: FormData) {
   revalidatePath("/admin/vendedores"); revalidatePath("/admin/clientes");
   redirect("/admin/vendedores");
 }
+
+export async function createUnitAction(formData: FormData) { await requireAdminUser("/admin/unidades"); const unit = parseUnit(formData); if (!unit.name) throw new Error("Informe o nome da unidade."); await createUnit(unit); revalidatePath("/"); revalidatePath("/produtos"); revalidatePath("/admin/unidades"); }
+export async function updateUnitAction(formData: FormData) { await requireAdminUser("/admin/unidades"); const unit = parseUnit(formData); if (!unit.name) throw new Error("Informe o nome da unidade."); await updateUnit(String(formData.get("id") ?? ""), unit); revalidatePath("/"); revalidatePath("/produtos"); revalidatePath("/admin/unidades"); }
+export async function deleteUnitAction(formData: FormData) { await requireAdminUser("/admin/unidades"); await deleteUnit(String(formData.get("id") ?? "")); revalidatePath("/"); revalidatePath("/produtos"); revalidatePath("/admin/unidades"); redirect("/admin/unidades"); }
 
 export async function deleteClientAction(formData: FormData) {
   await requireAdminUser("/admin/clientes");

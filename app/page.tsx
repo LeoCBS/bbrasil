@@ -20,9 +20,9 @@ import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
 import { getCategories, type Category } from "@/lib/categories";
 import { getProducts } from "@/lib/products";
-import { productCompanies, units } from "@/lib/companies";
 import { HeroCarousel } from "@/components/site/hero-carousel";
 import { SiteHeader } from "@/components/site/site-header";
+import { getUnits } from "@/lib/units";
 
 const categoryIcons = {
   package: PackageCheck,
@@ -35,7 +35,7 @@ const categoryIcons = {
 
 type HomeProps = {
   searchParams?: Promise<{
-    empresa?: string;
+    unidade?: string;
     busca?: string;
   }>;
 };
@@ -43,18 +43,18 @@ type HomeProps = {
 export default async function Home({ searchParams }: HomeProps) {
   const params = await searchParams;
   const cookieStore = await cookies();
-  const requestedCompany = params?.empresa?.trim();
-  const storedCompanyValue = cookieStore.get("bbrasil_selected_company")?.value;
-  const storedCompany = storedCompanyValue ? decodeURIComponent(storedCompanyValue) : undefined;
-  const selectedCompany = [requestedCompany, storedCompany].find((company) => company && productCompanies.includes(company));
+  const units = await getUnits();
+  const requestedUnitId = params?.unidade?.trim();
+  const storedUnitId = cookieStore.get("bbrasil_selected_unit_id")?.value;
+  const selectedUnit = units.find((unit) => unit.id === requestedUnitId) ?? units.find((unit) => unit.id === storedUnitId);
   const selectedSearch = params?.busca?.trim();
   const categories = await getCategories();
-  const products = await getProducts({ company: selectedCompany, search: selectedSearch });
+  const products = await getProducts({ unitId: selectedUnit?.id, search: selectedSearch });
 
   return (
     <main className="min-h-screen bg-white">
-      <SiteHeader selectedCompany={selectedCompany} selectedSearch={selectedSearch} />
-      <HeroCarousel selectedCompany={selectedCompany} />
+      <SiteHeader selectedUnit={selectedUnit} selectedSearch={selectedSearch} units={units} />
+      <HeroCarousel selectedUnit={selectedUnit} units={units} />
 
       <section id="categorias" className="container py-11">
         <div className="mb-5">
@@ -69,7 +69,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 <h3 className="mt-5 text-lg font-semibold text-brand-ink">{category.name}</h3>
                 <p className="mt-4 min-h-20 text-sm leading-6 text-slate-600">{category.description}</p>
                 <Link
-                  href={{ pathname: "/produtos", query: { categoria: category.name, ...(selectedCompany ? { empresa: selectedCompany } : {}) } }}
+                  href={{ pathname: "/produtos", query: { categoria: category.name, ...(selectedUnit ? { unidade: selectedUnit.id } : {}) } }}
                   className="mt-auto inline-flex items-center gap-2 pt-4 text-sm font-semibold text-brand-green"
                 >
                   Ver produtos <ArrowRight className="h-4 w-4" />
@@ -87,8 +87,8 @@ export default async function Home({ searchParams }: HomeProps) {
             <p className="mt-2 text-slate-600">
               {selectedSearch
                 ? `Resultados para "${selectedSearch}".`
-                : selectedCompany
-                ? `Conheca produtos em destaque da unidade ${selectedCompany}.`
+                : selectedUnit
+                ? `Conheca produtos em destaque da unidade ${selectedUnit.name}.`
                 : "Conheca nossos produtos mais populares e recomendados"}
             </p>
           </div>
@@ -99,7 +99,7 @@ export default async function Home({ searchParams }: HomeProps) {
           </div>
         </div>
         <form className="mb-6 grid gap-3 rounded-lg border bg-white p-4 shadow-soft md:grid-cols-[1fr_auto]" action="/#produtos">
-          {selectedCompany ? <input type="hidden" name="empresa" value={selectedCompany} /> : null}
+          {selectedUnit ? <input type="hidden" name="unidade" value={selectedUnit.id} /> : null}
           <label className="grid gap-2 text-sm font-medium text-brand-ink">
             Buscar produto
             <div className="relative">
@@ -124,7 +124,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   <ProductVisual name={product.name} imageSrc={product.image_url} compact />
                   <div className="flex flex-col py-2">
                     <span className="text-sm font-semibold text-brand-green">{product.category}</span>
-                    <span className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{product.company}</span>
+                    <span className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{product.unit_name}</span>
                     <h3 className="mt-2 text-xl font-bold text-brand-ink">{product.name}</h3>
                     <p className="mt-3 text-sm leading-6 text-slate-600">
                       {product.description && product.description.length > 150 ? (
@@ -153,8 +153,8 @@ export default async function Home({ searchParams }: HomeProps) {
           <Button asChild variant="outline">
             <Link
               href={
-                selectedCompany || selectedSearch
-                  ? { pathname: "/produtos", query: { ...(selectedCompany ? { empresa: selectedCompany } : {}), ...(selectedSearch ? { busca: selectedSearch } : {}) } }
+                selectedUnit || selectedSearch
+                  ? { pathname: "/produtos", query: { ...(selectedUnit ? { unidade: selectedUnit.id } : {}), ...(selectedSearch ? { busca: selectedSearch } : {}) } }
                   : "/produtos"
               }
             >
@@ -219,11 +219,7 @@ export default async function Home({ searchParams }: HomeProps) {
               Encontre a unidade mais proxima para atendimento comercial, pedidos e suporte.
             </p>
           </div>
-          <Button asChild size="lg">
-            <Link href={units[0].phones[0].href}>
-              <MessageCircle className="h-5 w-5" /> Fale com Florianopolis
-            </Link>
-          </Button>
+          
         </div>
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {units.map((unit) => (
@@ -234,7 +230,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   <div className="flex gap-3">
                     <MapPin className="mt-1 h-4 w-4 shrink-0 text-brand-blue" />
                     <span>
-                      {unit.address.map((line) => (
+                      {unit.address.split("\n").map((line) => (
                         <span key={line} className="block">
                           {line}
                         </span>
@@ -244,19 +240,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   <div className="flex gap-3">
                     <MessageCircle className="mt-1 h-4 w-4 shrink-0 text-brand-green" />
                     <span className="flex flex-wrap gap-x-2 gap-y-1">
-                      {unit.phones.map((phone, index) => (
-                        <span key={phone.label} className="inline-flex items-center gap-2">
-                          {index > 0 ? <span className="text-slate-400">/</span> : null}
-                          <Link
-                            href={phone.href}
-                            className="font-semibold text-brand-green hover:text-brand-blue"
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            {phone.label}
-                          </Link>
-                        </span>
-                      ))}
+                      {unit.phone ? <a target="_blank" rel="noreferrer" href={`https://wa.me/${unit.whatsapp_number}`} className="font-semibold text-brand-green hover:text-brand-blue">{unit.phone}</a> : "—"}
                     </span>
                   </div>
                   <div className="flex gap-3">

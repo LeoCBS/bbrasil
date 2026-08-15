@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Database,
-  LogOut,
   PackageCheck,
   Plus,
   Save,
@@ -14,7 +13,7 @@ import {
   Trash2,
   Waves
 } from "lucide-react";
-import { logoutAction, requireAdminUser } from "@/auth";
+import { requireAdminUser } from "@/auth";
 import {
   createCategoryAction,
   createProductAction,
@@ -33,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/site/logo";
+import AdminHeader from "@/components/admin/admin-header";
 import { ProductVisual } from "@/components/site/product-visual";
 import { ProductForm } from "@/components/product-form";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
@@ -100,24 +100,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white">
-        <div className="container flex h-24 items-center justify-between gap-4">
-          <Logo />
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-slate-600 md:inline">{user.email}</span>
-            <Button asChild variant="outline">
-              <Link href="/">
-                <ArrowLeft className="h-4 w-4" /> Voltar ao site
-              </Link>
-            </Button>
-            <form action={logoutAction}>
-              <SubmitButton pendingLabel="Saindo..." variant="outline" className="text-destructive hover:text-destructive">
-                <LogOut className="h-4 w-4" /> Sair
-              </SubmitButton>
-            </form>
-          </div>
-        </div>
-      </header>
+      <AdminHeader email={user.email} />
 
       <div className="lg:flex">
       <AdminSidebar current="produtos" />

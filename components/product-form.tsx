@@ -105,9 +105,16 @@ export function ProductForm({
 
       {product ? <input type="hidden" name="id" value={product.id} /> : null}
 
-      <div className="grid gap-2">
-        <Label htmlFor={`name-${product?.id ?? 'new'}`}>Nome</Label>
-        <Input id={`name-${product?.id ?? 'new'}`} name="name" defaultValue={product?.name} required />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor={`code-${product?.id ?? 'new'}`}>Cód.</Label>
+          <Input id={`code-${product?.id ?? 'new'}`} name="code" defaultValue={product?.code ?? ''} placeholder="ALT001" />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor={`name-${product?.id ?? 'new'}`}>Nome</Label>
+          <Input id={`name-${product?.id ?? 'new'}`} name="name" defaultValue={product?.name} required />
+        </div>
       </div>
 
       <div className="grid gap-2">
@@ -149,13 +156,24 @@ export function ProductForm({
         <Textarea id={`description-${product?.id ?? 'new'}`} name="description" defaultValue={product?.description} required />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid gap-2">
+        <Label htmlFor={`unit-short-${product?.id ?? 'new'}`}>UN (abreviação)</Label>
+        <Input id={`unit-short-${product?.id ?? 'new'}`} name="unit" defaultValue={product?.unit ?? ''} placeholder="PC, RL, CX" />
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
         <div className="grid gap-2">
           <Label htmlFor={`size-${product?.id ?? 'new'}`}>Volume</Label>
           <Input id={`size-${product?.id ?? 'new'}`} name="size" defaultValue={product?.size} placeholder="5L" required />
         </div>
+
         <div className="grid gap-2">
-          <Label htmlFor={`price-${product?.id ?? 'new'}`}>Preço</Label>
+          <Label htmlFor={`stock-${product?.id ?? 'new'}`}>Estoque</Label>
+          <Input id={`stock-${product?.id ?? 'new'}`} name="stock" type="number" step="1" defaultValue={product?.stock ?? ''} placeholder="0" />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor={`price-${product?.id ?? 'new'}`}>Preço (Venda)</Label>
           <Input
             id={`price-${product?.id ?? 'new'}`}
             name="price"
@@ -163,6 +181,29 @@ export function ProductForm({
             step="0.01"
             defaultValue={product?.price ?? ''}
             placeholder="0.00"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor={`cost_price-${product?.id ?? 'new'}`}>VL. Custo</Label>
+          <Input id={`cost_price-${product?.id ?? 'new'}`} name="cost_price" type="number" step="0.01" defaultValue={product?.cost_price ?? ''} placeholder="0.00" />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor={`image-${product?.id ?? 'new'}`}>Imagem do produto</Label>
+          {product?.image_url ? (
+            <div className="flex justify-center rounded-md border border-dashed bg-white p-3">
+              <ProductVisual name={product.name} imageSrc={product.image_url} compact />
+            </div>
+          ) : null}
+          <Input
+            id={`image-${product?.id ?? 'new'}`}
+            name="image_blob"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
           />
         </div>
       </div>
@@ -193,7 +234,7 @@ export function ProductForm({
         Produto ativo
       </label>
 
-      <SubmitButton className="w-full" pendingLabel={product ? 'Salvando...' : 'Criando...'} disabled={isPending}>
+      <SubmitButton className="w-full" pendingLabel={product ? 'Salvando...' : 'Criando...'} forcePending={isPending}>
         {submitIcon} {submitLabel}
       </SubmitButton>
     </form>

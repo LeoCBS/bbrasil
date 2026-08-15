@@ -77,7 +77,8 @@ export async function createCategoryAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/produtos");
   revalidatePath("/admin/produtos");
-  redirect("/admin/produtos?aba=categorias");
+  revalidatePath("/admin/categorias");
+  redirect("/admin/categorias");
 }
 
 export async function updateCategoryAction(formData: FormData) {
@@ -87,7 +88,8 @@ export async function updateCategoryAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/produtos");
   revalidatePath("/admin/produtos");
-  redirect("/admin/produtos?aba=categorias");
+  revalidatePath("/admin/categorias");
+  redirect("/admin/categorias");
 }
 
 export async function deleteCategoryAction(formData: FormData) {
@@ -97,7 +99,8 @@ export async function deleteCategoryAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/produtos");
   revalidatePath("/admin/produtos");
-  redirect("/admin/produtos?aba=categorias");
+  revalidatePath("/admin/categorias");
+  redirect("/admin/categorias");
 }
 
 function parseClient(formData: FormData): ClientMutationInput {

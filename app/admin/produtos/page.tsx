@@ -35,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
 import { ProductForm } from "@/components/product-form";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
 const categoryIconOptions = [
   { value: "package", label: "Pacote", icon: PackageCheck },
@@ -117,7 +118,9 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
         </div>
       </header>
 
-      <section className="container py-10">
+      <div className="lg:flex">
+      <AdminSidebar current="produtos" />
+      <section className="min-w-0 flex-1 p-4 md:p-8">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-4xl font-bold tracking-normal text-brand-ink">Admin do catalogo</h1>
@@ -312,6 +315,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
           </section>
         )}
       </section>
+      </div>
     </main>
   );
 }

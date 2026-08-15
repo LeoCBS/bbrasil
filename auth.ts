@@ -29,10 +29,10 @@ function getSupabaseAuthClient() {
 }
 
 function getSafeNextPath(value: FormDataEntryValue | string | null) {
-  const next = String(value ?? "/admin/produtos");
+  const next = String(value ?? "/admin/clientes");
 
   if (!next.startsWith("/") || next.startsWith("//")) {
-    return "/admin/produtos";
+    return "/admin/clientes";
   }
 
   return next;
@@ -56,11 +56,11 @@ export async function getCurrentUser() {
   return data.user;
 }
 
-export async function requireAdminUser() {
+export async function requireAdminUser(nextPath = "/admin/clientes") {
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect("/admin/login?next=/admin/produtos");
+    redirect(`/admin/login?next=${encodeURIComponent(nextPath)}`);
   }
 
   return user;

@@ -85,8 +85,7 @@ export async function getCategories({ includeInactive = false } = {}) {
   const { data, error } = await query;
 
   if (error) {
-    console.error("Supabase categories fetch failed:", error.message);
-    return fallbackCategories.filter((category) => includeInactive || category.active);
+    throw new Error(`Não foi possível carregar as categorias: ${error.message}`);
   }
 
   return (data ?? []).map((category) => normalizeCategory(category as Category));
@@ -131,24 +130,7 @@ export async function getPaginatedCategories({ includeInactive = false, page = 1
   const { data, error, count } = await query.range(from, to);
 
   if (error) {
-    console.error("Supabase categories fetch failed:", error.message);
-    const filtered = fallbackCategories.filter((category) => {
-      const visible = includeInactive || category.active;
-      const matches = search ? category.name.toLowerCase().includes(search.toLowerCase()) : true;
-      return visible && matches;
-    });
-
-    const total = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(total / safePageSize));
-    const safe = Math.min(safePage, totalPages);
-
-    return {
-      categories: filtered.slice((safe - 1) * safePageSize, (safe - 1) * safePageSize + safePageSize),
-      total,
-      page: safe,
-      pageSize: safePageSize,
-      totalPages
-    };
+    throw new Error(`Não foi possível carregar as categorias: ${error.message}`);
   }
 
   const total = count ?? 0;

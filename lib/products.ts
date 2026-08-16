@@ -222,13 +222,10 @@ export async function getProducts({ includeInactive = false, unitId, search }: G
   const { data, error } = await query;
 
   if (error) {
-    console.error("Supabase products fetch failed:", error.message);
-    return fallbackProducts.filter(
-      (product) => (includeInactive || product.active) && (!unitId || product.unit_id === unitId) && matchesSearch(product, search)
-    );
+    throw new Error(`Não foi possível carregar os produtos: ${error.message}`);
   }
 
-  return (data as ProductRecord[]).map(normalizeProduct);
+  return ((data ?? []) as ProductRecord[]).map(normalizeProduct);
 }
 
 export async function getPaginatedProducts({
@@ -279,19 +276,9 @@ export async function getPaginatedProducts({
   }
 
   const { data, error, count } = await query.range(from, to);
-  
-  if (error) {
-    console.error("Supabase products fetch failed:", error.message);
-    const products = fallbackProducts.filter((product) => {
-      return (
-        (includeInactive || product.active) &&
-        matchesText(product.category, category) &&
-        (!unitId || product.unit_id === unitId) &&
-        matchesSearch(product, search)
-      );
-    });
 
-    return paginateProducts(products, safePage, safePageSize);
+  if (error) {
+    throw new Error(`Não foi possível carregar os produtos: ${error.message}`);
   }
 
   const total = count ?? 0;
@@ -309,7 +296,7 @@ export async function getPaginatedProducts({
   }
 
   return {
-    products: (data as ProductRecord[]).map(normalizeProduct),
+    products: ((data ?? []) as ProductRecord[]).map(normalizeProduct),
     total,
     page: Math.min(safePage, totalPages),
     pageSize: safePageSize,
@@ -334,8 +321,7 @@ export async function getProduct(id: string, { includeInactive = false } = {}) {
   const { data, error } = await query.maybeSingle();
 
   if (error) {
-    console.error("Supabase product fetch failed:", error.message);
-    return null;
+    throw new Error(`Não foi possível carregar o produto: ${error.message}`);
   }
 
   if (!data) {

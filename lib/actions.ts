@@ -44,6 +44,8 @@ function parseProduct(formData: FormData): ProductMutationInput {
     category_id: textField(formData, "category_id"),
     description: textField(formData, "description"),
     size: textField(formData, "size"),
+    unit: textField(formData, "unit"),
+    stock: numberField(formData, "stock", null as any),
     price: currencyField(formData, "price"),
     cost_price: currencyField(formData, "cost_price"),
     active: checkboxField(formData, "active"),

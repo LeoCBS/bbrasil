@@ -94,12 +94,12 @@ export function ProductForm({
     setImageError(error);
   }
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmitForm(formData: FormData) {
     const rawImage = formData.get('image_blob');
     let error = '';
 
     // Only validate when an actual File is present (user selected a new file)
-    if (rawImage && rawImage instanceof File) {
+    if (rawImage instanceof File && rawImage.size > 0) {
       error = validateImage(rawImage as File);
     }
 
@@ -121,6 +121,9 @@ export function ProductForm({
 
         if (!product) {
           formRef.current?.reset();
+          // keep masked displays empty after reset
+          setPriceDisplay('');
+          setCostPriceDisplay('');
         }
 
         router.refresh();
@@ -131,8 +134,21 @@ export function ProductForm({
     });
   }
 
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSubmitError('');
+    const fd = new FormData(formRef.current as HTMLFormElement);
+    handleImageChangeOnSubmit(fd);
+    void handleSubmitForm(fd);
+  }
+
+  // Ensure when submitting we sanitize currency fields already formatted
+  function handleImageChangeOnSubmit(fd: FormData) {
+    // No-op for image, currency parsing is handled server-side by parseProduct; keep values as displayed
+  }
+
   return (
-    <form ref={formRef} action={handleSubmit} encType="multipart/form-data" className="grid gap-4">
+    <form ref={formRef} onSubmit={onSubmit} encType="multipart/form-data" className="grid gap-4">
       {successMessage && (
         <Alert variant="success" message={successMessage} onClose={() => setSuccessMessage('')} />
       )}

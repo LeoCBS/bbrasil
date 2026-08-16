@@ -63,7 +63,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             <h1 className="mt-3 text-4xl font-bold tracking-normal text-brand-ink md:text-5xl">{product.name}</h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">{product.description}</p>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <Card className="shadow-soft">
                 <CardContent className="p-5">
                   <Building2 className="h-6 w-6 text-brand-blue" />
@@ -85,15 +85,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                   <strong className="mt-1 block text-lg text-brand-ink">{product.category}</strong>
                 </CardContent>
               </Card>
-              <Card className="shadow-soft">
-                <CardContent className="p-5">
-                  <Tag className="h-6 w-6 text-brand-blue" />
-                  <span className="mt-4 block text-sm text-slate-500">Preco</span>
-                  <strong className="mt-1 block text-lg text-brand-ink">
-                    {product.price ? `R$ ${product.price.toFixed(2)}` : "Sob consulta"}
-                  </strong>
-                </CardContent>
-              </Card>
+              
             </div>
 
             <div className="mt-8 flex flex-wrap gap-4">

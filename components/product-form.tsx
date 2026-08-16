@@ -138,13 +138,7 @@ export function ProductForm({
     e.preventDefault();
     setSubmitError('');
     const fd = new FormData(formRef.current as HTMLFormElement);
-    handleImageChangeOnSubmit(fd);
     void handleSubmitForm(fd);
-  }
-
-  // Ensure when submitting we sanitize currency fields already formatted
-  function handleImageChangeOnSubmit(fd: FormData) {
-    // No-op for image, currency parsing is handled server-side by parseProduct; keep values as displayed
   }
 
   return (

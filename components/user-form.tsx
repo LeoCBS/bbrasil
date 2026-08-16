@@ -21,7 +21,7 @@ export function UserForm({ user, units, action, submitLabel, submitIcon }: {
   const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending] = React.useTransition();
 
   async function handleSubmit(formData: FormData) {
     try {

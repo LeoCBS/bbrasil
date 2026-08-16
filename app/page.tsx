@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/site/logo";
 import { ProductVisual } from "@/components/site/product-visual";
+import { whatsappHref } from "@/lib/format";
 import { getCategories, type Category } from "@/lib/categories";
 import { getProducts } from "@/lib/products";
 import { HeroCarousel } from "@/components/site/hero-carousel";
@@ -240,7 +241,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   <div className="flex gap-3">
                     <MessageCircle className="mt-1 h-4 w-4 shrink-0 text-brand-green" />
                     <span className="flex flex-wrap gap-x-2 gap-y-1">
-                      {unit.phone ? <a target="_blank" rel="noreferrer" href={`https://wa.me/${unit.whatsapp_number}`} className="font-semibold text-brand-green hover:text-brand-blue">{unit.phone}</a> : "—"}
+                      {unit.phone ? <a target="_blank" rel="noreferrer" href={whatsappHref(unit.whatsapp_number)} className="font-semibold text-brand-green hover:text-brand-blue">{unit.phone}</a> : "—"}
                     </span>
                   </div>
                   <div className="flex gap-3">

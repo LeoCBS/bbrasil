@@ -8,6 +8,7 @@ import { getPaginatedProducts } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
 import { getUnits } from "@/lib/units";
 import { SiteHeader } from "@/components/site/site-header";
+import { buildHref, parsePageParam } from "@/lib/pagination";
 
 const pageSize = 10;
 
@@ -20,12 +21,6 @@ type ProductsPageProps = {
   }>;
 };
 
-function parsePage(value: string | undefined) {
-  const page = Number(value);
-
-  return Number.isInteger(page) && page > 0 ? page : 1;
-}
-
 function buildProductsHref({
   page,
   category,
@@ -37,27 +32,7 @@ function buildProductsHref({
   unitId?: string;
   search?: string;
 }) {
-  const params = new URLSearchParams();
-
-  if (category) {
-    params.set("categoria", category);
-  }
-
-  if (unitId) {
-    params.set("unidade", unitId);
-  }
-
-  if (search) {
-    params.set("busca", search);
-  }
-
-  if (page > 1) {
-    params.set("page", String(page));
-  }
-
-  const query = params.toString();
-
-  return query ? `/produtos?${query}` : "/produtos";
+  return buildHref("/produtos", { categoria: category, unidade: unitId, busca: search }, page);
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
@@ -72,7 +47,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const storedUnitId = cookieStore.get("bbrasil_selected_unit_id")?.value;
   const selectedUnit = units.find((unit) => unit.id === requestedUnitId) ?? units.find((unit) => unit.id === storedUnitId);
   const selectedSearch = params?.busca?.trim();
-  const currentPage = parsePage(params?.page);
+  const currentPage = parsePageParam(params?.page);
 
   const { products, total, page, totalPages } = await getPaginatedProducts({
     category: selectedCategory,

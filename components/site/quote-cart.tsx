@@ -14,6 +14,7 @@ import {
   writeCart,
   type QuoteCartItem
 } from "@/lib/quote-cart-storage";
+import { whatsappHref } from "@/lib/format";
 
 function buildWhatsappHref(items: QuoteCartItem[], unitId: string, units: Unit[]) {
   const contact = units.find((unit) => unit.id === unitId) ?? units[0];
@@ -27,7 +28,7 @@ function buildWhatsappHref(items: QuoteCartItem[], unitId: string, units: Unit[]
     `Empresa para atendimento: ${contact.name}`
   ].join("\n");
 
-  return `https://wa.me/${contact.whatsapp_number}?text=${encodeURIComponent(message)}`;
+  return whatsappHref(contact.whatsapp_number, message);
 }
 
 export function QuoteCart({ units }: { units: Unit[] }) {
@@ -36,7 +37,7 @@ export function QuoteCart({ units }: { units: Unit[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState("");
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
-  const whatsappHref = useMemo(() => buildWhatsappHref(items, selectedUnitId, units), [items, selectedUnitId, units]);
+  const whatsappUrl = useMemo(() => buildWhatsappHref(items, selectedUnitId, units), [items, selectedUnitId, units]);
 
   useEffect(() => {
     const storedItems = readCart();
@@ -184,7 +185,7 @@ export function QuoteCart({ units }: { units: Unit[] }) {
                   </Button>
                 ) : (
                   <Button asChild>
-                    <a href={whatsappHref} target="_blank" rel="noreferrer">
+                    <a href={whatsappUrl} target="_blank" rel="noreferrer">
                       <MessageCircle className="h-5 w-5" /> Enviar pelo WhatsApp
                     </a>
                   </Button>

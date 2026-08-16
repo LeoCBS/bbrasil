@@ -10,17 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Client } from "@/lib/clients";
 import type { Salesperson } from "@/lib/salespeople";
 import type { Unit } from "@/lib/units";
+import { formatCnpj, formatPhone, isValidCnpj } from "@/lib/format";
 
 const fields = [["corporate_name", "Razão social", "text", true], ["state_registration", "Insc. estadual", "text", false], ["address", "Endereço", "text", false], ["neighborhood", "Bairro", "text", false], ["city", "Cidade", "text", false], ["state", "Estado", "text", false], ["zip_code", "CEP", "text", false], ["email", "E-mail", "email", false]] as const;
-
-function formatCnpj(value: string) { const digits = value.replace(/\D/g, "").slice(0, 14); return digits.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2}\.\d{3})(\d)/, "$1.$2").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2"); }
-function formatPhone(value: string) { const digits = value.replace(/\D/g, "").slice(0, 11); return digits.replace(/^(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2"); }
-function validCnpj(value: string) { const digits = value.replace(/\D/g, ""); if (digits.length !== 14 || /^(\d)\1+$/.test(digits)) return false; const digit = (length: number) => { let sum = 0, weight = length - 7; for (let index = 0; index < length; index += 1) { sum += Number(digits[index]) * weight; weight = weight === 2 ? 9 : weight - 1; } const remainder = sum % 11; return remainder < 2 ? 0 : 11 - remainder; }; return digit(12) === Number(digits[12]) && digit(13) === Number(digits[13]); }
 
 export function ClientForm({ client, action, submitLabel, successHref, units, salespeople }: { client?: Client; action: (formData: FormData) => Promise<void>; submitLabel: string; successHref?: string; units: Unit[]; salespeople: Salesperson[] }) {
   const router = useRouter(); const formRef = useRef<HTMLFormElement>(null); const [message, setMessage] = useState(""); const [error, setError] = useState(""); const [pending, startTransition] = useTransition();
   const [cnpj, setCnpj] = useState(formatCnpj(client?.cnpj ?? "")); const [phone, setPhone] = useState(formatPhone(client?.phone ?? "")); const id = client?.id ?? "new";
-  async function submit(formData: FormData) { setMessage(""); setError(""); if (!validCnpj(cnpj)) { setError("Informe um CNPJ válido."); return; } startTransition(async () => { try { await action(formData); setMessage(client ? "Cliente atualizado com sucesso." : "Cliente cadastrado com sucesso."); if (!client) { formRef.current?.reset(); setCnpj(""); setPhone(""); } if (successHref) router.push(successHref); router.refresh(); } catch (reason) { console.error("Falha ao salvar o cliente:", reason); setError(reason instanceof Error ? reason.message : "Não foi possível salvar o cliente."); } }); }
+  async function submit(formData: FormData) { setMessage(""); setError(""); if (!isValidCnpj(cnpj)) { setError("Informe um CNPJ válido."); return; } startTransition(async () => { try { await action(formData); setMessage(client ? "Cliente atualizado com sucesso." : "Cliente cadastrado com sucesso."); if (!client) { formRef.current?.reset(); setCnpj(""); setPhone(""); } if (successHref) router.push(successHref); router.refresh(); } catch (reason) { console.error("Falha ao salvar o cliente:", reason); setError(reason instanceof Error ? reason.message : "Não foi possível salvar o cliente."); } }); }
   const selectClass = "h-11 rounded-md border border-input bg-background px-3 text-sm";
   return <form ref={formRef} action={submit} className="grid gap-4">
     {client ? <input type="hidden" name="id" value={client.id} /> : null}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { requireAdminUser } from "@/auth";
 import { deleteProductAction } from "@/lib/actions";
 import { getPaginatedProducts, type Product } from "@/lib/products";
@@ -9,6 +9,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import AdminHeader from "@/components/admin/admin-header";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { AdminPagination } from "@/components/admin/admin-pagination";
+import { buildHref, parsePageParam } from "@/lib/pagination";
+import { formatMarginPercent } from "@/lib/format";
 
 const pageSize = 10;
 
@@ -20,26 +23,13 @@ type AdminProductsPageProps = {
   }>;
 };
 
-function parsePage(value: string | undefined) {
-  const page = Number(value);
-  return Number.isInteger(page) && page > 0 ? page : 1;
-}
-
-function buildHref(page: number, search?: string, category?: string) {
-  const params = new URLSearchParams();
-  if (search) params.set("busca", search);
-  if (category) params.set("categoria", category);
-  if (page > 1) params.set("page", String(page));
-  const q = params.toString();
-  return q ? `/admin/produtos?${q}` : "/admin/produtos";
-}
-
 export default async function AdminProductsPage({ searchParams }: AdminProductsPageProps) {
   const user = await requireAdminUser();
   const params = await searchParams;
   const search = params?.busca?.trim();
-  const page = parsePage(params?.page);
+  const page = parsePageParam(params?.page);
   const category = params?.categoria;
+  const hrefFor = (target: number) => buildHref("/admin/produtos", { busca: search, categoria: category }, target);
 
   const categories = await getCategories({ includeInactive: true });
   const { products, total, totalPages } = await getPaginatedProducts({ includeInactive: true, page, pageSize, category: category ?? undefined, search });
@@ -131,7 +121,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
         </td>
 
         <td className="p-4 text-right whitespace-nowrap">
-          {typeof p.cost_price === 'number' && p.price ? `${(((p.price - p.cost_price) / (p.cost_price || 1)) * 100).toFixed(2)}%` : "-"}
+          {formatMarginPercent(p.price, p.cost_price)}
         </td>
 
         <td className="p-4 text-right whitespace-nowrap">
@@ -161,52 +151,13 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
           </Card>
 
           {total > 0 ? (
-            <nav className="mt-4 flex items-center justify-between">
-              <div className="text-sm text-slate-600">Mostrando {products.length} de {total} produtos</div>
-              <div className="flex items-center gap-2">
-                <Button asChild variant="outline" disabled={page <= 1}>
-                  <Link href={buildHref(page - 1, search ?? undefined, category ?? undefined)}>
-                    <ArrowLeft className="h-4 w-4" />
-                  </Link>
-                </Button>
-
-                {/* Numeric pagination: show a window around current page with first/last and ellipses */}
-                <div className="flex items-center gap-1">
-                  {(() => {
-                    const pages: (number | "dots")[] = [];
-                    const start = Math.max(1, page - 2);
-                    const end = Math.min(totalPages, page + 2);
-
-                    if (start > 1) {
-                      pages.push(1);
-                      if (start > 2) pages.push("dots");
-                    }
-
-                    for (let p = start; p <= end; p++) pages.push(p);
-
-                    if (end < totalPages) {
-                      if (end < totalPages - 1) pages.push("dots");
-                      pages.push(totalPages);
-                    }
-
-                    return pages.map((p, idx) => {
-                      if (p === "dots") return <span key={`dots-${idx}`} className="px-2">…</span>;
-                      return (
-                        <Button asChild size="sm" key={p} variant={p === page ? "default" : "ghost"}>
-                          <Link href={buildHref(p as number, search ?? undefined, category ?? undefined)} className={p === page ? "font-semibold" : undefined}>{p}</Link>
-                        </Button>
-                      );
-                    });
-                  })()}
-                </div>
-
-                <Button asChild variant="outline" disabled={page >= totalPages}>
-                  <Link href={buildHref(page + 1, search ?? undefined, category ?? undefined)}>
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </nav>
+            <AdminPagination
+              className="mt-4 flex items-center justify-between"
+              page={page}
+              totalPages={totalPages}
+              hrefFor={hrefFor}
+              label={<div className="text-sm text-slate-600">Mostrando {products.length} de {total} produtos</div>}
+            />
           ) : null}
         </section>
       </div>

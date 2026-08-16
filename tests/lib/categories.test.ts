@@ -98,14 +98,11 @@ describe("getCategories", () => {
     await expect(getCategories()).resolves.toEqual([]);
   });
 
-  it("falls back to the demo catalog when the query fails", async () => {
+  it("propagates the supabase error when the query fails", async () => {
     const stub = createSupabaseStub({ data: null, error: { message: "unreachable" } });
     createClientMock.mockReturnValue(stub.client);
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await expect(getCategories()).resolves.toHaveLength(10);
-    expect(consoleError).toHaveBeenCalledWith("Supabase categories fetch failed:", "unreachable");
-    consoleError.mockRestore();
+    await expect(getCategories()).rejects.toThrow("unreachable");
   });
 });
 
@@ -172,16 +169,11 @@ describe("getPaginatedCategories with supabase", () => {
     await expect(getPaginatedCategories({ page: 9, pageSize: 3 })).resolves.toMatchObject({ page: 1, totalPages: 1 });
   });
 
-  it("falls back to the demo catalog when the paginated query fails", async () => {
+  it("propagates the supabase error when the paginated query fails", async () => {
     const stub = createSupabaseStub({ data: null, error: { message: "broken" }, count: null });
     createClientMock.mockReturnValue(stub.client);
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const page = await getPaginatedCategories({ search: "epi", pageSize: 5 });
-
-    expect(page).toMatchObject({ total: 1, page: 1, totalPages: 1 });
-    expect(consoleError).toHaveBeenCalledWith("Supabase categories fetch failed:", "broken");
-    consoleError.mockRestore();
+    await expect(getPaginatedCategories({ search: "epi", pageSize: 5 })).rejects.toThrow("broken");
   });
 });
 

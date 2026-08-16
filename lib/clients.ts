@@ -67,13 +67,7 @@ export async function getPaginatedClients({ search, status, page = 1, pageSize =
   }
   const from = (safePage - 1) * safePageSize;
   const { data, error, count } = await query.range(from, from + safePageSize - 1);
-  if (error) {
-    console.error("Supabase clients fetch failed:", error.message);
-    const filtered = fallbackClients.filter((client) => matches(client, search, status));
-    const totalPages = Math.max(1, Math.ceil(filtered.length / safePageSize));
-    const finalPage = Math.min(safePage, totalPages);
-    return { clients: filtered.slice((finalPage - 1) * safePageSize, finalPage * safePageSize), total: filtered.length, page: finalPage, pageSize: safePageSize, totalPages };
-  }
+  if (error) throw new Error(`Não foi possível carregar os clientes: ${error.message}`);
   const total = count ?? 0;
   return { clients: (data ?? []) as Client[], total, page: safePage, pageSize: safePageSize, totalPages: Math.max(1, Math.ceil(total / safePageSize)) };
 }

@@ -3,42 +3,19 @@
 import { useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-export type QuoteCartItem = {
-  id: string;
-  name: string;
-  unit_id: string;
-  unit_name: string;
-  category: string;
-  size: string;
-  quantity: number;
-};
-
-const cartStorageKey = "bbrasil_quote_cart";
-const currentUnitStorageKey = "bbrasil_quote_unit_id";
-
-function readCart() {
-  try {
-    const value = window.localStorage.getItem(cartStorageKey);
-
-    return value ? (JSON.parse(value) as QuoteCartItem[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeCart(items: QuoteCartItem[], unitId: string) {
-  window.localStorage.setItem(cartStorageKey, JSON.stringify(items));
-  window.localStorage.setItem(currentUnitStorageKey, unitId);
-  window.dispatchEvent(new CustomEvent("bbrasil:quote-cart-updated", { detail: { open: true } }));
-}
-
-function readSelectedUnit(items: QuoteCartItem[]) {
-  return window.localStorage.getItem(currentUnitStorageKey) ?? items[0]?.unit_id ?? "";
-}
+import { Alert } from "@/components/ui/alert";
+import {
+  notifyCartUpdated,
+  readCart,
+  readSelectedUnitId,
+  storageUnavailableMessage,
+  writeCart,
+  type QuoteCartItem
+} from "@/lib/quote-cart-storage";
 
 export function AddToQuoteButton({ item }: { item: Omit<QuoteCartItem, "quantity"> }) {
   const [added, setAdded] = useState(false);
+  const [error, setError] = useState("");
 
   function handleAddToCart() {
     const cart = readCart();
@@ -47,16 +24,28 @@ export function AddToQuoteButton({ item }: { item: Omit<QuoteCartItem, "quantity
       ? cart.map((cartItem) => (cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem))
       : [...cart, { ...item, quantity: 1 }];
 
-    writeCart(nextCart, readSelectedUnit(cart) || item.unit_id);
+    try {
+      writeCart(nextCart, readSelectedUnitId(cart) || item.unit_id);
+    } catch (reason) {
+      console.error("Não foi possível gravar o carrinho de orçamento:", reason);
+      setError(storageUnavailableMessage);
+      return;
+    }
+
+    notifyCartUpdated({ open: true });
+    setError("");
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1800);
   }
 
   return (
-    <Button type="button" size="lg" onClick={handleAddToCart}>
-      <MessageCircle className="h-5 w-5" /> {added ? "Produto adicionado" : "Solicitar orcamento"}
-    </Button>
+    <div className="grid gap-3">
+      {error ? <Alert variant="error" message={error} onClose={() => setError("")} /> : null}
+      <Button type="button" size="lg" onClick={handleAddToCart}>
+        <MessageCircle className="h-5 w-5" /> {added ? "Produto adicionado" : "Solicitar orcamento"}
+      </Button>
+    </div>
   );
 }
 
-export { cartStorageKey, currentUnitStorageKey };
+export type { QuoteCartItem };

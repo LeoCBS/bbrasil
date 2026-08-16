@@ -50,6 +50,7 @@ export async function getCurrentUser() {
   const { data, error } = await supabase.auth.getUser(accessToken);
 
   if (error) {
+    console.error("Não foi possível validar a sessão do admin:", error.message);
     return null;
   }
 
@@ -84,6 +85,10 @@ export async function loginAction(formData: FormData) {
   });
 
   if (error || !data.session) {
+    if (error) {
+      console.error("Falha no login do admin:", error.message);
+    }
+
     redirect(`/admin/login?error=invalid&next=${encodeURIComponent(next)}`);
   }
 

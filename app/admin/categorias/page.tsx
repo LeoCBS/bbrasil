@@ -7,6 +7,7 @@ import AdminHeader from "@/components/admin/admin-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { deleteCategoryAction as deleteAction } from "@/lib/actions";
+import { buildHref, parsePageParam } from "@/lib/pagination";
 
 const pageSize = 10;
 
@@ -14,24 +15,12 @@ type Props = {
   searchParams?: Promise<{ busca?: string; page?: string }>;
 };
 
-function parsePage(value: string | undefined) {
-  const p = Number(value);
-  return Number.isInteger(p) && p > 0 ? p : 1;
-}
-
-function buildHref(page: number, search?: string) {
-  const params = new URLSearchParams();
-  if (search) params.set("busca", search);
-  if (page > 1) params.set("page", String(page));
-  const q = params.toString();
-  return q ? `/admin/categorias?${q}` : "/admin/categorias";
-}
-
 export default async function CategoriesPage({ searchParams }: Props) {
   const user = await requireAdminUser("/admin/categorias");
   const params = await searchParams;
   const search = params?.busca?.trim();
-  const page = parsePage(params?.page);
+  const page = parsePageParam(params?.page);
+  const hrefFor = (target: number) => buildHref("/admin/categorias", { busca: search }, target);
 
   const { categories, total, totalPages } = await getPaginatedCategories({ includeInactive: true, page, pageSize, search });
 
@@ -101,13 +90,13 @@ export default async function CategoriesPage({ searchParams }: Props) {
               <div className="text-sm text-slate-600">Mostrando {categories.length} de {total} categorias</div>
               <div className="flex items-center gap-2">
                 <Button asChild variant="outline" disabled={page <= 1}>
-                  <Link href={buildHref(page - 1, search ?? undefined)}>
+                  <Link href={hrefFor(page - 1)}>
                     <ArrowLeft className="h-4 w-4" />
                   </Link>
                 </Button>
                 <div className="px-3 py-1 border rounded-md">{page}</div>
                 <Button asChild variant="outline" disabled={page >= totalPages}>
-                  <Link href={buildHref(page + 1, search ?? undefined)}>
+                  <Link href={hrefFor(page + 1)}>
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>

@@ -26,15 +26,27 @@ function parseCategory(formData: FormData): CategoryMutationInput {
 }
 
 async function parseProduct(formData: FormData): Promise<ProductMutationInput> {
-  const priceValue = String(formData.get("price") ?? "").replace(",", ".");
+  function parseCurrencyField(name: string) {
+    const raw = String(formData.get(name) ?? "").trim();
+    if (!raw) return null;
+    // remove any non digit, dot or comma (keeps - for negatives if any)
+    const cleaned = raw.replace(/[^0-9,.-]/g, "");
+    // normalize thousands separator and decimal comma
+    // remove dots used as thousand separators, convert comma to dot for decimal
+    const normalized = cleaned.replace(/\./g, "").replace(/,/g, ".");
+    const n = Number(normalized);
+    return Number.isFinite(n) ? n : null;
+  }
 
   const product: ProductMutationInput = {
+    code: String(formData.get("code") ?? "").trim(),
     name: String(formData.get("name") ?? "").trim(),
     unit_id: String(formData.get("unit_id") ?? "").trim(),
     category_id: String(formData.get("category_id") ?? "").trim(),
     description: String(formData.get("description") ?? "").trim(),
     size: String(formData.get("size") ?? "").trim(),
-    price: priceValue ? Number(priceValue) : null,
+    price: parseCurrencyField("price"),
+    cost_price: parseCurrencyField("cost_price"),
     active: formData.get("active") === "on",
     // ensure image_url is always present to satisfy ProductMutationInput
     image_url: String(formData.get("image_url") ?? "")

@@ -152,10 +152,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   <span className="mt-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">{product.unit_name}</span>
                   <h2 className="mt-2 text-xl font-bold text-brand-ink">{product.name}</h2>
                   <p className="mt-3 text-sm leading-6 text-slate-600">{product.description}</p>
-                  <div className="mt-auto flex items-center justify-between pt-5">
-                    <span className="font-semibold text-brand-blue">{product.size}</span>
-                    {product.price ? <span className="font-bold text-brand-ink">R$ {product.price.toFixed(2)}</span> : null}
-                  </div>
+                  
                   <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand-green">
                     Ver detalhes <ArrowRight className="h-4 w-4" />
                   </span>

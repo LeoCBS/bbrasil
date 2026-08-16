@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useRef, useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Category } from '@/lib/categories';
 import { Product } from '@/lib/products';
@@ -18,16 +18,28 @@ function validateImage(file: File | null): string {
   const maxSize = 1024 * 1024; // 1MB
   const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
-  if (file.size > maxSize) {
-    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+  // size guard: some entries may not have size property
+  const size = (file as File)?.size;
+  if (typeof size === 'number' && size > maxSize) {
+    const sizeMB = (size / 1024 / 1024).toFixed(2);
     return `❌ Imagem muito grande: ${sizeMB}MB. Máximo permitido: 1MB. Comprima ou use resolução menor.`;
   }
 
-  if (!validTypes.includes(file.type)) {
-    return '❌ Formato inválido. Use JPG, PNG ou WebP.';
+  // Accept based on MIME type when available, otherwise fallback to filename extension
+  const mime = (file as File)?.type || '';
+  const name = (file as File)?.name || '';
+
+  if (mime && validTypes.includes(mime)) {
+    return '';
   }
 
-  return '';
+  // fallback: check extension from filename
+  if (name && /\.(jpe?g|png|webp)$/i.test(name)) {
+    return '';
+  }
+
+  // If neither mime nor filename indicate an allowed type, reject
+  return '❌ Formato inválido. Use JPG, PNG ou WebP.';
 }
 
 export function ProductForm({
@@ -51,6 +63,41 @@ export function ProductForm({
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [isPending, startTransition] = useTransition();
 
+  // display states for masked currency inputs
+  const formatBRL = (value?: number | null) => {
+    if (value === null || value === undefined || value === 0) return value === 0 ? 'R$ 0,00' : '';
+    try {
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
+    } catch (e) {
+      return '';
+    }
+  };
+
+  const [priceDisplay, setPriceDisplay] = useState<string>(() => formatBRL(product?.price ?? null));
+  const [costPriceDisplay, setCostPriceDisplay] = useState<string>(() => formatBRL(product?.cost_price ?? null));
+
+  // keep displays in sync if product prop changes
+  useEffect(() => {
+    setPriceDisplay(formatBRL(product?.price ?? null));
+    setCostPriceDisplay(formatBRL(product?.cost_price ?? null));
+  }, [product]);
+
+  function formatFromInputDigits(digits: string) {
+    if (!digits) return '';
+    const num = Number(digits);
+    if (!Number.isFinite(num)) return '';
+    const value = num / 100; // digits are cents
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  }
+
+  function handleCurrencyInputChange(e: React.ChangeEvent<HTMLInputElement>, setter: (v: string) => void) {
+    const onlyDigits = e.target.value.replace(/\D/g, '');
+    const display = formatFromInputDigits(onlyDigits);
+    setter(display);
+    // update the real input value so FormData contains formatted value
+    e.target.value = display;
+  }
+
   const activeCategories = categories.filter((category) => category.active);
   const categoryOptions = product?.category_id && !activeCategories.some((category) => category.id === product.category_id)
     ? [{ id: product.category_id, name: product.category, description: '', icon: 'package', active: true, sort_order: -1 }, ...activeCategories]
@@ -63,8 +110,13 @@ export function ProductForm({
   }
 
   async function handleSubmit(formData: FormData) {
-    const imageFile = formData.get('image_blob') as File | null;
-    const error = validateImage(imageFile);
+    const rawImage = formData.get('image_blob');
+    let error = '';
+
+    // Only validate when an actual File is present (user selected a new file)
+    if (rawImage && rawImage instanceof File) {
+      error = validateImage(rawImage as File);
+    }
 
     if (error) {
       setImageError(error);
@@ -161,10 +213,10 @@ export function ProductForm({
         <Input id={`unit-short-${product?.id ?? 'new'}`} name="unit" defaultValue={product?.unit ?? ''} placeholder="PC, RL, CX" />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <div className="grid gap-2">
           <Label htmlFor={`size-${product?.id ?? 'new'}`}>Volume</Label>
-          <Input id={`size-${product?.id ?? 'new'}`} name="size" defaultValue={product?.size} placeholder="5L" required />
+          <Input id={`size-${product?.id ?? 'new'}`} name="size" defaultValue={product?.size} placeholder="5L" />
         </div>
 
         <div className="grid gap-2">
@@ -177,38 +229,42 @@ export function ProductForm({
           <Input
             id={`price-${product?.id ?? 'new'}`}
             name="price"
-            type="number"
-            step="0.01"
-            defaultValue={product?.price ?? ''}
-            placeholder="0.00"
+            type="text"
+            value={priceDisplay}
+            placeholder="R$ 0,00"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCurrencyInputChange(e, setPriceDisplay)}
           />
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label htmlFor={`cost_price-${product?.id ?? 'new'}`}>VL. Custo</Label>
-          <Input id={`cost_price-${product?.id ?? 'new'}`} name="cost_price" type="number" step="0.01" defaultValue={product?.cost_price ?? ''} placeholder="0.00" />
-        </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor={`image-${product?.id ?? 'new'}`}>Imagem do produto</Label>
-          {product?.image_url ? (
-            <div className="flex justify-center rounded-md border border-dashed bg-white p-3">
-              <ProductVisual name={product.name} imageSrc={product.image_url} compact />
-            </div>
-          ) : null}
           <Input
-            id={`image-${product?.id ?? 'new'}`}
-            name="image_blob"
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
+            id={`cost_price-${product?.id ?? 'new'}`}
+            name="cost_price"
+            type="text"
+            value={costPriceDisplay}
+            placeholder="R$ 0,00"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCurrencyInputChange(e, setCostPriceDisplay)}
           />
         </div>
       </div>
 
-      
+
+      <div className="grid gap-2">
+        <Label htmlFor={`image-${product?.id ?? 'new'}`}>Imagem do produto</Label>
+        {product?.image_url ? (
+          <div className="flex justify-center rounded-md border border-dashed bg-white p-3">
+            <ProductVisual name={product.name} imageSrc={product.image_url} compact />
+          </div>
+        ) : null}
+        <Input
+          id={`image-${product?.id ?? 'new'}`}
+          name="image_blob"
+          type="file"
+          accept=".jpg,.jpeg,.png,.webp,image/*"
+          onChange={handleImageChange}
+        />
+      </div>
+
       <label className="flex items-center gap-3 text-sm font-medium">
         <input
           type="checkbox"

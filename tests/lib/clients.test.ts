@@ -123,7 +123,7 @@ describe("getPaginatedClients with supabase", () => {
 
     expect(stub.builder.callsFor("or")).toEqual([
       [
-        "corporate_name.ilike.%50\\%\\_a\\,b%,cnpj.ilike.%50\\%\\_a\\,b%,city.ilike.%50\\%\\_a\\,b%,email.ilike.%50\\%\\_a\\,b%"
+        'corporate_name.ilike."%50\\%\\_a,b%",cnpj.ilike."%50\\%\\_a,b%",city.ilike."%50\\%\\_a,b%",email.ilike."%50\\%\\_a,b%"'
       ]
     ]);
   });
@@ -137,16 +137,11 @@ describe("getPaginatedClients with supabase", () => {
     expect(stub.builder.callsFor("or")).toEqual([]);
   });
 
-  it("falls back to the demo clients when the query fails", async () => {
+  it("propagates the supabase error when the query fails", async () => {
     const stub = createSupabaseStub({ data: null, error: { message: "timeout" }, count: null });
     createSupabaseClientMock.mockReturnValue(stub.client);
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const page = await getPaginatedClients({ search: "hotel" });
-
-    expect(page).toMatchObject({ total: 1, page: 1, totalPages: 1 });
-    expect(consoleError).toHaveBeenCalledWith("Supabase clients fetch failed:", "timeout");
-    consoleError.mockRestore();
+    await expect(getPaginatedClients({ search: "hotel" })).rejects.toThrow("timeout");
   });
 
   it("treats a missing count as zero", async () => {

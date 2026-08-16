@@ -45,17 +45,17 @@ export default async function Home({ searchParams }: HomeProps) {
   const params = await searchParams;
   const cookieStore = await cookies();
   const units = await getUnits();
+  const categories = await getCategories();
   const requestedUnitId = params?.unidade?.trim();
   const storedUnitId = cookieStore.get("bbrasil_selected_unit_id")?.value;
   const selectedUnit = units.find((unit) => unit.id === requestedUnitId) ?? units.find((unit) => unit.id === storedUnitId);
   const selectedSearch = params?.busca?.trim();
-  const categories = await getCategories();
   const products = await getProducts({ unitId: selectedUnit?.id, search: selectedSearch });
 
   return (
     <main className="min-h-screen bg-white">
       <SiteHeader selectedUnit={selectedUnit} selectedSearch={selectedSearch} units={units} />
-      <HeroCarousel selectedUnit={selectedUnit} units={units} />
+      <HeroCarousel selectedUnit={selectedUnit} />
 
       <section id="categorias" className="container py-11">
         <div className="mb-5">

@@ -31,7 +31,7 @@ function parseCategory(formData: FormData): CategoryMutationInput {
     name: textField(formData, "name"),
     description: textField(formData, "description"),
     icon: textField(formData, "icon", "package"),
-    sort_order: numberField(formData, "sort_order"),
+    sort_order: numberField(formData, "sort_order", 0)?? 0,
     active: checkboxField(formData, "active")
   };
 }
@@ -45,7 +45,7 @@ function parseProduct(formData: FormData): ProductMutationInput {
     description: textField(formData, "description"),
     size: textField(formData, "size"),
     unit: textField(formData, "unit"),
-    stock: numberField(formData, "stock", null as any),
+    stock: numberField(formData, "stock", null),
     price: currencyField(formData, "price"),
     cost_price: currencyField(formData, "cost_price"),
     active: checkboxField(formData, "active"),

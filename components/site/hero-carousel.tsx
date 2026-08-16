@@ -23,7 +23,7 @@ const banners = [
   },
 ];
 
-export function HeroCarousel({ selectedUnit, units }: { selectedUnit?: Unit; units: Unit[] }) {
+export function HeroCarousel({ selectedUnit }: { selectedUnit?: Unit }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const banner = banners[activeSlide];
   const whatsappUrl = whatsappHref(selectedUnit?.whatsapp_number);

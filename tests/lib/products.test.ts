@@ -154,7 +154,7 @@ describe("getProducts with supabase", () => {
       ["unit_id", "unit-1"]
     ]);
     expect(stub.builder.callsFor("or")).toEqual([
-      ["name.ilike.%50\\%\\_a\\,b%,description.ilike.%50\\%\\_a\\,b%"]
+      ['name.ilike."%50\\%\\_a,b%",description.ilike."%50\\%\\_a,b%"']
     ]);
   });
 
@@ -167,14 +167,11 @@ describe("getProducts with supabase", () => {
     expect(stub.builder.callsFor("eq")).toEqual([]);
   });
 
-  it("falls back to the demo products when the query fails", async () => {
+  it("propagates the supabase error when the query fails", async () => {
     const stub = createSupabaseStub({ data: null, error: { message: "down" } });
     createClientMock.mockReturnValue(stub.client);
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await expect(getProducts({ search: "multiuso" })).resolves.toHaveLength(1);
-    expect(consoleError).toHaveBeenCalledWith("Supabase products fetch failed:", "down");
-    consoleError.mockRestore();
+    await expect(getProducts({ search: "multiuso" })).rejects.toThrow("down");
   });
 });
 
@@ -239,16 +236,13 @@ describe("getPaginatedProducts with supabase", () => {
     expect(secondStub.builder.callsFor("range")).toEqual([[2, 3]]);
   });
 
-  it("falls back to the demo products when the paginated query fails", async () => {
+  it("propagates the supabase error when the paginated query fails", async () => {
     const stub = createSupabaseStub({ data: null, error: { message: "boom" }, count: null });
     createClientMock.mockReturnValue(stub.client);
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const page = await getPaginatedProducts({ category: "LIMPEZA E HIGIENE", search: "detergente" });
-
-    expect(page).toMatchObject({ total: 1, page: 1, totalPages: 1 });
-    expect(consoleError).toHaveBeenCalledWith("Supabase products fetch failed:", "boom");
-    consoleError.mockRestore();
+    await expect(
+      getPaginatedProducts({ category: "LIMPEZA E HIGIENE", search: "detergente" })
+    ).rejects.toThrow("boom");
   });
 
   it("treats a missing count as an empty result", async () => {
@@ -287,14 +281,11 @@ describe("getProduct", () => {
     expect(stub.builder.callsFor("eq")).toEqual([["id", "p-1"]]);
   });
 
-  it("returns null and logs when the fetch fails", async () => {
+  it("propagates the supabase error when the fetch fails", async () => {
     const stub = createSupabaseStub({ data: null, error: { message: "nope" } });
     createClientMock.mockReturnValue(stub.client);
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await expect(getProduct("p-1")).resolves.toBeNull();
-    expect(consoleError).toHaveBeenCalledWith("Supabase product fetch failed:", "nope");
-    consoleError.mockRestore();
+    await expect(getProduct("p-1")).rejects.toThrow("nope");
   });
 });
 

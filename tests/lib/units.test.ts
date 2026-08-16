@@ -121,7 +121,9 @@ describe("unit mutations", () => {
   ])("%s asks for supabase configuration when it is missing", async (_name, run) => {
     clearSupabaseEnv();
 
-    await expect(run()).rejects.toThrow("Configure o Supabase para cadastrar unidades.");
+    await expect(run()).rejects.toThrow(
+      "Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para usar o cadastro de unidades."
+    );
   });
 
   it.each([

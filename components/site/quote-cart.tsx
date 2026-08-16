@@ -5,26 +5,15 @@ import { usePathname } from "next/navigation";
 import { ArrowLeft, Minus, MessageCircle, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import type { Unit } from "@/lib/units";
 import { Button } from "@/components/ui/button";
-import { cartStorageKey, currentUnitStorageKey, type QuoteCartItem } from "@/components/site/add-to-quote-button";
-
-function readCart() {
-  try {
-    const value = window.localStorage.getItem(cartStorageKey);
-
-    return value ? (JSON.parse(value) as QuoteCartItem[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function readCurrentUnitId(items: QuoteCartItem[], units: Unit[]) {
-  return window.localStorage.getItem(currentUnitStorageKey) ?? items[0]?.unit_id ?? units[0]?.id ?? "";
-}
-
-function writeCart(items: QuoteCartItem[], unitId: string) {
-  window.localStorage.setItem(cartStorageKey, JSON.stringify(items));
-  window.localStorage.setItem(currentUnitStorageKey, unitId);
-}
+import { Alert } from "@/components/ui/alert";
+import {
+  cartUpdatedEvent,
+  readCart,
+  readSelectedUnitId,
+  storageUnavailableMessage,
+  writeCart,
+  type QuoteCartItem
+} from "@/lib/quote-cart-storage";
 
 function buildWhatsappHref(items: QuoteCartItem[], unitId: string, units: Unit[]) {
   const contact = units.find((unit) => unit.id === unitId) ?? units[0];
@@ -45,6 +34,7 @@ export function QuoteCart({ units }: { units: Unit[] }) {
   const [items, setItems] = useState<QuoteCartItem[]>([]);
   const [selectedUnitId, setSelectedUnitId] = useState(units[0]?.id ?? "");
   const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState("");
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
   const whatsappHref = useMemo(() => buildWhatsappHref(items, selectedUnitId, units), [items, selectedUnitId, units]);
 
@@ -52,14 +42,14 @@ export function QuoteCart({ units }: { units: Unit[] }) {
     const storedItems = readCart();
 
     setItems(storedItems);
-    setSelectedUnitId(readCurrentUnitId(storedItems, units));
+    setSelectedUnitId(readSelectedUnitId(storedItems, units));
 
     function handleCartUpdated(event: Event) {
       const updatedItems = readCart();
       const shouldOpen = event instanceof CustomEvent ? Boolean(event.detail?.open) : false;
 
       setItems(updatedItems);
-      setSelectedUnitId(readCurrentUnitId(updatedItems, units));
+      setSelectedUnitId(readSelectedUnitId(updatedItems, units));
 
       if (shouldOpen) {
         setIsOpen(true);
@@ -67,17 +57,25 @@ export function QuoteCart({ units }: { units: Unit[] }) {
     }
 
     window.addEventListener("storage", handleCartUpdated);
-    window.addEventListener("bbrasil:quote-cart-updated", handleCartUpdated);
+    window.addEventListener(cartUpdatedEvent, handleCartUpdated);
 
     return () => {
       window.removeEventListener("storage", handleCartUpdated);
-      window.removeEventListener("bbrasil:quote-cart-updated", handleCartUpdated);
+      window.removeEventListener(cartUpdatedEvent, handleCartUpdated);
     };
   }, [units]);
 
   function updateItems(nextItems: QuoteCartItem[]) {
+    try {
+      writeCart(nextItems, selectedUnitId);
+    } catch (reason) {
+      console.error("Não foi possível gravar o carrinho de orçamento:", reason);
+      setError(storageUnavailableMessage);
+      return;
+    }
+
+    setError("");
     setItems(nextItems);
-    writeCart(nextItems, selectedUnitId);
   }
 
   function updateQuantity(id: string, quantity: number) {
@@ -129,6 +127,12 @@ export function QuoteCart({ units }: { units: Unit[] }) {
             </header>
 
             <div className="flex-1 overflow-y-auto p-5">
+              {error ? (
+                <div className="mb-4">
+                  <Alert variant="error" message={error} onClose={() => setError("")} />
+                </div>
+              ) : null}
+
               {items.length === 0 ? (
                 <div className="rounded-lg border border-dashed p-6 text-center">
                   <ShoppingCart className="mx-auto h-8 w-8 text-slate-400" />

@@ -60,6 +60,7 @@ export function ProductForm({
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [imageError, setImageError] = useState<string>('');
+  const [submitError, setSubmitError] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [isPending, startTransition] = useTransition();
 
@@ -68,7 +69,8 @@ export function ProductForm({
     if (value === null || value === undefined || value === 0) return value === 0 ? 'R$ 0,00' : '';
     try {
       return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
-    } catch (e) {
+    } catch (reason) {
+      console.error('Não foi possível formatar o valor em BRL:', reason);
       return '';
     }
   };
@@ -120,27 +122,28 @@ export function ProductForm({
 
     if (error) {
       setImageError(error);
+      setSubmitError('');
       setSuccessMessage('');
       return;
     }
 
     setImageError('');
+    setSubmitError('');
     setSuccessMessage('');
 
     startTransition(async () => {
       try {
         await action(formData);
         setSuccessMessage(product ? 'Produto atualizado com sucesso.' : 'Produto criado com sucesso.');
-        setImageError('');
 
         if (!product) {
           formRef.current?.reset();
         }
 
         router.refresh();
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Erro ao enviar formulário';
-        setImageError(errorMessage);
+      } catch (reason) {
+        console.error('Falha ao salvar o produto:', reason);
+        setSubmitError(reason instanceof Error ? reason.message : 'Não foi possível salvar o produto.');
       }
     });
   }
@@ -153,6 +156,10 @@ export function ProductForm({
       
       {imageError && (
         <Alert variant="error" message={imageError} onClose={() => setImageError('')} />
+      )}
+
+      {submitError && (
+        <Alert variant="error" message={submitError} onClose={() => setSubmitError('')} />
       )}
 
       {product ? <input type="hidden" name="id" value={product.id} /> : null}

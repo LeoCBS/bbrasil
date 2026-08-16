@@ -1,6 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from 'crypto';
+import { buildIlikePattern } from "@/lib/supabase-filters";
 
 export type Product = {
   id: string;
@@ -162,10 +163,6 @@ function matchesSearch(product: Product, search?: string) {
   return searchableText.includes(normalizedSearch);
 }
 
-function escapeSearchPattern(value: string) {
-  return value.replace(/[%_]/g, "\\$&").replace(/,/g, "\\,");
-}
-
 function paginateProducts(products: Product[], page: number, pageSize: number): ProductsPage {
   const safePageSize = Math.max(1, pageSize);
   const total = products.length;
@@ -218,7 +215,7 @@ export async function getProducts({ includeInactive = false, unitId, search }: G
   }
 
   if (search) {
-    const pattern = `%${escapeSearchPattern(search.trim())}%`;
+    const pattern = buildIlikePattern(search.trim());
     query = query.or(`name.ilike.${pattern},description.ilike.${pattern}`);
   }
 
@@ -277,11 +274,10 @@ export async function getPaginatedProducts({
   }
 
   if (search) {
-    const pattern = `%${escapeSearchPattern(search.trim())}%`;
+    const pattern = buildIlikePattern(search.trim());
     query = query.or(`name.ilike.${pattern},description.ilike.${pattern}`);
   }
-  
-  
+
   const { data, error, count } = await query.range(from, to);
   
   if (error) {
@@ -370,6 +366,14 @@ export async function createProduct(input: ProductMutationInput, imageFile: Form
   }
 }
 
+const allowedImageTypes: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp"
+};
+
+const maxImageSizeInBytes = 1024 * 1024;
+
 function sanitizeFileName(fileName: string): string {
   return fileName
     .toLowerCase() // Converter para minúsculas
@@ -398,13 +402,25 @@ async function uploadImageToBucket(imageFile:FormDataEntryValue, id: string, uni
 
   if (hasImageFile) {
     const file = imageFile as File;
+    const contentType = file.type;
+    const extension = allowedImageTypes[contentType];
+
+    if (!extension) {
+      throw new Error("Formato de imagem invalido. Envie um arquivo JPG, PNG ou WEBP.");
+    }
+
+    if (file.size > maxImageSizeInBytes) {
+      throw new Error("Imagem muito grande. O tamanho maximo permitido e 1MB.");
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
-    const imagePath = `${sanitizeFileName(unitId)}/${id}-${sanitizeFileName(file.name)}`;
-    const { data, error } = await supabase
+    const baseName = sanitizeFileName(file.name.replace(/\.[^.]+$/, "")) || "imagem";
+    const imagePath = `${sanitizeFileName(unitId)}/${id}-${baseName}.${extension}`;
+    const { error } = await supabase
     .storage
     .from('images')
     .upload(imagePath, buffer, {
-      contentType: file.type,
+      contentType,
       upsert: true
     })
 

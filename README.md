@@ -69,6 +69,11 @@ using (active = true);
 
 O admin usa `SUPABASE_SERVICE_ROLE_KEY` em server actions. Nao exponha essa chave no navegador.
 
+Rode tambem as migracoes de `supabase/migrations`. A migracao `20260816000000_enable_row_level_security.sql`
+habilita row level security em `products`, `units`, `clients` e `salespeople`: sem ela, a `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+(publica) da acesso de leitura e escrita a essas tabelas pela API REST do Supabase. Com RLS habilitado,
+`SUPABASE_SERVICE_ROLE_KEY` passa a ser obrigatoria para o admin funcionar.
+
 As categorias usam o campo `icon` com estes valores aceitos pelo site: `package`, `spray`, `shield`, `sparkles`, `trash` e `waves`.
 
 Para acessar o admin, crie um usuario em **Supabase Auth > Users** com e-mail e senha. O login usa Supabase Auth nativo, sem providers externos.

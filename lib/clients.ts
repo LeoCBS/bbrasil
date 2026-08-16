@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { unstable_noStore as noStore } from "next/cache";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { buildIlikePattern } from "@/lib/supabase-filters";
 
 export type Client = {
   id: string;
@@ -61,8 +62,8 @@ export async function getPaginatedClients({ search, status, page = 1, pageSize =
   if (status === "ativo") query = query.eq("active", true);
   if (status === "inativo") query = query.eq("active", false);
   if (search?.trim()) {
-    const term = search.trim().replace(/[%_,]/g, "\\$&");
-    query = query.or(`corporate_name.ilike.%${term}%,cnpj.ilike.%${term}%,city.ilike.%${term}%,email.ilike.%${term}%`);
+    const pattern = buildIlikePattern(search.trim());
+    query = query.or(`corporate_name.ilike.${pattern},cnpj.ilike.${pattern},city.ilike.${pattern},email.ilike.${pattern}`);
   }
   const from = (safePage - 1) * safePageSize;
   const { data, error, count } = await query.range(from, from + safePageSize - 1);

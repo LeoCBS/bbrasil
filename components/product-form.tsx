@@ -11,6 +11,8 @@ import { SubmitButton } from '@/components/ui/submit-button';
 import { Textarea } from '@/components/ui/textarea';
 import { ProductVisual } from '@/components/site/product-visual';
 import { Alert } from '@/components/ui/alert';
+import { formatCurrency, formatCurrencyFromCents } from '@/lib/format';
+import { onlyDigits } from '@/lib/text';
 
 function validateImage(file: File | null): string {
   if (!file) return '';
@@ -65,36 +67,17 @@ export function ProductForm({
   const [isPending, startTransition] = useTransition();
 
   // display states for masked currency inputs
-  const formatBRL = (value?: number | null) => {
-    if (value === null || value === undefined || value === 0) return value === 0 ? 'R$ 0,00' : '';
-    try {
-      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
-    } catch (reason) {
-      console.error('Não foi possível formatar o valor em BRL:', reason);
-      return '';
-    }
-  };
-
-  const [priceDisplay, setPriceDisplay] = useState<string>(() => formatBRL(product?.price ?? null));
-  const [costPriceDisplay, setCostPriceDisplay] = useState<string>(() => formatBRL(product?.cost_price ?? null));
+  const [priceDisplay, setPriceDisplay] = useState<string>(() => formatCurrency(product?.price));
+  const [costPriceDisplay, setCostPriceDisplay] = useState<string>(() => formatCurrency(product?.cost_price));
 
   // keep displays in sync if product prop changes
   useEffect(() => {
-    setPriceDisplay(formatBRL(product?.price ?? null));
-    setCostPriceDisplay(formatBRL(product?.cost_price ?? null));
+    setPriceDisplay(formatCurrency(product?.price));
+    setCostPriceDisplay(formatCurrency(product?.cost_price));
   }, [product]);
 
-  function formatFromInputDigits(digits: string) {
-    if (!digits) return '';
-    const num = Number(digits);
-    if (!Number.isFinite(num)) return '';
-    const value = num / 100; // digits are cents
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  }
-
   function handleCurrencyInputChange(e: React.ChangeEvent<HTMLInputElement>, setter: (v: string) => void) {
-    const onlyDigits = e.target.value.replace(/\D/g, '');
-    const display = formatFromInputDigits(onlyDigits);
+    const display = formatCurrencyFromCents(onlyDigits(e.target.value));
     setter(display);
     // update the real input value so FormData contains formatted value
     e.target.value = display;

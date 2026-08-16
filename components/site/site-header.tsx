@@ -3,6 +3,7 @@ import { BookOpen, MessageCircle, PackageSearch, Search } from "lucide-react";
 import { Logo } from "@/components/site/logo";
 import type { Unit } from "@/lib/units";
 import { UnitSelector } from "@/components/site/unit-selector";
+import { whatsappHref } from "@/lib/format";
 
 type SiteHeaderProps = {
   selectedUnit?: Unit;
@@ -37,7 +38,7 @@ export function SiteHeader({ selectedUnit, selectedSearch, units }: SiteHeaderPr
           <UnitSelector selectedUnit={selectedUnit} units={units} />
           {selectedUnit?.whatsapp_number ? (
             <a
-              href={`https://wa.me/${selectedUnit.whatsapp_number}`}
+              href={whatsappHref(selectedUnit.whatsapp_number)}
               target="_blank"
               rel="noreferrer"
               className="hidden items-center gap-2 rounded-md bg-brand-green px-4 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-brand-greenDark lg:inline-flex"

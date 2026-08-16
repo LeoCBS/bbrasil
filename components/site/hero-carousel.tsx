@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import type { Unit } from "@/lib/units";
+import { whatsappHref } from "@/lib/format";
 
 const banners = [
   {
@@ -25,7 +26,7 @@ const banners = [
 export function HeroCarousel({ selectedUnit, units }: { selectedUnit?: Unit; units: Unit[] }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const banner = banners[activeSlide];
-  const whatsappUrl = selectedUnit?.whatsapp_number ? `https://wa.me/${selectedUnit.whatsapp_number}` : "#";
+  const whatsappUrl = whatsappHref(selectedUnit?.whatsapp_number);
   const catalogHref = selectedUnit ? `/produtos?unidade=${encodeURIComponent(selectedUnit.id)}` : "/produtos";
 
   function move(direction: 1 | -1) {

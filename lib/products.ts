@@ -1,7 +1,9 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from 'crypto';
 import { buildIlikePattern } from "@/lib/supabase-filters";
+import { deleteRecord, getSupabase, requireSupabase } from "@/lib/supabase";
+import { paginate, pageRange, totalPagesFor } from "@/lib/pagination";
+import { matchesText, normalizeText } from "@/lib/text";
 
 export type Product = {
   id: string;
@@ -140,18 +142,6 @@ function normalizeProduct(product: ProductRecord): Product {
   };
 }
 
-function normalizeText(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
-function matchesText(value: string, selected?: string) {
-  return selected ? normalizeText(value) === normalizeText(selected) : true;
-}
-
 function matchesSearch(product: Product, search?: string) {
   if (!search) {
     return true;
@@ -164,34 +154,9 @@ function matchesSearch(product: Product, search?: string) {
 }
 
 function paginateProducts(products: Product[], page: number, pageSize: number): ProductsPage {
-  const safePageSize = Math.max(1, pageSize);
-  const total = products.length;
-  const totalPages = Math.max(1, Math.ceil(total / safePageSize));
-  const safePage = Math.min(Math.max(1, page), totalPages);
-  const from = (safePage - 1) * safePageSize;
+  const { items, ...rest } = paginate(products, page, pageSize);
 
-  return {
-    products: products.slice(from, from + safePageSize),
-    total,
-    page: safePage,
-    pageSize: safePageSize,
-    totalPages
-  };
-}
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !key) {
-    return null;
-  }
-
-  return createClient(url, key, {
-    auth: {
-      persistSession: false
-    },
-  });
+  return { products: items, ...rest };
 }
 
 export async function getProducts({ includeInactive = false, unitId, search }: GetProductsOptions = {}) {
@@ -238,10 +203,7 @@ export async function getPaginatedProducts({
 }: GetPaginatedProductsOptions = {}) {
   noStore();
   const supabase = getSupabase();
-  const safePageSize = Math.max(1, pageSize);
-  const safePage = Math.max(1, page);
-  const from = (safePage - 1) * safePageSize;
-  const to = from + safePageSize - 1;
+  const { page: safePage, pageSize: safePageSize, from, to } = pageRange(page, pageSize);
 
   if (!supabase) {
     const products = fallbackProducts.filter((product) => {
@@ -282,7 +244,7 @@ export async function getPaginatedProducts({
   }
 
   const total = count ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / safePageSize));
+  const totalPages = totalPagesFor(total, safePageSize);
 
   if (total > 0 && safePage > totalPages) {
     return getPaginatedProducts({
@@ -332,11 +294,7 @@ export async function getProduct(id: string, { includeInactive = false } = {}) {
 }
 
 export async function createProduct(input: ProductMutationInput, imageFile: FormDataEntryValue) {
-  const supabase = getSupabase();
-
-  if (!supabase) {
-    throw new Error("Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para usar o admin.");
-  }
+  const supabase = requireSupabase();
   const id = randomUUID();
   
   const imageURL = await uploadImageToBucket(imageFile, id, input.unit_id);
@@ -372,11 +330,7 @@ function sanitizeFileName(fileName: string): string {
 }
 
 async function uploadImageToBucket(imageFile:FormDataEntryValue, id: string, unitId: string = "default") {
-  const supabase = getSupabase();
-
-  if (!supabase) {
-    throw new Error("Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para usar o admin.");
-  }
+  const supabase = requireSupabase();
 
   const imageURL = "";
   const hasImageFile =
@@ -422,11 +376,7 @@ async function uploadImageToBucket(imageFile:FormDataEntryValue, id: string, uni
 }
 
 export async function updateProduct(id: string, input: ProductMutationInput, imageFile: FormDataEntryValue) {
-  const supabase = getSupabase();
-
-  if (!supabase) {
-    throw new Error("Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para usar o admin.");
-  }
+  const supabase = requireSupabase();
 
   const imageURL = await uploadImageToBucket(imageFile, id, input.unit_id);
 
@@ -442,15 +392,5 @@ export async function updateProduct(id: string, input: ProductMutationInput, ima
 }
 
 export async function deleteProduct(id: string) {
-  const supabase = getSupabase();
-
-  if (!supabase) {
-    throw new Error("Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para usar o admin.");
-  }
-
-  const { error } = await supabase.from("products").delete().eq("id", id);
-
-  if (error) {
-    throw new Error(error.message);
-  }
+  await deleteRecord("products", id);
 }

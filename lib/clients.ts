@@ -1,7 +1,9 @@
 import { randomUUID } from "crypto";
 import { unstable_noStore as noStore } from "next/cache";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { buildIlikePattern } from "@/lib/supabase-filters";
+import { deleteRecord, getSupabase, insertRecord, updateRecord } from "@/lib/supabase";
+import { paginate, pageRange, totalPagesFor } from "@/lib/pagination";
+import { normalizeText } from "@/lib/text";
 
 export type Client = {
   id: string;
@@ -31,33 +33,25 @@ const fallbackClients: Client[] = [
   { id: "demo-client-2", corporate_name: "Hotel Praia Norte", cnpj: "23.456.789/0001-01", state_registration: "", address: "Av. Atlântica, 80", neighborhood: "Praia", notes: "", city: "Joinville", state: "SC", zip_code: "89210-000", email: "compras@hotelpraianorte.com.br", phone: "(47) 98888-8888", salesperson: "Maria Santos", unit: "JOINVILLE SC", unit_id: "unit-joinville", active: true }
 ];
 
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  return url && key ? createSupabaseClient(url, key, { auth: { persistSession: false } }) : null;
-}
-
-function normalize(value: string) {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-}
+const clientsFeature = "o cadastro de clientes";
 
 function matches(client: Client, search?: string, status?: string) {
-  const text = normalize(search?.trim() ?? "");
-  const hasText = !text || [client.corporate_name, client.cnpj, client.city, client.email, client.salesperson].some((value) => normalize(value).includes(text));
+  const text = normalizeText(search ?? "");
+  const hasText = !text || [client.corporate_name, client.cnpj, client.city, client.email, client.salesperson].some((value) => normalizeText(value).includes(text));
   return hasText && (status !== "ativo" || client.active) && (status !== "inativo" || !client.active);
+}
+
+function paginateFallbackClients(page: number, pageSize: number, search?: string, status?: string): ClientsPage {
+  const { items, ...rest } = paginate(fallbackClients.filter((client) => matches(client, search, status)), page, pageSize);
+
+  return { clients: items, ...rest };
 }
 
 export async function getPaginatedClients({ search, status, page = 1, pageSize = 10 }: { search?: string; status?: string; page?: number; pageSize?: number } = {}): Promise<ClientsPage> {
   noStore();
   const supabase = getSupabase();
-  const safePage = Math.max(1, page);
-  const safePageSize = Math.max(1, pageSize);
-  if (!supabase) {
-    const filtered = fallbackClients.filter((client) => matches(client, search, status));
-    const totalPages = Math.max(1, Math.ceil(filtered.length / safePageSize));
-    const finalPage = Math.min(safePage, totalPages);
-    return { clients: filtered.slice((finalPage - 1) * safePageSize, finalPage * safePageSize), total: filtered.length, page: finalPage, pageSize: safePageSize, totalPages };
-  }
+  const { page: safePage, pageSize: safePageSize, from, to } = pageRange(page, pageSize);
+  if (!supabase) return paginateFallbackClients(safePage, safePageSize, search, status);
   let query = supabase.from("clients").select("*", { count: "exact" }).order("created_at", { ascending: false });
   if (status === "ativo") query = query.eq("active", true);
   if (status === "inativo") query = query.eq("active", false);
@@ -65,11 +59,10 @@ export async function getPaginatedClients({ search, status, page = 1, pageSize =
     const pattern = buildIlikePattern(search.trim());
     query = query.or(`corporate_name.ilike.${pattern},cnpj.ilike.${pattern},city.ilike.${pattern},email.ilike.${pattern}`);
   }
-  const from = (safePage - 1) * safePageSize;
-  const { data, error, count } = await query.range(from, from + safePageSize - 1);
+  const { data, error, count } = await query.range(from, to);
   if (error) throw new Error(`Não foi possível carregar os clientes: ${error.message}`);
   const total = count ?? 0;
-  return { clients: (data ?? []) as Client[], total, page: safePage, pageSize: safePageSize, totalPages: Math.max(1, Math.ceil(total / safePageSize)) };
+  return { clients: (data ?? []) as Client[], total, page: safePage, pageSize: safePageSize, totalPages: totalPagesFor(total, safePageSize) };
 }
 
 export async function getClient(id: string): Promise<Client | null> {
@@ -82,22 +75,13 @@ export async function getClient(id: string): Promise<Client | null> {
 }
 
 export async function createClient(input: ClientMutationInput) {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para usar o cadastro de clientes.");
-  const { error } = await supabase.from("clients").insert({ ...input, id: randomUUID() });
-  if (error) throw new Error(error.message);
+  await insertRecord("clients", { ...input, id: randomUUID() }, clientsFeature);
 }
 
 export async function updateClient(id: string, input: ClientMutationInput) {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para usar o cadastro de clientes.");
-  const { error } = await supabase.from("clients").update(input).eq("id", id);
-  if (error) throw new Error(error.message);
+  await updateRecord("clients", id, input, clientsFeature);
 }
 
 export async function deleteClient(id: string) {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para usar o cadastro de clientes.");
-  const { error } = await supabase.from("clients").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  await deleteRecord("clients", id, clientsFeature);
 }

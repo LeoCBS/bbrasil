@@ -110,10 +110,10 @@ describe("product actions", () => {
     );
   });
 
-  it("returns null for a blank price and zero when every character is stripped", async () => {
+  it("returns null for a blank price and for values without digits", async () => {
     await createProductAction(formData({ price: "   ", cost_price: "abc" }));
 
-    expect(createProduct).toHaveBeenCalledWith(expect.objectContaining({ price: null, cost_price: 0 }), "");
+    expect(createProduct).toHaveBeenCalledWith(expect.objectContaining({ price: null, cost_price: null }), "");
   });
 
   it("forwards the uploaded image and the product id on update", async () => {

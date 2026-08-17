@@ -41,6 +41,16 @@ export async function getProfile(id: string): Promise<Profile | null> {
   return data as Profile | null;
 }
 
+export async function getProfileByEmail(email: string): Promise<Profile | null> {
+  noStore();
+  const supabase = getSupabase();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase.from('profiles').select('*').eq('email', email).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as Profile | null;
+}
+
 export async function createProfile(input: Omit<Profile, 'id' | 'created_at'>) {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase not configured');

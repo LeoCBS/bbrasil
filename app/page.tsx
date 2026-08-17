@@ -256,7 +256,7 @@ export default async function Home({ searchParams }: HomeProps) {
           ))}
         </div>
       </section>
-      <Footer categories={categories} />
+      <Footer />
     </main>
   );
 }
@@ -267,7 +267,7 @@ function CategoryIcon({ icon, className }: { icon: string; className?: string })
   return <Icon className={className} strokeWidth={1.5} />;
 }
 
-function Footer({ categories }: { categories: Category[] }) {
+function Footer() {
   return (
     <footer className="mt-6 border-t">
       <div className="container grid gap-9 py-10 md:grid-cols-4">

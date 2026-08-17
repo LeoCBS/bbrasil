@@ -6,15 +6,15 @@ import { requireAdminUser } from "@/auth";
 import { createCategory, deleteCategory, updateCategory, type CategoryMutationInput } from "@/lib/categories";
 import { createProduct, deleteProduct, updateProduct, type ProductMutationInput } from "@/lib/products";
 import { createClient, deleteClient, updateClient, type ClientMutationInput } from "@/lib/clients";
-import { createSalesperson, deleteSalesperson, updateSalesperson, type SalespersonInput } from "@/lib/salespeople";
 import { createUnit, deleteUnit, updateUnit, type UnitInput } from "@/lib/units";
+import { createOrder, deleteOrder, updateOrder, type OrderMutationInput } from "@/lib/orders";
 import { checkboxField, currencyField, digitsField, numberField, textField } from "@/lib/form-data";
 import { isValidCnpj } from "@/lib/format";
 
 const catalogPaths = ["/", "/produtos", "/admin/produtos"];
 const categoryPaths = [...catalogPaths, "/admin/categorias"];
 const unitPaths = ["/", "/produtos", "/admin/unidades"];
-const salespersonPaths = ["/admin/vendedores", "/admin/clientes"];
+const orderPaths = ["/admin/pedidos"];
 
 function revalidate(paths: string[]) {
   for (const path of paths) {
@@ -24,6 +24,11 @@ function revalidate(paths: string[]) {
 
 function idField(formData: FormData) {
   return String(formData.get("id") ?? "");
+}
+
+function numericIdField(formData: FormData) {
+  const value = formData.get("id");
+  return value ? Number(value) : 0;
 }
 
 function parseCategory(formData: FormData): CategoryMutationInput {
@@ -66,18 +71,8 @@ function parseClient(formData: FormData): ClientMutationInput {
     zip_code: textField(formData, "zip_code"),
     email: textField(formData, "email"),
     phone: textField(formData, "phone"),
-    salesperson: textField(formData, "salesperson"),
+    profile_id: textField(formData, "profile_id"),
     unit: "",
-    unit_id: textField(formData, "unit_id"),
-    active: checkboxField(formData, "active")
-  };
-}
-
-function parseSalesperson(formData: FormData): SalespersonInput {
-  return {
-    name: textField(formData, "name"),
-    email: textField(formData, "email"),
-    phone: textField(formData, "phone"),
     unit_id: textField(formData, "unit_id"),
     active: checkboxField(formData, "active")
   };
@@ -91,6 +86,41 @@ function parseUnit(formData: FormData): UnitInput {
     whatsapp_number: digitsField(formData, "whatsapp_number"),
     email: textField(formData, "email"),
     active: checkboxField(formData, "active")
+  };
+}
+
+function parseOrder(formData: FormData): OrderMutationInput {
+  const itemsJson = String(formData.get("items") ?? "[]");
+  let items;
+  try {
+    items = JSON.parse(itemsJson);
+  } catch {
+    items = [];
+  }
+
+  const totalAmountStr = String(formData.get("total_amount") ?? "0");
+  let totalAmount = 0;
+  try {
+    totalAmount = parseFloat(totalAmountStr) || 0;
+  } catch {
+    totalAmount = 0;
+  }
+
+  return {
+    user_id: textField(formData, "user_id"),
+    user_name: textField(formData, "user_name"),
+    user_email: textField(formData, "user_email"),
+    client_id: textField(formData, "client_id"),
+    client_name: textField(formData, "client_name"),
+    client_cnpj: textField(formData, "client_cnpj"),
+    client_salesperson_id: textField(formData, "client_salesperson_id"),
+    client_salesperson_name: textField(formData, "client_salesperson_name"),
+    unit_id: textField(formData, "unit_id"),
+    unit_name: textField(formData, "unit_name"),
+    status: (String(formData.get("status") ?? "pending") as 'pending' | 'confirmed' | 'cancelled' | 'delivered'),
+    observation: textField(formData, "observation"),
+    total_amount: totalAmount,
+    items
   };
 }
 
@@ -156,29 +186,6 @@ export async function deleteClientAction(formData: FormData) {
   redirect("/admin/clientes");
 }
 
-export async function createSalespersonAction(formData: FormData) {
-  await requireAdminUser("/admin/vendedores");
-  const salesperson = parseSalesperson(formData);
-  if (!salesperson.name) throw new Error("Informe o nome do vendedor.");
-  await createSalesperson(salesperson);
-  revalidate(salespersonPaths);
-}
-
-export async function updateSalespersonAction(formData: FormData) {
-  await requireAdminUser("/admin/vendedores");
-  const salesperson = parseSalesperson(formData);
-  if (!salesperson.name) throw new Error("Informe o nome do vendedor.");
-  await updateSalesperson(idField(formData), salesperson);
-  revalidate(salespersonPaths);
-}
-
-export async function deleteSalespersonAction(formData: FormData) {
-  await requireAdminUser("/admin/vendedores");
-  await deleteSalesperson(idField(formData));
-  revalidate(salespersonPaths);
-  redirect("/admin/vendedores");
-}
-
 export async function createUnitAction(formData: FormData) {
   await requireAdminUser("/admin/unidades");
   const unit = parseUnit(formData);
@@ -200,4 +207,30 @@ export async function deleteUnitAction(formData: FormData) {
   await deleteUnit(idField(formData));
   revalidate(unitPaths);
   redirect("/admin/unidades");
+}
+
+export async function createOrderAction(formData: FormData) {
+  await requireAdminUser("/admin/pedidos");
+  const order = parseOrder(formData);
+  if (!order.client_id) throw new Error("Selecione um cliente para o pedido.");
+  if (!order.unit_id) throw new Error("Informe a unidade do pedido.");
+  if (!order.items || order.items.length === 0) throw new Error("Adicione pelo menos um produto ao pedido.");
+  await createOrder(order);
+  revalidate(orderPaths);
+}
+
+export async function updateOrderAction(formData: FormData) {
+  await requireAdminUser("/admin/pedidos");
+  const order = parseOrder(formData);
+  if (!order.client_id) throw new Error("Selecione um cliente para o pedido.");
+  if (!order.unit_id) throw new Error("Informe a unidade do pedido.");
+  if (!order.items || order.items.length === 0) throw new Error("Adicione pelo menos um produto ao pedido.");
+  await updateOrder(numericIdField(formData), order);
+  revalidate(orderPaths);
+}
+
+export async function deleteOrderAction(formData: FormData) {
+  await requireAdminUser("/admin/pedidos");
+  await deleteOrder(numericIdField(formData));
+  revalidate(orderPaths);
 }

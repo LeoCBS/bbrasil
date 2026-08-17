@@ -18,7 +18,7 @@ export type Client = {
   zip_code: string;
   email: string;
   phone: string;
-  salesperson: string;
+  profile_id: string | null;
   unit: string;
   unit_id: string;
   active: boolean;
@@ -29,15 +29,15 @@ export type ClientMutationInput = Omit<Client, "id" | "created_at">;
 export type ClientsPage = { clients: Client[]; total: number; page: number; pageSize: number; totalPages: number };
 
 const fallbackClients: Client[] = [
-  { id: "demo-client-1", corporate_name: "Mercado 3 Irmãos Ltda", cnpj: "12.345.678/0001-90", state_registration: "", address: "Rua das Flores, 120", neighborhood: "Centro", notes: "", city: "Joinville", state: "SC", zip_code: "89201-000", email: "contato@mercado3irmaos.com.br", phone: "(47) 99999-9999", salesperson: "João da Silva", unit: "JOINVILLE SC", unit_id: "unit-joinville", active: true },
-  { id: "demo-client-2", corporate_name: "Hotel Praia Norte", cnpj: "23.456.789/0001-01", state_registration: "", address: "Av. Atlântica, 80", neighborhood: "Praia", notes: "", city: "Joinville", state: "SC", zip_code: "89210-000", email: "compras@hotelpraianorte.com.br", phone: "(47) 98888-8888", salesperson: "Maria Santos", unit: "JOINVILLE SC", unit_id: "unit-joinville", active: true }
+  { id: "demo-client-1", corporate_name: "Mercado 3 Irmãos Ltda", cnpj: "12.345.678/0001-90", state_registration: "", address: "Rua das Flores, 120", neighborhood: "Centro", notes: "", city: "Joinville", state: "SC", zip_code: "89201-000", email: "contato@mercado3irmaos.com.br", phone: "(47) 99999-9999", profile_id: "demo-profile-1", unit: "JOINVILLE SC", unit_id: "unit-joinville", active: true },
+  { id: "demo-client-2", corporate_name: "Hotel Praia Norte", cnpj: "23.456.789/0001-01", state_registration: "", address: "Av. Atlântica, 80", neighborhood: "Praia", notes: "", city: "Joinville", state: "SC", zip_code: "89210-000", email: "compras@hotelpraianorte.com.br", phone: "(47) 98888-8888", profile_id: "demo-profile-2", unit: "JOINVILLE SC", unit_id: "unit-joinville", active: true }
 ];
 
 const clientsFeature = "o cadastro de clientes";
 
 function matches(client: Client, search?: string, status?: string) {
   const text = normalizeText(search ?? "");
-  const hasText = !text || [client.corporate_name, client.cnpj, client.city, client.email, client.salesperson].some((value) => normalizeText(value).includes(text));
+  const hasText = !text || [client.corporate_name, client.cnpj, client.city, client.email].some((value) => normalizeText(value).includes(text));
   return hasText && (status !== "ativo" || client.active) && (status !== "inativo" || !client.active);
 }
 
@@ -45,6 +45,17 @@ function paginateFallbackClients(page: number, pageSize: number, search?: string
   const { items, ...rest } = paginate(fallbackClients.filter((client) => matches(client, search, status)), page, pageSize);
 
   return { clients: items, ...rest };
+}
+
+export async function getClients({ includeInactive = false }: { includeInactive?: boolean } = {}): Promise<Client[]> {
+  noStore();
+  const supabase = getSupabase();
+  if (!supabase) return fallbackClients.filter((client) => includeInactive || client.active);
+  let query = supabase.from("clients").select("*").order("corporate_name");
+  if (!includeInactive) query = query.eq("active", true);
+  const { data, error } = await query;
+  if (error) throw new Error(`Não foi possível carregar os clientes: ${error.message}`);
+  return (data ?? []) as Client[];
 }
 
 export async function getPaginatedClients({ search, status, page = 1, pageSize = 10 }: { search?: string; status?: string; page?: number; pageSize?: number } = {}): Promise<ClientsPage> {

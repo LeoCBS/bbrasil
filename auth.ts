@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
+import { getProfileByEmail, type Profile } from "@/lib/users";
 
 const ACCESS_TOKEN_COOKIE = "bbrasil-supabase-access-token";
 const REFRESH_TOKEN_COOKIE = "bbrasil-supabase-refresh-token";
@@ -65,6 +66,19 @@ export async function requireAdminUser(nextPath = "/admin/clientes") {
   }
 
   return user;
+}
+
+export async function getCurrentUserProfile(): Promise<Profile | null> {
+  const user = await getCurrentUser();
+  if (!user || !user.email) return null;
+
+  try {
+    const profile = await getProfileByEmail(user.email);
+    return profile;
+  } catch (error) {
+    console.error("Não foi possível carregar o perfil do usuário:", error);
+    return null;
+  }
 }
 
 export async function loginAction(formData: FormData) {

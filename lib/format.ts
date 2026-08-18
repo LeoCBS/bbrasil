@@ -90,3 +90,14 @@ export function isValidCnpj(value: string) {
 
   return checkDigit(12) === Number(digits[12]) && checkDigit(13) === Number(digits[13]);
 }
+
+export function formatDate(dateString: string | null | undefined): string {
+  if (!dateString) return '-';
+  
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+  } catch {
+    return dateString;
+  }
+}

@@ -3,6 +3,7 @@ import { buildIlikePattern } from "@/lib/supabase-filters";
 import { getSupabase } from "@/lib/supabase";
 import { paginate, pageRange, totalPagesFor } from "@/lib/pagination";
 import { normalizeText } from "@/lib/text";
+import { createReceivableFromOrder } from "@/lib/receivables";
 
 export type OrderItem = {
   id: number;
@@ -28,7 +29,6 @@ export type Order = {
   client_salesperson_name?: string;
   unit_id: string;
   unit_name: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'delivered';
   observation?: string;
   total_amount: number;
   items?: OrderItem[];
@@ -54,7 +54,6 @@ const fallbackOrders: Order[] = [
     client_salesperson_name: "João da Silva",
     unit_id: "unit-joinville",
     unit_name: "JOINVILLE SC",
-    status: "pending",
     observation: "Entregar pela manhã",
     total_amount: 1500.00,
     items: [
@@ -74,28 +73,26 @@ const fallbackOrders: Order[] = [
 
 
 
-function matches(order: Order, search?: string, status?: string, unitId?: string) {
+function matches(order: Order, search?: string, unitId?: string) {
   const text = normalizeText(search ?? "");
   const hasText = !text || [order.client_name, order.client_cnpj, order.unit_name].some((value) => normalizeText(value).includes(text));
-  const hasStatus = !status || order.status === status;
   const hasUnit = !unitId || order.unit_id === unitId;
-  return hasText && hasStatus && hasUnit;
+  return hasText && hasUnit;
 }
 
-function paginateFallbackOrders(page: number, pageSize: number, search?: string, status?: string, unitId?: string): OrdersPage {
-  const { items, ...rest } = paginate(fallbackOrders.filter((order) => matches(order, search, status, unitId)), page, pageSize);
+function paginateFallbackOrders(page: number, pageSize: number, search?: string, unitId?: string): OrdersPage {
+  const { items, ...rest } = paginate(fallbackOrders.filter((order) => matches(order, search, unitId)), page, pageSize);
   return { orders: items, ...rest };
 }
 
-export async function getPaginatedOrders({ search, status, unitId, page = 1, pageSize = 10 }: { search?: string; status?: string; unitId?: string; page?: number; pageSize?: number } = {}): Promise<OrdersPage> {
+export async function getPaginatedOrders({ search, unitId, page = 1, pageSize = 10 }: { search?: string; unitId?: string; page?: number; pageSize?: number } = {}): Promise<OrdersPage> {
   noStore();
   const supabase = getSupabase();
   const { page: safePage, pageSize: safePageSize, from, to } = pageRange(page, pageSize);
-  if (!supabase) return paginateFallbackOrders(safePage, safePageSize, search, status, unitId);
+  if (!supabase) return paginateFallbackOrders(page, pageSize, search, unitId);
   
   let query = supabase.from("orders").select("*", { count: "exact" }).order("created_at", { ascending: false });
   
-  if (status) query = query.eq("status", status);
   if (unitId) query = query.eq("unit_id", unitId);
   if (search?.trim()) {
     const pattern = buildIlikePattern(search.trim());
@@ -149,6 +146,14 @@ export async function createOrder(input: OrderMutationInput) {
 
     const { error: itemsError } = await supabase.from("order_items").insert(itemsWithOrderId);
     if (itemsError) throw new Error(`Não foi possível criar os itens do pedido: ${itemsError.message}`);
+  }
+
+  // Criar conta a receber automaticamente
+  try {
+    await createReceivableFromOrder(orderId, orderData);
+  } catch (error) {
+    console.error('Erro ao criar conta a receber:', error);
+    // Não falhar o pedido se a conta a receber falhar
   }
 }
 

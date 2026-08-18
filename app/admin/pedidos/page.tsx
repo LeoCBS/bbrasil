@@ -19,7 +19,6 @@ type AdminOrdersPageProps = {
   searchParams?: Promise<{
     busca?: string;
     page?: string;
-    status?: string;
   }>;
 };
 
@@ -29,8 +28,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   const params = await searchParams;
   const search = params?.busca?.trim();
   const page = parsePageParam(params?.page);
-  const status = params?.status;
-  const hrefFor = (target: number) => buildHref("/admin/pedidos", { busca: search, status }, target);
+  const hrefFor = (target: number) => buildHref("/admin/pedidos", { busca: search }, target);
 
   // Filter by user's unit if user has a unit_id
   const unitId = userProfile?.unit_id || undefined;
@@ -38,24 +36,9 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   const { orders, total, totalPages } = await getPaginatedOrders({ 
     page, 
     pageSize, 
-    status: status as 'pending' | 'confirmed' | 'cancelled' | 'delivered' | undefined, 
     search,
     unitId 
   });
-
-  const statusLabels: Record<string, string> = {
-    pending: 'Pendente',
-    confirmed: 'Confirmado',
-    cancelled: 'Cancelado',
-    delivered: 'Entregue'
-  };
-
-  const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    confirmed: 'bg-blue-100 text-blue-800',
-    cancelled: 'bg-red-100 text-red-800',
-    delivered: 'bg-green-100 text-green-800'
-  };
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -80,13 +63,6 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                 <Input name="busca" defaultValue={search ?? ""} placeholder="Buscar pedido..." className="pl-10" />
               </div>
             </div>
-            <select name="status" defaultValue={status ?? ""} className="h-11 rounded-md border border-input bg-background px-3 text-sm">
-              <option value="">Todos os status</option>
-              <option value="pending">Pendente</option>
-              <option value="confirmed">Confirmado</option>
-              <option value="cancelled">Cancelado</option>
-              <option value="delivered">Entregue</option>
-            </select>
             <Button type="submit">Pesquisar</Button>
           </form>
 
@@ -103,8 +79,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                     <th className="w-[14%] p-4 whitespace-nowrap">CNPJ</th>
                     <th className="w-[14%] p-4 whitespace-nowrap">Vendedor</th>
                     <th className="w-[12%] p-4 whitespace-nowrap">Unidade</th>
-                    <th className="w-[10%] p-4 whitespace-nowrap">Status</th>
-                    <th className="w-[10%] p-4 whitespace-nowrap">Total</th>
+                    <th className="w-[12%] p-4 whitespace-nowrap">Total</th>
                     <th className="w-[8%] p-4 text-right whitespace-nowrap">Ações</th>
                   </tr>
                 </thead>
@@ -130,11 +105,6 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                       </td>
                       <td className="p-4 whitespace-nowrap">
                         {order.unit_name}
-                      </td>
-                      <td className="p-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
-                          {statusLabels[order.status] || order.status}
-                        </span>
                       </td>
                       <td className="p-4 whitespace-nowrap">
                         {formatCurrency(order.total_amount)}

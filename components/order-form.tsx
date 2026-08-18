@@ -549,22 +549,6 @@ export function OrderForm({
         )}
       </div>
 
-      {/* Status */}
-      <div className="grid gap-2">
-        <Label htmlFor="status">Status</Label>
-        <select
-          id="status"
-          name="status"
-          defaultValue={order?.status || 'pending'}
-          className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="pending">Pendente</option>
-          <option value="confirmed">Confirmado</option>
-          <option value="cancelled">Cancelado</option>
-          <option value="delivered">Entregue</option>
-        </select>
-      </div>
-
       {/* Observation */}
       <div className="grid gap-2">
         <Label htmlFor="observation">Observação</Label>

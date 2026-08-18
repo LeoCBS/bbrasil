@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Boxes, Building2, FileText, Package, Settings, ShoppingCart, Users, UserRound, Sparkles } from "lucide-react";
+import { BarChart3, Boxes, Building2, FileText, Package, Settings, ShoppingCart, Users, UserRound, Sparkles, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const sections = [
@@ -22,6 +22,13 @@ const sections = [
     ]
   },
   {
+    title: "Financeiro",
+    items: [
+      { label: "Contas a Receber", href: "/admin/contas-receber", icon: DollarSign, disabled: false },
+      { label: "Contas a Pagar", href: "/admin/contas-pagar", icon: DollarSign, disabled: false }
+    ]
+  },
+  {
     title: "Relatórios",
     items: [
       { label: "Relatórios", href: "/admin/produtos", icon: BarChart3, disabled: true }
@@ -33,7 +40,7 @@ const footerItems = [
   { label: "Configurações", href: "/admin/produtos", icon: Settings, disabled: true }
 ];
 
-export function AdminSidebar({ current }: { current: "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "pedidos" | "orcamentos" }) {
+export function AdminSidebar({ current }: { current: "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "pedidos" | "orcamentos" | "contas-receber" | "contas-pagar" }) {
   return (
     <aside className="p-4 lg:w-64 lg:shrink-0">
       <div className="rounded-lg border bg-white p-3">

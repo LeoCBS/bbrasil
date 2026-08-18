@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { requireAdminUser, getCurrentUserProfile } from "@/auth";
-import { getPaginatedOrders, type Order } from "@/lib/orders";
+import { getPaginatedQuotations, type Quotation } from "@/lib/quotations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,12 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { buildHref, parsePageParam } from "@/lib/pagination";
 import { formatCurrency } from "@/lib/format";
-import { DeleteOrderButton } from "@/components/admin/delete-order-button";
-import { QuotationConverter } from "@/components/quotation-converter";
+import { DeleteQuotationButton } from "@/components/admin/delete-quotation-button";
+import { ConvertQuotationButton } from "@/components/admin/convert-quotation-button";
 
 const pageSize = 10;
 
-type AdminOrdersPageProps = {
+type AdminQuotationsPageProps = {
   searchParams?: Promise<{
     busca?: string;
     page?: string;
@@ -23,130 +23,143 @@ type AdminOrdersPageProps = {
   }>;
 };
 
-export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
+export default async function AdminQuotationsPage({ searchParams }: AdminQuotationsPageProps) {
   const user = await requireAdminUser();
   const userProfile = await getCurrentUserProfile();
   const params = await searchParams;
   const search = params?.busca?.trim();
   const page = parsePageParam(params?.page);
   const status = params?.status;
-  const hrefFor = (target: number) => buildHref("/admin/pedidos", { busca: search, status }, target);
+  const hrefFor = (target: number) => buildHref("/admin/orcamentos", { busca: search, status }, target);
 
   // Filter by user's unit if user has a unit_id
   const unitId = userProfile?.unit_id || undefined;
 
-  const { orders, total, totalPages } = await getPaginatedOrders({ 
+  const { quotations, total, totalPages } = await getPaginatedQuotations({ 
     page, 
     pageSize, 
-    status: status as 'pending' | 'confirmed' | 'cancelled' | 'delivered' | undefined, 
+    status: status as 'pending' | 'approved' | 'rejected' | 'converted' | undefined, 
     search,
     unitId 
   });
 
   const statusLabels: Record<string, string> = {
     pending: 'Pendente',
-    confirmed: 'Confirmado',
-    cancelled: 'Cancelado',
-    delivered: 'Entregue'
+    approved: 'Aprovado',
+    rejected: 'Rejeitado',
+    converted: 'Convertido'
   };
 
   const statusColors: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800',
-    confirmed: 'bg-blue-100 text-blue-800',
-    cancelled: 'bg-red-100 text-red-800',
-    delivered: 'bg-green-100 text-green-800'
+    approved: 'bg-green-100 text-green-800',
+    rejected: 'bg-red-100 text-red-800',
+    converted: 'bg-blue-100 text-blue-800'
   };
 
   return (
     <main className="min-h-screen bg-slate-50">
       <AdminHeader email={user.email} />
       <div className="lg:flex">
-        <AdminSidebar current="pedidos" />
+        <AdminSidebar current="orcamentos" />
         <section className="flex-1 p-4 md:p-8">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-brand-ink">Pedidos</h1>
-              <p className="mt-1 text-slate-600">Listagem de pedidos{unitId ? ` da unidade` : ''}</p>
+              <h1 className="text-3xl font-bold text-brand-ink">Orçamentos</h1>
+              <p className="mt-1 text-slate-600">Listagem de orçamentos{unitId ? ` da unidade` : ''}</p>
             </div>
             <Button asChild>
-              <Link href="/admin/pedidos/novo">+ Novo pedido</Link>
+              <Link href="/admin/orcamentos/novo">+ Novo orçamento</Link>
             </Button>
           </div>
 
-          <form className="mb-4 flex gap-3" action="/admin/pedidos">
+          <form className="mb-4 flex gap-3" action="/admin/orcamentos">
             <div className="flex-1">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input name="busca" defaultValue={search ?? ""} placeholder="Buscar pedido..." className="pl-10" />
+                <Input name="busca" defaultValue={search ?? ""} placeholder="Buscar orçamento..." className="pl-10" />
               </div>
             </div>
             <select name="status" defaultValue={status ?? ""} className="h-11 rounded-md border border-input bg-background px-3 text-sm">
               <option value="">Todos os status</option>
               <option value="pending">Pendente</option>
-              <option value="confirmed">Confirmado</option>
-              <option value="cancelled">Cancelado</option>
-              <option value="delivered">Entregue</option>
+              <option value="approved">Aprovado</option>
+              <option value="rejected">Rejeitado</option>
+              <option value="converted">Convertido</option>
             </select>
             <Button type="submit">Pesquisar</Button>
           </form>
-
-          {/* Converter orçamento em pedido */}
-          <QuotationConverter />
 
           <Card>
             <CardContent className="p-0">
               <table className="w-full table-fixed border-collapse">
                 <thead>
                   <tr className="bg-slate-50 text-left text-sm text-slate-600">
-                    <th className="w-[8%] p-4 whitespace-nowrap">ID</th>
-                    <th className="w-[18%] p-4 whitespace-nowrap">Cliente</th>
-                    <th className="w-[14%] p-4 whitespace-nowrap">CNPJ</th>
-                    <th className="w-[14%] p-4 whitespace-nowrap">Vendedor</th>
-                    <th className="w-[12%] p-4 whitespace-nowrap">Unidade</th>
+                    <th className="w-[7%] p-4 whitespace-nowrap">ID</th>
+                    <th className="w-[17%] p-4 whitespace-nowrap">Cliente</th>
+                    <th className="w-[13%] p-4 whitespace-nowrap">CNPJ</th>
+                    <th className="w-[13%] p-4 whitespace-nowrap">Vendedor</th>
+                    <th className="w-[11%] p-4 whitespace-nowrap">Unidade</th>
                     <th className="w-[10%] p-4 whitespace-nowrap">Status</th>
-                    <th className="w-[10%] p-4 whitespace-nowrap">Total</th>
-                    <th className="w-[8%] p-4 text-right whitespace-nowrap">Ações</th>
+                    <th className="w-[9%] p-4 whitespace-nowrap">Total</th>
+                    <th className="w-[8%] p-4 whitespace-nowrap">Pedido</th>
+                    <th className="w-[12%] p-4 text-right whitespace-nowrap">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((order: Order) => (
-                    <tr key={order.id} className="border-t">
+                  {quotations.map((quotation: Quotation) => (
+                    <tr key={quotation.id} className="border-t">
                       <td className="p-4 whitespace-nowrap">
-                        #{order.id}
+                        #{quotation.id}
                       </td>
                       <td className="p-4 overflow-hidden">
                         <div
                           className="truncate whitespace-nowrap overflow-hidden cursor-help"
-                          title={order.client_name}
+                          title={quotation.client_name}
                         >
-                          {order.client_name}
+                          {quotation.client_name}
                         </div>
                       </td>
                       <td className="p-4 whitespace-nowrap">
-                        {order.client_cnpj}
+                        {quotation.client_cnpj}
                       </td>
                       <td className="p-4 whitespace-nowrap overflow-hidden">
-                        {order.client_salesperson_name || order.user_name || '-'}
+                        {quotation.client_salesperson_name || quotation.user_name || '-'}
                       </td>
                       <td className="p-4 whitespace-nowrap">
-                        {order.unit_name}
+                        {quotation.unit_name}
                       </td>
                       <td className="p-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
-                          {statusLabels[order.status] || order.status}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[quotation.status] || 'bg-gray-100 text-gray-800'}`}>
+                          {statusLabels[quotation.status] || quotation.status}
                         </span>
                       </td>
                       <td className="p-4 whitespace-nowrap">
-                        {formatCurrency(order.total_amount)}
+                        {formatCurrency(quotation.total_amount)}
+                      </td>
+                      <td className="p-4 whitespace-nowrap">
+                        {quotation.order_id ? (
+                          <Link 
+                            href={`/admin/pedidos/${quotation.order_id}/edit`}
+                            className="text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            #{quotation.order_id}
+                          </Link>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
                       </td>
                       <td className="p-4 text-right whitespace-nowrap">
                         <Link
-                          href={`/admin/pedidos/${order.id}/edit`}
+                          href={`/admin/orcamentos/${quotation.id}/edit`}
                           className="mr-3 text-slate-600 hover:text-brand-ink"
                         >
                           ✏️
                         </Link>
-                        <DeleteOrderButton orderId={order.id} />
+                        <span className="mr-3 inline-flex items-center justify-center">
+                          <ConvertQuotationButton quotationId={quotation.id} size="icon" />
+                        </span>
+                        <DeleteQuotationButton quotationId={quotation.id} isConverted={quotation.status === 'converted'} />
                       </td>
                     </tr>
                   ))}
@@ -161,11 +174,11 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
               page={page}
               totalPages={totalPages}
               hrefFor={hrefFor}
-              label={<div className="text-sm text-slate-600">Mostrando {orders.length} de {total} pedidos</div>}
+              label={<div className="text-sm text-slate-600">Mostrando {quotations.length} de {total} orçamentos</div>}
             />
           ) : (
             <div className="mt-4 text-center text-slate-600">
-              Nenhum pedido encontrado.
+              Nenhum orçamento encontrado.
             </div>
           )}
         </section>

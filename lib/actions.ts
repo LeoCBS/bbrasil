@@ -9,6 +9,8 @@ import { createClient, deleteClient, updateClient, type ClientMutationInput } fr
 import { createUnit, deleteUnit, updateUnit, type UnitInput } from "@/lib/units";
 import { createOrder, deleteOrder, updateOrder, type OrderMutationInput } from "@/lib/orders";
 import { createQuotation, deleteQuotation, updateQuotation, convertQuotationToOrder, type QuotationMutationInput } from "@/lib/quotations";
+import { createReceivable, deleteReceivable, updateReceivable, markAsPaid as markReceivableAsPaid, type ReceivableMutationInput } from "@/lib/receivables";
+import { createPayable, deletePayable, updatePayable, markAsPaid as markPayableAsPaid, type PayableMutationInput } from "@/lib/payables";
 import { checkboxField, currencyField, digitsField, numberField, textField } from "@/lib/form-data";
 import { isValidCnpj } from "@/lib/format";
 
@@ -17,6 +19,8 @@ const categoryPaths = [...catalogPaths, "/admin/categorias"];
 const unitPaths = ["/", "/produtos", "/admin/unidades"];
 const orderPaths = ["/admin/pedidos"];
 const quotationPaths = ["/admin/orcamentos"];
+const receivablePaths = ["/admin/contas-receber"];
+const payablePaths = ["/admin/contas-pagar"];
 
 function revalidate(paths: string[]) {
   for (const path of paths) {
@@ -119,7 +123,6 @@ function parseOrder(formData: FormData): OrderMutationInput {
     client_salesperson_name: textField(formData, "client_salesperson_name"),
     unit_id: textField(formData, "unit_id"),
     unit_name: textField(formData, "unit_name"),
-    status: String(formData.get("status") ?? "pending") as 'pending' | 'confirmed' | 'cancelled' | 'delivered',
     observation: textField(formData, "observation"),
     total_amount: totalAmount,
     items
@@ -309,4 +312,139 @@ export async function convertQuotationToOrderAction(formData: FormData) {
   revalidate(orderPaths);
   
   return orderId;
+}
+
+function parseReceivable(formData: FormData): ReceivableMutationInput {
+  const amountStr = String(formData.get("amount") ?? "0");
+  let amount = 0;
+  try {
+    amount = parseFloat(amountStr) || 0;
+  } catch {
+    amount = 0;
+  }
+
+  const statusValue = String(formData.get("status") ?? "pending");
+  let status: 'pending' | 'paid' | 'overdue' | 'cancelled' = 'pending';
+  if (statusValue === 'paid') status = 'paid';
+  if (statusValue === 'overdue') status = 'overdue';
+  if (statusValue === 'cancelled') status = 'cancelled';
+
+  return {
+    order_id: numericIdField(formData),
+    order_reference: textField(formData, "order_reference"),
+    client_id: textField(formData, "client_id"),
+    client_name: textField(formData, "client_name"),
+    client_cnpj: textField(formData, "client_cnpj"),
+    amount: amount,
+    due_date: textField(formData, "due_date"),
+    payment_date: textField(formData, "payment_date"),
+    status: status,
+    unit_id: textField(formData, "unit_id"),
+    unit_name: textField(formData, "unit_name"),
+    observation: textField(formData, "observation"),
+    user_id: textField(formData, "user_id"),
+    user_name: textField(formData, "user_name"),
+    user_email: textField(formData, "user_email")
+  };
+}
+
+export async function createReceivableAction(formData: FormData) {
+  await requireAdminUser("/admin/contas-receber");
+  const receivable = parseReceivable(formData);
+  if (!receivable.client_name) throw new Error("Informe o nome do cliente.");
+  if (!receivable.unit_id) throw new Error("Informe a unidade.");
+  await createReceivable(receivable);
+  revalidate(receivablePaths);
+}
+
+export async function updateReceivableAction(formData: FormData) {
+  await requireAdminUser("/admin/contas-receber");
+  const receivable = parseReceivable(formData);
+  if (!receivable.client_name) throw new Error("Informe o nome do cliente.");
+  if (!receivable.unit_id) throw new Error("Informe a unidade.");
+  await updateReceivable(numericIdField(formData), receivable);
+  revalidate(receivablePaths);
+}
+
+export async function deleteReceivableAction(formData: FormData) {
+  await requireAdminUser("/admin/contas-receber");
+  await deleteReceivable(numericIdField(formData));
+  revalidate(receivablePaths);
+}
+
+export async function markAsPaidReceivableAction(formData: FormData) {
+  await requireAdminUser("/admin/contas-receber");
+  const id = numericIdField(formData);
+  const paymentDate = String(formData.get("payment_date") ?? new Date().toISOString().split('T')[0]);
+  await markReceivableAsPaid(id, paymentDate);
+  revalidate(receivablePaths);
+}
+
+function parsePayable(formData: FormData): PayableMutationInput {
+  const amountStr = String(formData.get("amount") ?? "0");
+  let amount = 0;
+  try {
+    amount = parseFloat(amountStr) || 0;
+  } catch {
+    amount = 0;
+  }
+
+  const statusValue = String(formData.get("status") ?? "pending");
+  let status: 'pending' | 'paid' | 'overdue' | 'cancelled' = 'pending';
+  if (statusValue === 'paid') status = 'paid';
+  if (statusValue === 'overdue') status = 'overdue';
+  if (statusValue === 'cancelled') status = 'cancelled';
+
+  return {
+    supplier_name: textField(formData, "supplier_name"),
+    supplier_cnpj: textField(formData, "supplier_cnpj"),
+    supplier_address: textField(formData, "supplier_address"),
+    description: textField(formData, "description"),
+    amount: amount,
+    due_date: textField(formData, "due_date"),
+    payment_date: textField(formData, "payment_date"),
+    status: status,
+    category: textField(formData, "category"),
+    payment_method: textField(formData, "payment_method"),
+    unit_id: textField(formData, "unit_id"),
+    unit_name: textField(formData, "unit_name"),
+    observation: textField(formData, "observation"),
+    user_id: textField(formData, "user_id"),
+    user_name: textField(formData, "user_name"),
+    user_email: textField(formData, "user_email")
+  };
+}
+
+export async function createPayableAction(formData: FormData) {
+  await requireAdminUser("/admin/contas-pagar");
+  const payable = parsePayable(formData);
+  if (!payable.supplier_name) throw new Error("Informe o nome do fornecedor.");
+  if (!payable.description) throw new Error("Informe a descrição.");
+  if (!payable.unit_id) throw new Error("Informe a unidade.");
+  await createPayable(payable);
+  revalidate(payablePaths);
+}
+
+export async function updatePayableAction(formData: FormData) {
+  await requireAdminUser("/admin/contas-pagar");
+  const payable = parsePayable(formData);
+  if (!payable.supplier_name) throw new Error("Informe o nome do fornecedor.");
+  if (!payable.description) throw new Error("Informe a descrição.");
+  if (!payable.unit_id) throw new Error("Informe a unidade.");
+  await updatePayable(numericIdField(formData), payable);
+  revalidate(payablePaths);
+}
+
+export async function deletePayableAction(formData: FormData) {
+  await requireAdminUser("/admin/contas-pagar");
+  await deletePayable(numericIdField(formData));
+  revalidate(payablePaths);
+}
+
+export async function markAsPaidPayableAction(formData: FormData) {
+  await requireAdminUser("/admin/contas-pagar");
+  const id = numericIdField(formData);
+  const paymentDate = String(formData.get("payment_date") ?? new Date().toISOString().split('T')[0]);
+  await markPayableAsPaid(id, paymentDate);
+  revalidate(payablePaths);
 }

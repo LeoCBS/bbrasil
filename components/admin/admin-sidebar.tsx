@@ -16,7 +16,7 @@ const sections = [
   {
     title: "Operações",
     items: [
-      { label: "Orçamentos", href: "/admin/produtos", icon: FileText, disabled: true },
+      { label: "Orçamentos", href: "/admin/orcamentos", icon: FileText, disabled: false },
       { label: "Pedidos", href: "/admin/pedidos", icon: ShoppingCart, disabled: false },
       { label: "Estoque", href: "/admin/produtos", icon: Boxes, disabled: true }
     ]
@@ -33,7 +33,7 @@ const footerItems = [
   { label: "Configurações", href: "/admin/produtos", icon: Settings, disabled: true }
 ];
 
-export function AdminSidebar({ current }: { current: "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "pedidos" }) {
+export function AdminSidebar({ current }: { current: "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "pedidos" | "orcamentos" }) {
   return (
     <aside className="p-4 lg:w-64 lg:shrink-0">
       <div className="rounded-lg border bg-white p-3">

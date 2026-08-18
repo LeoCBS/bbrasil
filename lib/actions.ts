@@ -8,6 +8,7 @@ import { createProduct, deleteProduct, updateProduct, type ProductMutationInput 
 import { createClient, deleteClient, updateClient, type ClientMutationInput } from "@/lib/clients";
 import { createUnit, deleteUnit, updateUnit, type UnitInput } from "@/lib/units";
 import { createOrder, deleteOrder, updateOrder, type OrderMutationInput } from "@/lib/orders";
+import { createQuotation, deleteQuotation, updateQuotation, convertQuotationToOrder, type QuotationMutationInput } from "@/lib/quotations";
 import { checkboxField, currencyField, digitsField, numberField, textField } from "@/lib/form-data";
 import { isValidCnpj } from "@/lib/format";
 
@@ -15,6 +16,7 @@ const catalogPaths = ["/", "/produtos", "/admin/produtos"];
 const categoryPaths = [...catalogPaths, "/admin/categorias"];
 const unitPaths = ["/", "/produtos", "/admin/unidades"];
 const orderPaths = ["/admin/pedidos"];
+const quotationPaths = ["/admin/orcamentos"];
 
 function revalidate(paths: string[]) {
   for (const path of paths) {
@@ -117,7 +119,7 @@ function parseOrder(formData: FormData): OrderMutationInput {
     client_salesperson_name: textField(formData, "client_salesperson_name"),
     unit_id: textField(formData, "unit_id"),
     unit_name: textField(formData, "unit_name"),
-    status: (String(formData.get("status") ?? "pending") as 'pending' | 'confirmed' | 'cancelled' | 'delivered'),
+    status: String(formData.get("status") ?? "pending") as 'pending' | 'confirmed' | 'cancelled' | 'delivered',
     observation: textField(formData, "observation"),
     total_amount: totalAmount,
     items
@@ -233,4 +235,78 @@ export async function deleteOrderAction(formData: FormData) {
   await requireAdminUser("/admin/pedidos");
   await deleteOrder(numericIdField(formData));
   revalidate(orderPaths);
+}
+
+function parseQuotation(formData: FormData): QuotationMutationInput {
+  const itemsJson = String(formData.get("items") ?? "[]");
+  let items;
+  try {
+    items = JSON.parse(itemsJson);
+  } catch {
+    items = [];
+  }
+
+  const totalAmountStr = String(formData.get("total_amount") ?? "0");
+  let totalAmount = 0;
+  try {
+    totalAmount = parseFloat(totalAmountStr) || 0;
+  } catch {
+    totalAmount = 0;
+  }
+
+  return {
+    user_id: textField(formData, "user_id"),
+    user_name: textField(formData, "user_name"),
+    user_email: textField(formData, "user_email"),
+    client_id: textField(formData, "client_id"),
+    client_name: textField(formData, "client_name"),
+    client_cnpj: textField(formData, "client_cnpj"),
+    client_salesperson_id: textField(formData, "client_salesperson_id"),
+    client_salesperson_name: textField(formData, "client_salesperson_name"),
+    unit_id: textField(formData, "unit_id"),
+    unit_name: textField(formData, "unit_name"),
+    status: String(formData.get("status") ?? "pending") as 'pending' | 'approved' | 'rejected' | 'converted',
+    observation: textField(formData, "observation"),
+    total_amount: totalAmount,
+    valid_until: textField(formData, "valid_until"),
+    items
+  };
+}
+
+export async function createQuotationAction(formData: FormData) {
+  await requireAdminUser("/admin/orcamentos");
+  const quotation = parseQuotation(formData);
+  if (!quotation.client_id) throw new Error("Selecione um cliente para o orçamento.");
+  if (!quotation.unit_id) throw new Error("Informe a unidade do orçamento.");
+  if (!quotation.items || quotation.items.length === 0) throw new Error("Adicione pelo menos um produto ao orçamento.");
+  await createQuotation(quotation);
+  revalidate(quotationPaths);
+}
+
+export async function updateQuotationAction(formData: FormData) {
+  await requireAdminUser("/admin/orcamentos");
+  const quotation = parseQuotation(formData);
+  if (!quotation.client_id) throw new Error("Selecione um cliente para o orçamento.");
+  if (!quotation.unit_id) throw new Error("Informe a unidade do orçamento.");
+  if (!quotation.items || quotation.items.length === 0) throw new Error("Adicione pelo menos um produto ao orçamento.");
+  await updateQuotation(numericIdField(formData), quotation);
+  revalidate(quotationPaths);
+}
+
+export async function deleteQuotationAction(formData: FormData) {
+  await requireAdminUser("/admin/orcamentos");
+  await deleteQuotation(numericIdField(formData));
+  revalidate(quotationPaths);
+}
+
+export async function convertQuotationToOrderAction(formData: FormData) {
+  await requireAdminUser("/admin/pedidos");
+  const quotationId = numericIdField(formData);
+  if (!quotationId) throw new Error("ID do orçamento ausente");
+  
+  const orderId = await convertQuotationToOrder(quotationId);
+  revalidate(quotationPaths);
+  revalidate(orderPaths);
+  
+  return orderId;
 }

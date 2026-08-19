@@ -4,8 +4,9 @@ import { cn } from "@/lib/utils";
 
 const sections = [
   {
-    title: "Cadastros",
+    title: "Navegação",
     items: [
+      { label: "Dashboard", href: "/admin/dashboard", icon: BarChart3, disabled: false },
       { label: "Produtos", href: "/admin/produtos", icon: Package ,disabled: false},
   { label: "Categorias", href: "/admin/categorias", icon: Sparkles ,disabled: false},
   { label: "Clientes", href: "/admin/clientes", icon: Users ,disabled: false},
@@ -40,7 +41,7 @@ const footerItems = [
   { label: "Configurações", href: "/admin/produtos", icon: Settings, disabled: true }
 ];
 
-export function AdminSidebar({ current }: { current: "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "pedidos" | "orcamentos" | "contas-receber" | "contas-pagar" }) {
+export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "pedidos" | "orcamentos" | "contas-receber" | "contas-pagar" }) {
   return (
     <aside className="p-4 lg:w-64 lg:shrink-0">
       <div className="rounded-lg border bg-white p-3">

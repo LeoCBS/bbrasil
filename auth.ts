@@ -30,7 +30,7 @@ function getSupabaseAuthClient() {
 }
 
 function getSafeNextPath(value: FormDataEntryValue | string | null) {
-  const next = String(value ?? "/admin/clientes");
+  const next = String(value ?? "/admin/dashboard");
 
   if (!next.startsWith("/") || next.startsWith("//")) {
     return "/admin/clientes";

@@ -40,6 +40,16 @@ const sections = [
     ]
   },
   {
+    title: "Logística",
+    items: [
+      { label: "Roteiro do Dia", href: "/admin/logistica", icon: MapPin, disabled: false },
+      { label: "Visitas", href: "/admin/logistica/visitas", icon: Calendar, disabled: true },
+      { label: "Check-ins", href: "/admin/logistica/checkins", icon: ClipboardCheck, disabled: true },
+      { label: "Histórico", href: "/admin/logistica/historico", icon: History, disabled: true },
+      { label: "Relatórios", href: "/admin/logistica/relatorios", icon: FileBarChart, disabled: true }
+    ]
+  },
+  {
     title: "Relatórios",
     items: [
       { label: "Relatórios", href: "/admin/produtos", icon: BarChart3, disabled: true }

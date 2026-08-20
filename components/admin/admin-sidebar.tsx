@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Boxes, Building2, FileText, Package, Settings, ShoppingCart, Users, UserRound, Sparkles, DollarSign } from "lucide-react";
+import { BarChart3, Boxes, Building2, FileText, Package, Settings, ShoppingCart, Users, UserRound, Sparkles, DollarSign, MapPin, Calendar, History, ClipboardCheck, FileBarChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const sections = [
@@ -12,6 +12,16 @@ const sections = [
   { label: "Clientes", href: "/admin/clientes", icon: Users ,disabled: false},
   { label: "Unidades", href: "/admin/unidades", icon: Building2 ,disabled: false},
   { label: "Usuários", href: "/admin/usuarios", icon: UserRound ,disabled: false}
+    ]
+  },
+  {
+    title: "Logística",
+    items: [
+      { label: "Roteiro do Dia", href: "/admin/logistica", icon: MapPin, disabled: false },
+      { label: "Visitas", href: "/admin/logistica/visitas", icon: Calendar, disabled: true },
+      { label: "Check-ins", href: "/admin/logistica/checkins", icon: ClipboardCheck, disabled: true },
+      { label: "Histórico", href: "/admin/logistica/historico", icon: History, disabled: true },
+      { label: "Relatórios", href: "/admin/logistica/relatorios", icon: FileBarChart, disabled: true }
     ]
   },
   {
@@ -41,7 +51,7 @@ const footerItems = [
   { label: "Configurações", href: "/admin/produtos", icon: Settings, disabled: true }
 ];
 
-export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "pedidos" | "orcamentos" | "contas-receber" | "contas-pagar" }) {
+export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "pedidos" | "orcamentos" | "contas-receber" | "contas-pagar" | "logistica" }) {
   return (
     <aside className="p-4 lg:w-64 lg:shrink-0">
       <div className="rounded-lg border bg-white p-3">
@@ -52,7 +62,8 @@ export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | 
               <div className="grid gap-1">
                 {section.items.map((item) => {
                   const Icon = item.icon;
-                  const active = item.label.toLowerCase() === current;
+                  const itemPath = item.href.replace("/admin/", "");
+                  const active = current === itemPath || (current === "logistica" && item.href === "/admin/logistica");
                   const className = cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition-colors",
                     active ? "bg-brand-blue text-white" : "text-slate-600 hover:bg-slate-50 hover:text-brand-ink",

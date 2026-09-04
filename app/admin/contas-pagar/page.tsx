@@ -105,7 +105,7 @@ export default async function AdminPayablesPage({ searchParams }: AdminPayablesP
                     <th className="w-[8%] p-4 whitespace-nowrap">ID</th>
                     <th className="w-[18%] p-4 whitespace-nowrap">Fornecedor</th>
                     <th className="w-[14%] p-4 whitespace-nowrap">CNPJ</th>
-                    <th className="w-[16%] p-4 whitespace-nowrap">Descrição</th>
+                    <th className="w-[16%] p-4 whitespace-nowrap">Unidade</th>
                     <th className="w-[10%] p-4 whitespace-nowrap">Vencimento</th>
                     <th className="w-[10%] p-4 whitespace-nowrap">Pagamento</th>
                     <th className="w-[10%] p-4 whitespace-nowrap">Status</th>
@@ -133,9 +133,9 @@ export default async function AdminPayablesPage({ searchParams }: AdminPayablesP
                       <td className="p-4 overflow-hidden">
                         <div
                           className="truncate whitespace-nowrap overflow-hidden cursor-help"
-                          title={payable.description}
+                          title={payable.unit_name}
                         >
-                          {payable.description}
+                          {payable.unit_name}
                         </div>
                       </td>
                       <td className="p-4 whitespace-nowrap">

@@ -490,8 +490,11 @@ export function QuotationForm({
                           type="text"
                           value={unitPriceDisplay}
                           onChange={(e) => {
-                            handleCurrencyInputChange(e, setUnitPriceDisplay);
-                            handleUnitPriceChange(index, parseFloat(unitPriceDisplay.replace(/[^\d,]/g, '').replace(',', '.')) || 0);
+                            const display = formatCurrencyFromCents(onlyDigits(e.target.value));
+                            setUnitPriceDisplay(display);
+                            e.target.value = display;
+                            const numericValue = parseFloat(display.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                            handleUnitPriceChange(index, numericValue);
                           }}
                           className="w-28 text-right"
                         />

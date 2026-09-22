@@ -169,7 +169,7 @@ export async function updateQuotation(id: number, input: QuotationMutationInput)
 
   // Inserir os novos itens
   if (items && items.length > 0) {
-    const itemsWithQuotationId = items.map(({ id, ...itemData }: QuotationItem) => ({
+    const itemsWithQuotationId = items.map(({ id: itemId, ...itemData }: QuotationItem) => ({
       ...itemData,
       quotation_id: id
     }));

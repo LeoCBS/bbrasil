@@ -103,6 +103,12 @@ export function QuotationForm({
     quotation?.valid_until ? new Date(quotation.valid_until).toISOString().split('T')[0] : ''
   );
 
+  // New fields for quotation export
+  const [consultant, setConsultant] = useState<string>(quotation?.consultant || '');
+  const [paymentCondition, setPaymentCondition] = useState<string>(quotation?.payment_condition || '');
+  const [deliveryPeriod, setDeliveryPeriod] = useState<string>(quotation?.delivery_period || '');
+  const [additionalInfo, setAdditionalInfo] = useState<string>(quotation?.additional_info || '');
+
   // Order ID display (read-only)
   const orderId = quotation?.order_id;
 
@@ -244,6 +250,10 @@ export function QuotationForm({
         formData.append('total_amount', totalAmount.toString());
         formData.append('observation', observation);
         formData.append('valid_until', validUntil);
+        formData.append('consultant', consultant);
+        formData.append('payment_condition', paymentCondition);
+        formData.append('delivery_period', deliveryPeriod);
+        formData.append('additional_info', additionalInfo);
 
         await action(formData);
         setSuccessMessage(quotation ? 'Orçamento atualizado com sucesso.' : 'Orçamento criado com sucesso.');
@@ -571,6 +581,51 @@ export function QuotationForm({
           type="date"
           value={validUntil}
           onChange={(e) => setValidUntil(e.target.value)}
+        />
+      </div>
+
+      {/* Consultant */}
+      <div className="grid gap-2">
+        <Label htmlFor="consultant">Consultor</Label>
+        <Input
+          id="consultant"
+          value={consultant}
+          onChange={(e) => setConsultant(e.target.value)}
+          placeholder="Nome do consultor"
+        />
+      </div>
+
+      {/* Payment Condition */}
+      <div className="grid gap-2">
+        <Label htmlFor="payment_condition">Condição de Pagamento</Label>
+        <Input
+          id="payment_condition"
+          value={paymentCondition}
+          onChange={(e) => setPaymentCondition(e.target.value)}
+          placeholder="Ex: BOLETO 28 DIAS"
+        />
+      </div>
+
+      {/* Delivery Period */}
+      <div className="grid gap-2">
+        <Label htmlFor="delivery_period">Prazo de Entrega</Label>
+        <Input
+          id="delivery_period"
+          value={deliveryPeriod}
+          onChange={(e) => setDeliveryPeriod(e.target.value)}
+          placeholder="Ex: 02 DIAS ÚTEIS"
+        />
+      </div>
+
+      {/* Additional Info */}
+      <div className="grid gap-2">
+        <Label htmlFor="additional_info">Informações Complementares</Label>
+        <Textarea
+          id="additional_info"
+          value={additionalInfo}
+          onChange={(e) => setAdditionalInfo(e.target.value)}
+          placeholder="Informações adicionais sobre o orçamento..."
+          rows={2}
         />
       </div>
 

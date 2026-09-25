@@ -164,9 +164,14 @@ export function ProductForm({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor={`name-${product?.id ?? 'new'}`}>Nome</Label>
-          <Input id={`name-${product?.id ?? 'new'}`} name="name" defaultValue={product?.name} required />
+          <Label htmlFor={`ncm-${product?.id ?? 'new'}`}>NCM</Label>
+          <Input id={`ncm-${product?.id ?? 'new'}`} name="ncm" defaultValue={product?.ncm ?? ''} placeholder="17019900" />
         </div>
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor={`name-${product?.id ?? 'new'}`}>Nome</Label>
+        <Input id={`name-${product?.id ?? 'new'}`} name="name" defaultValue={product?.name} required />
       </div>
 
       <div className="grid gap-2">

@@ -21,6 +21,9 @@ export type Client = {
   profile_id: string | null;
   unit: string;
   unit_id: string;
+  plan?: string | null;
+  contact_person?: string | null;
+  contact_phone?: string | null;
   active: boolean;
   created_at?: string;
 };

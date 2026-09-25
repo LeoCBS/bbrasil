@@ -56,6 +56,7 @@ function parseProduct(formData: FormData): ProductMutationInput {
     description: textField(formData, "description"),
     size: textField(formData, "size"),
     unit: textField(formData, "unit"),
+    ncm: textField(formData, "ncm"),
     stock: numberField(formData, "stock", null),
     price: currencyField(formData, "price"),
     cost_price: currencyField(formData, "cost_price"),
@@ -272,6 +273,10 @@ function parseQuotation(formData: FormData): QuotationMutationInput {
     observation: textField(formData, "observation"),
     total_amount: totalAmount,
     valid_until: textField(formData, "valid_until"),
+    consultant: textField(formData, "consultant"),
+    payment_condition: textField(formData, "payment_condition"),
+    delivery_period: textField(formData, "delivery_period"),
+    additional_info: textField(formData, "additional_info"),
     items
   };
 }

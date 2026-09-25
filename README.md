@@ -86,3 +86,20 @@ alter table public.products
   add column if not exists image_blob bytea,
   add column if not exists image_mime_type text;
 ```
+
+## Nota fiscal eletronica
+
+Principais WebServices da SVRS (Homologação - Versão 4.00)
+
+Autorização de NF-e:
+https://nfe-homologacao.svrs.rs.gov.br/ws/NfeAutorizacao/NFeAutorizacao4.asmx
+
+Retorno da Autorização:
+https://nfe-homologacao.svrs.rs.gov.br/ws/NfeRetAutorizacao/NFeRetAutorizacao4.asmx
+
+Status de Serviço:https://nfe-homologacao.svrs.rs.gov.br/ws/NfeStatusServico/NfeStatusServico4.asmx
+
+Recepção de Eventos (Cancelamento / CC-e):
+https://nfe-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmxConsulta
+
+Protocolo:https://svrs.rs.gov.br

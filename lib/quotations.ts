@@ -10,6 +10,7 @@ export type QuotationItem = {
   product_id: string;
   product_name: string;
   product_code?: string;
+  ncm?: string | null;
   quantity: number;
   unit_price: number;
   total_price: number;
@@ -33,6 +34,10 @@ export type Quotation = {
   total_amount: number;
   valid_until?: string;
   order_id?: number;
+  consultant?: string | null;
+  payment_condition?: string | null;
+  delivery_period?: string | null;
+  additional_info?: string | null;
   items?: QuotationItem[];
   created_at?: string;
   updated_at?: string;

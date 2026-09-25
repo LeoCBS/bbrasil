@@ -12,7 +12,7 @@ import type { Profile } from "@/lib/profiles";
 import type { Unit } from "@/lib/units";
 import { formatCnpj, formatPhone, isValidCnpj } from "@/lib/format";
 
-const fields = [["corporate_name", "Razão social", "text", true], ["state_registration", "Insc. estadual", "text", false], ["address", "Endereço", "text", false], ["neighborhood", "Bairro", "text", false], ["city", "Cidade", "text", false], ["state", "Estado", "text", false], ["zip_code", "CEP", "text", false], ["email", "E-mail", "email", false]] as const;
+const fields = [["corporate_name", "Razão social", "text", true], ["state_registration", "Insc. estadual", "text", false], ["address", "Endereço", "text", false], ["neighborhood", "Bairro", "text", false], ["city", "Cidade", "text", false], ["state", "Estado", "text", false], ["zip_code", "CEP", "text", false], ["email", "E-mail", "email", false], ["plan", "Plano", "text", false], ["contact_person", "Contato", "text", false], ["contact_phone", "Fone Contato", "text", false]] as const;
 
 export function ClientForm({ client, action, submitLabel, successHref, units, profiles }: { client?: Client; action: (formData: FormData) => Promise<void>; submitLabel: string; successHref?: string; units: Unit[]; profiles: Profile[] }) {
   const router = useRouter(); const formRef = useRef<HTMLFormElement>(null); const [message, setMessage] = useState(""); const [error, setError] = useState(""); const [pending, startTransition] = useTransition();

@@ -10,6 +10,7 @@ import { QuotationForm } from "@/components/quotation-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ConvertQuotationButton } from "@/components/admin/convert-quotation-button";
+import { ExportQuotationButton } from "@/components/admin/export-quotation-button";
 
 export default async function EditQuotationPage({
   params,
@@ -44,6 +45,7 @@ export default async function EditQuotationPage({
               <p className="mt-1 text-slate-600">Edite o orçamento selecionado.</p>
             </div>
             <div className="flex gap-2">
+              <ExportQuotationButton quotation={quotation} size="default" />
               <ConvertQuotationButton quotationId={quotation.id} size="default" />
               <Button asChild>
                 <Link href="/admin/orcamentos">Voltar</Link>

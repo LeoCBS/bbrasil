@@ -16,6 +16,7 @@ export type Product = {
   category: string;
   description: string;
   size: string;
+  ncm?: string | null;
   stock?: number | null;
   cost_price?: number | null;
   price: number | null;

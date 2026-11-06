@@ -29,3 +29,4 @@ coverage/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+NFE.md

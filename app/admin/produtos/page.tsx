@@ -77,9 +77,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
       <th className="w-[6%] p-4 whitespace-nowrap">UN</th>
       <th className="w-[36%] p-4 whitespace-nowrap">Descrição</th>
       <th className="w-[10%] p-4 whitespace-nowrap">Estoque</th>
-      <th className="w-[12%] p-4 whitespace-nowrap">VL. Custo</th>
-      <th className="w-[12%] p-4 whitespace-nowrap">VL. Venda</th>
-      <th className="w-[8%] p-4 text-right whitespace-nowrap">%Marg.Luc</th>
+      <th className="w-[12%] p-4 whitespace-nowrap">Custo</th>
       <th className="w-[10%] p-4 text-right whitespace-nowrap">Ações</th>
     </tr>
   </thead>
@@ -114,14 +112,6 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
 
         <td className="p-4 whitespace-nowrap">
           {typeof p.cost_price === 'number' ? `R$ ${p.cost_price.toFixed(2)}` : "-"}
-        </td>
-
-        <td className="p-4 whitespace-nowrap">
-          {p.price ? `R$ ${p.price.toFixed(2)}` : "-"}
-        </td>
-
-        <td className="p-4 text-right whitespace-nowrap">
-          {formatMarginPercent(p.price, p.cost_price)}
         </td>
 
         <td className="p-4 text-right whitespace-nowrap">

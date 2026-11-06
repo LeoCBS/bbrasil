@@ -62,7 +62,6 @@ function parseProduct(formData: FormData): ProductMutationInput {
     cost_price: currencyField(formData, "cost_price"),
     cean: textField(formData, "cean", "SEM GTIN"),
     cean_trib: textField(formData, "cean_trib", "SEM GTIN"),
-    utrib: currencyField(formData, "utrib"),
     active: checkboxField(formData, "active"),
     image_url: textField(formData, "image_url")
   };

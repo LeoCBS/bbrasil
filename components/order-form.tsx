@@ -24,6 +24,10 @@ interface OrderFormItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  cfop?: number;
+  indtot?: number;
+  qtrib?: number;
+  v_un_trib?: number;
 }
 
 export function OrderForm({
@@ -80,7 +84,11 @@ export function OrderForm({
       product_code: item.product_code || undefined,
       quantity: item.quantity,
       unit_price: item.unit_price,
-      total_price: item.total_price
+      total_price: item.total_price,
+      cfop: item.cfop,
+      indtot: item.indtot,
+      qtrib: item.qtrib,
+      v_un_trib: item.v_un_trib
     })) || []
   );
 
@@ -90,6 +98,8 @@ export function OrderForm({
   const [showProductDropdown, setShowProductDropdown] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [newItemQuantity, setNewItemQuantity] = useState<number>(1);
+  const [newItemPrice, setNewItemPrice] = useState<number>(0);
+  const [newItemPriceDisplay, setNewItemPriceDisplay] = useState<string>('');
 
   // Editing item
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
@@ -150,13 +160,19 @@ export function OrderForm({
       product_name: product.name,
       product_code: product.code || undefined,
       quantity: newItemQuantity,
-      unit_price: product.price || 0,
-      total_price: (product.price || 0) * newItemQuantity
+      unit_price: newItemPrice,
+      total_price: newItemPrice * newItemQuantity,
+      cfop: 5102,
+      indtot: 1,
+      qtrib: newItemQuantity,
+      v_un_trib: newItemPrice
     };
     setOrderItems([...orderItems, newItem]);
     setProductSearch('');
     setSelectedProduct(null);
     setNewItemQuantity(1);
+    setNewItemPrice(0);
+    setNewItemPriceDisplay('');
     setShowProductDropdown(false);
   }
 
@@ -192,6 +208,7 @@ export function OrderForm({
     updatedItems[index] = {
       ...item,
       quantity,
+      qtrib: quantity,
       total_price: quantity * item.unit_price
     };
     setOrderItems(updatedItems);
@@ -203,6 +220,7 @@ export function OrderForm({
     updatedItems[index] = {
       ...item,
       unit_price: price,
+      v_un_trib: price,
       total_price: item.quantity * price
     };
     setOrderItems(updatedItems);
@@ -389,21 +407,14 @@ export function OrderForm({
                   }}
                   className="px-4 py-2 hover:bg-slate-50 cursor-pointer"
                 >
-                  <div className="flex justify-between">
-                    <div>
-                      <div className="font-medium">{product.name}</div>
-                      <div className="text-sm text-slate-600">{product.code || 'Sem código'}</div>
-                    </div>
-                    <div className="text-sm font-medium">
-                      {product.price ? formatCurrency(product.price) : 'Preço não definido'}
-                    </div>
-                  </div>
+                  <div className="font-medium">{product.name}</div>
+                  <div className="text-sm text-slate-600">{product.code || 'Sem código'}</div>
                 </div>
               ))}
             </div>
           )}
           
-          {/* Quantity input when product is selected */}
+          {/* Quantity and Price input when product is selected */}
           {selectedProduct && (
             <div className="mt-2 flex gap-2 items-center">
               <div className="flex-1">
@@ -414,6 +425,21 @@ export function OrderForm({
                   min="1"
                   value={newItemQuantity}
                   onChange={(e) => setNewItemQuantity(parseInt(e.target.value) || 1)}
+                  className="mt-1"
+                />
+              </div>
+              <div className="flex-1">
+                <Label htmlFor="price" className="text-sm">Preço Unitário</Label>
+                <Input
+                  id="price"
+                  type="text"
+                  value={newItemPriceDisplay}
+                  onChange={(e) => {
+                    handleCurrencyInputChange(e, setNewItemPriceDisplay);
+                    const numericValue = parseFloat(e.target.value.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                    setNewItemPrice(numericValue);
+                  }}
+                  placeholder="0,00"
                   className="mt-1"
                 />
               </div>
@@ -431,6 +457,8 @@ export function OrderForm({
                   setSelectedProduct(null);
                   setProductSearch('');
                   setNewItemQuantity(1);
+                  setNewItemPrice(0);
+                  setNewItemPriceDisplay('');
                 }}
                 className="mt-5"
               >
@@ -480,7 +508,7 @@ export function OrderForm({
                           value={unitPriceDisplay}
                           onChange={(e) => {
                             handleCurrencyInputChange(e, setUnitPriceDisplay);
-                            handleUnitPriceChange(index, parseFloat(unitPriceDisplay.replace(/[^\d,]/g, '').replace(',', '.')) || 0);
+                            handleUnitPriceChange(index, parseFloat(e.target.value.replace(/[^\d,]/g, '').replace(',', '.')) || 0);
                           }}
                           className="w-28 text-right"
                         />

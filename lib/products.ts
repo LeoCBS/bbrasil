@@ -22,7 +22,6 @@ export type Product = {
   price: number | null;
   cean?: string | null;
   cean_trib?: string | null;
-  utrib?: number | null;
   image_blob: string | null;
   image_mime_type: string | null;
   image_url: string | null;
@@ -68,7 +67,6 @@ type ProductRecord = Omit<ProductInput, "unit_name"> & {
   cost_price?: number | null;
   cean?: string | null;
   cean_trib?: string | null;
-  utrib?: number | null;
 };
 
 const fallbackProducts: Product[] = [
@@ -142,7 +140,6 @@ function normalizeProduct(product: ProductRecord): Product {
     cost_price: product.cost_price ?? null,
     cean: product.cean ?? null,
     cean_trib: product.cean_trib ?? null,
-    utrib: product.utrib ?? null,
     unit_name: relatedUnit?.name ?? "Unidade não definida",
     unit_id: product.unit_id ?? "",
     category: relatedCategory?.name ?? "Sem categoria",
@@ -158,7 +155,7 @@ function matchesSearch(product: Product, search?: string) {
   }
 
   const normalizedSearch = normalizeText(search);
-  const searchableText = [product.name, product.description, product.category, product.unit_name].map(normalizeText).join(" ");
+  const searchableText = [product.name, product.description, product.category, product.unit_name, product.code ?? ''].map(normalizeText).join(" ");
 
   return searchableText.includes(normalizedSearch);
 }
@@ -191,7 +188,7 @@ export async function getProducts({ includeInactive = false, unitId, search }: G
 
   if (search) {
     const pattern = buildIlikePattern(search.trim());
-    query = query.or(`name.ilike.${pattern},description.ilike.${pattern}`);
+    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},code.ilike.${pattern}`);
   }
 
   const { data, error } = await query;
@@ -244,7 +241,7 @@ export async function getPaginatedProducts({
 
   if (search) {
     const pattern = buildIlikePattern(search.trim());
-    query = query.or(`name.ilike.${pattern},description.ilike.${pattern}`);
+    query = query.or(`name.ilike.${pattern},description.ilike.${pattern},code.ilike.${pattern}`);
   }
 
   const { data, error, count } = await query.range(from, to);

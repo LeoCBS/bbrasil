@@ -14,6 +14,10 @@ export type QuotationItem = {
   quantity: number;
   unit_price: number;
   total_price: number;
+  cfop?: number;
+  indtot?: number;
+  qtrib?: number;
+  v_un_trib?: number;
   created_at?: string;
 };
 
@@ -74,7 +78,11 @@ const fallbackQuotations: Quotation[] = [
         product_code: "ALT001",
         quantity: 10,
         unit_price: 150.00,
-        total_price: 1500.00
+        total_price: 1500.00,
+        cfop: 5102,
+        indtot: 1,
+        qtrib: 10,
+        v_un_trib: 150.00
       }
     ]
   }
@@ -150,7 +158,9 @@ export async function createQuotation(input: QuotationMutationInput) {
   if (items && items.length > 0) {
     const itemsWithQuotationId = items.map(({ id, ...itemData }: QuotationItem) => ({
       ...itemData,
-      quotation_id: quotationId
+      quotation_id: quotationId,
+      cfop: itemData.cfop ?? 5102,
+      indtot: itemData.indtot ?? 1
     }));
 
     const { error: itemsError } = await supabase.from("quotation_items").insert(itemsWithQuotationId);
@@ -176,7 +186,9 @@ export async function updateQuotation(id: number, input: QuotationMutationInput)
   if (items && items.length > 0) {
     const itemsWithQuotationId = items.map(({ id: itemId, ...itemData }: QuotationItem) => ({
       ...itemData,
-      quotation_id: id
+      quotation_id: id,
+      cfop: itemData.cfop ?? 5102,
+      indtot: itemData.indtot ?? 1
     }));
 
     const { error: itemsError } = await supabase.from("quotation_items").insert(itemsWithQuotationId);
@@ -226,7 +238,9 @@ export async function convertQuotationToOrder(quotationId: number) {
   if (quotation.items && quotation.items.length > 0) {
     const itemsWithOrderId = quotation.items.map(({ id, quotation_id, ...itemData }: QuotationItem) => ({
       ...itemData,
-      order_id: orderId
+      order_id: orderId,
+      cfop: itemData.cfop ?? 5102,
+      indtot: itemData.indtot ?? 1
     }));
 
     const { error: itemsError } = await supabase.from("order_items").insert(itemsWithOrderId);

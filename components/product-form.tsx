@@ -69,18 +69,27 @@ export function ProductForm({
   // display states for masked currency inputs
   const [priceDisplay, setPriceDisplay] = useState<string>(() => formatCurrency(product?.price));
   const [costPriceDisplay, setCostPriceDisplay] = useState<string>(() => formatCurrency(product?.cost_price));
+  const [uTribDisplay, setUTribDisplay] = useState<string>(() => formatCurrency(product?.utrib));
 
   // keep displays in sync if product prop changes
   useEffect(() => {
     setPriceDisplay(formatCurrency(product?.price));
     setCostPriceDisplay(formatCurrency(product?.cost_price));
+    setUTribDisplay(formatCurrency(product?.utrib ?? product?.price));
   }, [product]);
+
+
 
   function handleCurrencyInputChange(e: React.ChangeEvent<HTMLInputElement>, setter: (v: string) => void) {
     const display = formatCurrencyFromCents(onlyDigits(e.target.value));
     setter(display);
     // update the real input value so FormData contains formatted value
     e.target.value = display;
+
+    // if editing price, also update uTrib
+    if (e.target.name === 'price') {
+      setUTribDisplay(display);
+    }
   }
 
   const activeCategories = categories.filter((category) => category.active);
@@ -124,6 +133,7 @@ export function ProductForm({
           // keep masked displays empty after reset
           setPriceDisplay('');
           setCostPriceDisplay('');
+          setUTribDisplay('');
         }
 
         router.refresh();
@@ -166,6 +176,18 @@ export function ProductForm({
         <div className="grid gap-2">
           <Label htmlFor={`ncm-${product?.id ?? 'new'}`}>NCM</Label>
           <Input id={`ncm-${product?.id ?? 'new'}`} name="ncm" defaultValue={product?.ncm ?? ''} placeholder="17019900" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor={`cean-${product?.id ?? 'new'}`}>Código de barras comercial</Label>
+          <Input id={`cean-${product?.id ?? 'new'}`} name="cean" defaultValue={product?.cean ?? 'SEM GTIN'} placeholder="SEM GTIN" />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor={`cean_trib-${product?.id ?? 'new'}`}>GTIN da unidade tributável</Label>
+          <Input id={`cean_trib-${product?.id ?? 'new'}`} name="cean_trib" defaultValue={product?.cean_trib ?? 'SEM GTIN'} placeholder="SEM GTIN" />
         </div>
       </div>
 
@@ -213,12 +235,23 @@ export function ProductForm({
         <Textarea id={`description-${product?.id ?? 'new'}`} name="description" defaultValue={product?.description} required />
       </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor={`unit-short-${product?.id ?? 'new'}`}>UN (abreviação)</Label>
-        <Input id={`unit-short-${product?.id ?? 'new'}`} name="unit" defaultValue={product?.unit ?? ''} placeholder="PC, RL, CX" />
-      </div>
-
       <div className="grid grid-cols-4 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor={`unit-short-${product?.id ?? 'new'}`}>UN</Label>
+          <select
+            id={`unit-short-${product?.id ?? 'new'}`}
+            name="unit"
+            defaultValue={product?.unit ?? 'UN'}
+            className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="CX">CX</option>
+            <option value="BB">BB</option>
+            <option value="FR">FR</option>
+            <option value="UN">UN</option>
+            <option value="FD">FD</option>
+          </select>
+        </div>
+        
         <div className="grid gap-2">
           <Label htmlFor={`size-${product?.id ?? 'new'}`}>Volume</Label>
           <Input id={`size-${product?.id ?? 'new'}`} name="size" defaultValue={product?.size} placeholder="5L" />
@@ -230,17 +263,6 @@ export function ProductForm({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor={`price-${product?.id ?? 'new'}`}>Preço (Venda)</Label>
-          <Input
-            id={`price-${product?.id ?? 'new'}`}
-            name="price"
-            type="text"
-            value={priceDisplay}
-            placeholder="R$ 0,00"
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCurrencyInputChange(e, setPriceDisplay)}
-          />
-        </div>
-        <div className="grid gap-2">
           <Label htmlFor={`cost_price-${product?.id ?? 'new'}`}>VL. Custo</Label>
           <Input
             id={`cost_price-${product?.id ?? 'new'}`}
@@ -251,6 +273,7 @@ export function ProductForm({
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCurrencyInputChange(e, setCostPriceDisplay)}
           />
         </div>
+        
       </div>
 
 

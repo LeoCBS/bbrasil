@@ -20,6 +20,9 @@ export type Product = {
   stock?: number | null;
   cost_price?: number | null;
   price: number | null;
+  cean?: string | null;
+  cean_trib?: string | null;
+  utrib?: number | null;
   image_blob: string | null;
   image_mime_type: string | null;
   image_url: string | null;
@@ -63,6 +66,9 @@ type ProductRecord = Omit<ProductInput, "unit_name"> & {
   unit?: string | null;
   stock?: number | null;
   cost_price?: number | null;
+  cean?: string | null;
+  cean_trib?: string | null;
+  utrib?: number | null;
 };
 
 const fallbackProducts: Product[] = [
@@ -134,6 +140,9 @@ function normalizeProduct(product: ProductRecord): Product {
     unit: product.unit ?? null,
     stock: product.stock ?? null,
     cost_price: product.cost_price ?? null,
+    cean: product.cean ?? null,
+    cean_trib: product.cean_trib ?? null,
+    utrib: product.utrib ?? null,
     unit_name: relatedUnit?.name ?? "Unidade não definida",
     unit_id: product.unit_id ?? "",
     category: relatedCategory?.name ?? "Sem categoria",

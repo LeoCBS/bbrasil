@@ -69,13 +69,11 @@ export function ProductForm({
   // display states for masked currency inputs
   const [priceDisplay, setPriceDisplay] = useState<string>(() => formatCurrency(product?.price));
   const [costPriceDisplay, setCostPriceDisplay] = useState<string>(() => formatCurrency(product?.cost_price));
-  const [uTribDisplay, setUTribDisplay] = useState<string>(() => formatCurrency(product?.utrib));
 
   // keep displays in sync if product prop changes
   useEffect(() => {
     setPriceDisplay(formatCurrency(product?.price));
     setCostPriceDisplay(formatCurrency(product?.cost_price));
-    setUTribDisplay(formatCurrency(product?.utrib ?? product?.price));
   }, [product]);
 
 
@@ -85,11 +83,6 @@ export function ProductForm({
     setter(display);
     // update the real input value so FormData contains formatted value
     e.target.value = display;
-
-    // if editing price, also update uTrib
-    if (e.target.name === 'price') {
-      setUTribDisplay(display);
-    }
   }
 
   const activeCategories = categories.filter((category) => category.active);
@@ -133,7 +126,6 @@ export function ProductForm({
           // keep masked displays empty after reset
           setPriceDisplay('');
           setCostPriceDisplay('');
-          setUTribDisplay('');
         }
 
         router.refresh();

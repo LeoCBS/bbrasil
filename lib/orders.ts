@@ -14,6 +14,10 @@ export type OrderItem = {
   quantity: number;
   unit_price: number;
   total_price: number;
+  cfop?: number;
+  indtot?: number;
+  qtrib?: number;
+  v_un_trib?: number;
   created_at?: string;
 };
 
@@ -65,7 +69,11 @@ const fallbackOrders: Order[] = [
         product_code: "ALT001",
         quantity: 10,
         unit_price: 150.00,
-        total_price: 1500.00
+        total_price: 1500.00,
+        cfop: 5102,
+        indtot: 1,
+        qtrib: 10,
+        v_un_trib: 150.00
       }
     ]
   }
@@ -141,7 +149,9 @@ export async function createOrder(input: OrderMutationInput) {
   if (items && items.length > 0) {
     const itemsWithOrderId = items.map(({ id: _id, ...itemData }: OrderItem) => ({
       ...itemData,
-      order_id: orderId
+      order_id: orderId,
+      cfop: itemData.cfop ?? 5102,
+      indtot: itemData.indtot ?? 1
     }));
 
     const { error: itemsError } = await supabase.from("order_items").insert(itemsWithOrderId);
@@ -175,7 +185,9 @@ export async function updateOrder(id: number, input: OrderMutationInput) {
   if (items && items.length > 0) {
     const itemsWithOrderId = items.map(({ id: _id, ...itemData }: OrderItem) => ({
       ...itemData,
-      order_id: id
+      order_id: id,
+      cfop: itemData.cfop ?? 5102,
+      indtot: itemData.indtot ?? 1
     }));
 
     const { error: itemsError } = await supabase.from("order_items").insert(itemsWithOrderId);

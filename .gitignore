@@ -30,3 +30,4 @@ coverage/
 *.tsbuildinfo
 next-env.d.ts
 NFE.md
+nfe-example.xml

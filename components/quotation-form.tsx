@@ -25,6 +25,10 @@ interface QuotationFormItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  cfop?: number;
+  indtot?: number;
+  qtrib?: number;
+  v_un_trib?: number;
 }
 
 export function QuotationForm({
@@ -81,7 +85,11 @@ export function QuotationForm({
       product_code: item.product_code || undefined,
       quantity: item.quantity,
       unit_price: item.unit_price,
-      total_price: item.total_price
+      total_price: item.total_price,
+      cfop: item.cfop,
+      indtot: item.indtot,
+      qtrib: item.qtrib,
+      v_un_trib: item.v_un_trib
     })) || []
   );
 
@@ -91,6 +99,8 @@ export function QuotationForm({
   const [showProductDropdown, setShowProductDropdown] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [newItemQuantity, setNewItemQuantity] = useState<number>(1);
+  const [newItemPrice, setNewItemPrice] = useState<number>(0);
+  const [newItemPriceDisplay, setNewItemPriceDisplay] = useState<string>('');
 
   // Editing item
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
@@ -165,13 +175,19 @@ export function QuotationForm({
       product_name: product.name,
       product_code: product.code || undefined,
       quantity: newItemQuantity,
-      unit_price: product.price || 0,
-      total_price: (product.price || 0) * newItemQuantity
+      unit_price: newItemPrice,
+      total_price: newItemPrice * newItemQuantity,
+      cfop: 5102,
+      indtot: 1,
+      qtrib: newItemQuantity,
+      v_un_trib: newItemPrice
     };
     setQuotationItems([...quotationItems, newItem]);
     setProductSearch('');
     setSelectedProduct(null);
     setNewItemQuantity(1);
+    setNewItemPrice(0);
+    setNewItemPriceDisplay('');
     setShowProductDropdown(false);
   }
 
@@ -207,6 +223,7 @@ export function QuotationForm({
     updatedItems[index] = {
       ...item,
       quantity,
+      qtrib: quantity,
       total_price: quantity * item.unit_price
     };
     setQuotationItems(updatedItems);
@@ -218,6 +235,7 @@ export function QuotationForm({
     updatedItems[index] = {
       ...item,
       unit_price: price,
+      v_un_trib: price,
       total_price: item.quantity * price
     };
     setQuotationItems(updatedItems);
@@ -410,21 +428,14 @@ export function QuotationForm({
                   }}
                   className="px-4 py-2 hover:bg-slate-50 cursor-pointer"
                 >
-                  <div className="flex justify-between">
-                    <div>
-                      <div className="font-medium">{product.name}</div>
-                      <div className="text-sm text-slate-600">{product.code || 'Sem código'}</div>
-                    </div>
-                    <div className="text-sm font-medium">
-                      {product.price ? formatCurrency(product.price) : 'Preço não definido'}
-                    </div>
-                  </div>
+                  <div className="font-medium">{product.name}</div>
+                  <div className="text-sm text-slate-600">{product.code || 'Sem código'}</div>
                 </div>
               ))}
             </div>
           )}
           
-          {/* Quantity input when product is selected */}
+          {/* Quantity and Price input when product is selected */}
           {selectedProduct && (
             <div className="mt-2 flex gap-2 items-center">
               <div className="flex-1">
@@ -435,6 +446,23 @@ export function QuotationForm({
                   min="1"
                   value={newItemQuantity}
                   onChange={(e) => setNewItemQuantity(parseInt(e.target.value) || 1)}
+                  className="mt-1"
+                />
+              </div>
+              <div className="flex-1">
+                <Label htmlFor="price" className="text-sm">Preço Unitário</Label>
+                <Input
+                  id="price"
+                  type="text"
+                  value={newItemPriceDisplay}
+                  onChange={(e) => {
+                    const display = formatCurrencyFromCents(onlyDigits(e.target.value));
+                    setNewItemPriceDisplay(display);
+                    e.target.value = display;
+                    const numericValue = parseFloat(display.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                    setNewItemPrice(numericValue);
+                  }}
+                  placeholder="0,00"
                   className="mt-1"
                 />
               </div>
@@ -452,6 +480,8 @@ export function QuotationForm({
                   setSelectedProduct(null);
                   setProductSearch('');
                   setNewItemQuantity(1);
+                  setNewItemPrice(0);
+                  setNewItemPriceDisplay('');
                 }}
                 className="mt-5"
               >

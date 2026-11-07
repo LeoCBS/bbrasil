@@ -11,6 +11,7 @@ import { createOrder, deleteOrder, updateOrder, type OrderMutationInput } from "
 import { createQuotation, deleteQuotation, updateQuotation, convertQuotationToOrder, type QuotationMutationInput } from "@/lib/quotations";
 import { createReceivable, deleteReceivable, updateReceivable, markAsPaid as markReceivableAsPaid, type ReceivableMutationInput } from "@/lib/receivables";
 import { createPayable, deletePayable, updatePayable, markAsPaid as markPayableAsPaid, type PayableMutationInput } from "@/lib/payables";
+import { createTaxRule, deleteTaxRule, updateTaxRule, type TaxRuleMutationInput } from "@/lib/tax-rules";
 import { checkboxField, currencyField, digitsField, numberField, textField } from "@/lib/form-data";
 import { isValidCnpj } from "@/lib/format";
 
@@ -21,6 +22,7 @@ const orderPaths = ["/admin/pedidos"];
 const quotationPaths = ["/admin/orcamentos"];
 const receivablePaths = ["/admin/contas-receber"];
 const payablePaths = ["/admin/contas-pagar"];
+const taxRulePaths = ["/admin/regras-fiscais"];
 
 function revalidate(paths: string[]) {
   for (const path of paths) {
@@ -454,4 +456,45 @@ export async function markAsPaidPayableAction(formData: FormData) {
   const paymentDate = String(formData.get("payment_date") ?? new Date().toISOString().split('T')[0]);
   await markPayableAsPaid(id, paymentDate);
   revalidate(payablePaths);
+}
+
+function parseTaxRule(formData: FormData): TaxRuleMutationInput {
+  return {
+    name: textField(formData, "name"),
+    description: textField(formData, "description"),
+    ncm: textField(formData, "ncm") || null,
+    icms_orig: numberField(formData, "icms_orig") || null,
+    icms_csosn: numberField(formData, "icms_csosn") || null,
+    icms_p_cred_sn: numberField(formData, "icms_p_cred_sn") || null,
+    pis_cst: numberField(formData, "pis_cst") || null,
+    pis_p: numberField(formData, "pis_p") || null,
+    cofins_cst: numberField(formData, "cofins_cst") || null,
+    cofins_p: numberField(formData, "cofins_p") || null,
+    active: checkboxField(formData, "active")
+  };
+}
+
+export async function createTaxRuleAction(formData: FormData) {
+  await requireAdminUser("/admin/regras-fiscais");
+  const taxRule = parseTaxRule(formData);
+  if (!taxRule.name) throw new Error("Informe o nome da regra fiscal.");
+  await createTaxRule(taxRule);
+  revalidate(taxRulePaths);
+  redirect("/admin/regras-fiscais");
+}
+
+export async function updateTaxRuleAction(formData: FormData) {
+  await requireAdminUser("/admin/regras-fiscais");
+  const taxRule = parseTaxRule(formData);
+  if (!taxRule.name) throw new Error("Informe o nome da regra fiscal.");
+  await updateTaxRule(idField(formData), taxRule);
+  revalidate(taxRulePaths);
+  redirect("/admin/regras-fiscais");
+}
+
+export async function deleteTaxRuleAction(formData: FormData) {
+  await requireAdminUser("/admin/regras-fiscais");
+  await deleteTaxRule(idField(formData));
+  revalidate(taxRulePaths);
+  redirect("/admin/regras-fiscais");
 }

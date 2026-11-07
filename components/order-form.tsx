@@ -28,6 +28,7 @@ interface OrderFormItem {
   indtot?: number;
   qtrib?: number;
   v_un_trib?: number;
+  tax_rule_id?: string | null;
 }
 
 export function OrderForm({
@@ -88,7 +89,8 @@ export function OrderForm({
       cfop: item.cfop,
       indtot: item.indtot,
       qtrib: item.qtrib,
-      v_un_trib: item.v_un_trib
+      v_un_trib: item.v_un_trib,
+      tax_rule_id: item.tax_rule_id
     })) || []
   );
 

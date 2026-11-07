@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Boxes, Building2, FileText, Package, Settings, ShoppingCart, Users, UserRound, Sparkles, DollarSign, MapPin, Calendar, History, ClipboardCheck, FileBarChart } from "lucide-react";
+import { BarChart3, Boxes, Building2, FileText, Package, Settings, ShoppingCart, Users, UserRound, Sparkles, DollarSign, MapPin, Calendar, History, ClipboardCheck, FileBarChart, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const sections = [
@@ -30,6 +30,12 @@ const sections = [
     ]
   },
   {
+    title: "Fiscal",
+    items: [
+      { label: "Regras Fiscais", href: "/admin/regras-fiscais", icon: Receipt, disabled: false }
+    ]
+  },
+  {
     title: "Logística",
     items: [
       { label: "Roteiro do Dia", href: "/admin/logistica", icon: MapPin, disabled: false },
@@ -51,7 +57,7 @@ const footerItems = [
   { label: "Configurações", href: "/admin/produtos", icon: Settings, disabled: true }
 ];
 
-export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "pedidos" | "orcamentos" | "contas-receber" | "contas-pagar" | "logistica" }) {
+export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "pedidos" | "orcamentos" | "contas-receber" | "contas-pagar" | "logistica" | "regras-fiscais" }) {
   return (
     <aside className="p-4 lg:w-64 lg:shrink-0">
       <div className="rounded-lg border bg-white p-3">

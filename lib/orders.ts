@@ -4,6 +4,8 @@ import { getSupabase } from "@/lib/supabase";
 import { paginate, pageRange, totalPagesFor } from "@/lib/pagination";
 import { normalizeText } from "@/lib/text";
 import { createReceivableFromOrder } from "@/lib/receivables";
+import { getTaxRuleByNcm, getDefaultTaxRule, calculateItemTaxes } from "@/lib/tax-rules";
+import { getProduct } from "@/lib/products";
 
 export type OrderItem = {
   id: number;
@@ -18,6 +20,10 @@ export type OrderItem = {
   indtot?: number;
   qtrib?: number;
   v_un_trib?: number;
+  tax_rule_id?: string | null;
+  v_pis?: number;
+  v_cofins?: number;
+  v_tot_trib?: number;
   created_at?: string;
 };
 
@@ -73,7 +79,11 @@ const fallbackOrders: Order[] = [
         cfop: 5102,
         indtot: 1,
         qtrib: 10,
-        v_un_trib: 150.00
+        v_un_trib: 150.00,
+        tax_rule_id: null,
+        v_pis: 0.00,
+        v_cofins: 0.00,
+        v_tot_trib: 0.00
       }
     ]
   }
@@ -147,11 +157,47 @@ export async function createOrder(input: OrderMutationInput) {
 
   // Criar os itens do pedido
   if (items && items.length > 0) {
-    const itemsWithOrderId = items.map(({ id: _id, ...itemData }: OrderItem) => ({
-      ...itemData,
-      order_id: orderId,
-      cfop: itemData.cfop ?? 5102,
-      indtot: itemData.indtot ?? 1
+    const itemsWithOrderId = await Promise.all(items.map(async ({ id: _id, ...itemData }: OrderItem) => {
+      // Se não tiver tax_rule_id, buscar automaticamente
+      let taxRuleId = itemData.tax_rule_id ?? null;
+      let taxRule = null;
+      
+      if (!taxRuleId) {
+        try {
+          // Buscar o produto para obter o NCM
+          const product = await getProduct(itemData.product_id);
+          if (product?.ncm) {
+            // Tentar buscar regra específica do NCM
+            const ncmRule = await getTaxRuleByNcm(product.ncm);
+            taxRuleId = ncmRule?.id ?? null;
+            taxRule = ncmRule;
+          }
+          
+          // Se não achou por NCM, usar regra padrão
+          if (!taxRuleId) {
+            const defaultRule = await getDefaultTaxRule();
+            taxRuleId = defaultRule?.id ?? null;
+            taxRule = defaultRule;
+          }
+        } catch (error) {
+          console.error('Erro ao buscar regra fiscal:', error);
+          taxRuleId = null;
+        }
+      }
+
+      // Calcular tributos no backend
+      const taxCalculation = calculateItemTaxes(taxRule, itemData.total_price);
+
+      return {
+        ...itemData,
+        order_id: orderId,
+        cfop: itemData.cfop ?? 5102,
+        indtot: itemData.indtot ?? 1,
+        tax_rule_id: taxRuleId,
+        v_pis: taxCalculation.v_pis,
+        v_cofins: taxCalculation.v_cofins,
+        v_tot_trib: taxCalculation.v_tot_trib
+      };
     }));
 
     const { error: itemsError } = await supabase.from("order_items").insert(itemsWithOrderId);
@@ -183,11 +229,47 @@ export async function updateOrder(id: number, input: OrderMutationInput) {
 
   // Inserir os novos itens
   if (items && items.length > 0) {
-    const itemsWithOrderId = items.map(({ id: _id, ...itemData }: OrderItem) => ({
-      ...itemData,
-      order_id: id,
-      cfop: itemData.cfop ?? 5102,
-      indtot: itemData.indtot ?? 1
+    const itemsWithOrderId = await Promise.all(items.map(async ({ id: _id, ...itemData }: OrderItem) => {
+      // Se não tiver tax_rule_id, buscar automaticamente
+      let taxRuleId = itemData.tax_rule_id ?? null;
+      let taxRule = null;
+      
+      if (!taxRuleId) {
+        try {
+          // Buscar o produto para obter o NCM
+          const product = await getProduct(itemData.product_id);
+          if (product?.ncm) {
+            // Tentar buscar regra específica do NCM
+            const ncmRule = await getTaxRuleByNcm(product.ncm);
+            taxRuleId = ncmRule?.id ?? null;
+            taxRule = ncmRule;
+          }
+          
+          // Se não achou por NCM, usar regra padrão
+          if (!taxRuleId) {
+            const defaultRule = await getDefaultTaxRule();
+            taxRuleId = defaultRule?.id ?? null;
+            taxRule = defaultRule;
+          }
+        } catch (error) {
+          console.error('Erro ao buscar regra fiscal:', error);
+          taxRuleId = null;
+        }
+      }
+
+      // Calcular tributos no backend
+      const taxCalculation = calculateItemTaxes(taxRule, itemData.total_price);
+
+      return {
+        ...itemData,
+        order_id: id,
+        cfop: itemData.cfop ?? 5102,
+        indtot: itemData.indtot ?? 1,
+        tax_rule_id: taxRuleId,
+        v_pis: taxCalculation.v_pis,
+        v_cofins: taxCalculation.v_cofins,
+        v_tot_trib: taxCalculation.v_tot_trib
+      };
     }));
 
     const { error: itemsError } = await supabase.from("order_items").insert(itemsWithOrderId);

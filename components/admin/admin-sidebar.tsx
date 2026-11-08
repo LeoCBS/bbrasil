@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Boxes, Building2, FileText, Package, Settings, ShoppingCart, Users, UserRound, Sparkles, DollarSign, MapPin, Calendar, History, ClipboardCheck, FileBarChart, Receipt } from "lucide-react";
+import { BarChart3, Boxes, Building2, FileText, Package, Settings, ShoppingCart, Users, UserRound, Sparkles, DollarSign, MapPin, Calendar, History, ClipboardCheck, FileBarChart, Receipt, UserCog } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const sections = [
@@ -32,7 +32,8 @@ const sections = [
   {
     title: "Fiscal",
     items: [
-      { label: "Regras Fiscais", href: "/admin/regras-fiscais", icon: Receipt, disabled: false }
+      { label: "Regras Fiscais", href: "/admin/regras-fiscais", icon: Receipt, disabled: false },
+      { label: "Resp. Técnico NFe", href: "/admin/responsavel-tecnico-nfe", icon: UserCog, disabled: false }
     ]
   },
   {
@@ -57,7 +58,7 @@ const footerItems = [
   { label: "Configurações", href: "/admin/produtos", icon: Settings, disabled: true }
 ];
 
-export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "pedidos" | "orcamentos" | "contas-receber" | "contas-pagar" | "logistica" | "regras-fiscais" }) {
+export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "pedidos" | "orcamentos" | "contas-receber" | "contas-pagar" | "logistica" | "regras-fiscais" | "responsavel-tecnico-nfe" }) {
   return (
     <aside className="p-4 lg:w-64 lg:shrink-0">
       <div className="rounded-lg border bg-white p-3">
@@ -69,7 +70,7 @@ export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | 
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   const itemPath = item.href.replace("/admin/", "");
-                  const active = current === itemPath || (current === "logistica" && item.href === "/admin/logistica");
+                  const active = current === itemPath || (current === "logistica" && item.href === "/admin/logistica") || (current === "responsavel-tecnico-nfe" && item.href === "/admin/responsavel-tecnico-nfe");
                   const className = cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition-colors",
                     active ? "bg-brand-blue text-white" : "text-slate-600 hover:bg-slate-50 hover:text-brand-ink",

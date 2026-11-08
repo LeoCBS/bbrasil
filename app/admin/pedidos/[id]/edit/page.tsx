@@ -9,6 +9,7 @@ import { updateOrderAction } from "@/lib/actions";
 import { OrderForm } from "@/components/order-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 export default async function EditOrderPage({
   params,
@@ -42,9 +43,17 @@ export default async function EditOrderPage({
               <h1 className="text-3xl font-bold text-brand-ink">Editar pedido</h1>
               <p className="mt-1 text-slate-600">Edite o pedido selecionado.</p>
             </div>
-            <Button asChild>
-              <Link href="/admin/pedidos">Voltar</Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button asChild variant="outline">
+                <Link href={`/api/orders/${orderId}/nfe-xml`} download>
+                  <Download className="mr-2 h-4 w-4" />
+                  XML NFe
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/admin/pedidos">Voltar</Link>
+              </Button>
+            </div>
           </div>
 
           <div className="max-w-4xl">

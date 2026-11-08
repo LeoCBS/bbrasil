@@ -103,3 +103,39 @@ Recepção de Eventos (Cancelamento / CC-e):
 https://nfe-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmxConsulta
 
 Protocolo:https://svrs.rs.gov.br
+
+
+## Tecnologias
+
+### Frontend
+
+Next.js 15.5.23 - Framework React com App Router
+React 19.0.0 - Biblioteca UI
+TypeScript 5.7.2 - Tipagem estática
+Tailwind CSS 3.4.16 - Framework de estilização
+Radix UI - Componentes acessíveis de UI primitivos
+shadcn/ui - Componentes pré-construídos (baseados em Radix)
+Lucide React - Biblioteca de ícones
+React Hook Form + Resolvers - Gerenciamento de formulários
+Zod - Validação de esquemas
+clsx + tailwind-merge - Utilitários para classes CSS
+class-variance-authority - Gerenciamento de variantes de componentes
+tailwindcss-animate - Animações para Tailwind
+
+### Backend (Server-side)
+Next.js API Routes - Rotas API em app/api/
+Next.js Server Actions - Ações de servidor (em actions.ts)
+Supabase - Banco de dados PostgreSQL + Autenticação
+@supabase/supabase-js v2.50.0
+xml-crypto - Assinatura e manipulação de XML (para NF-e)
+jspdf + jspdf-autotable - Geração de PDFs
+Desenvolvimento & Testes
+Vitest 2.1.9 - Framework de testes
+@vitest/coverage-v8 - Cobertura de testes
+ESLint - Linting de código
+PostCSS + Autoprefixer - Processamento de CSS
+
+### Infraestrutura
+Supabase - Banco de dados PostgreSQL e autenticação (Row Level Security habilitado)
+NF-e (Nota Fiscal Eletrônica) - Integração com WebServices da SVRS
+

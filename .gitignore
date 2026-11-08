@@ -31,3 +31,4 @@ coverage/
 next-env.d.ts
 NFE.md
 nfe-example.xml
+*.pfx

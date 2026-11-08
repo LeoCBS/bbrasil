@@ -24,6 +24,8 @@ export type Client = {
   plan?: string | null;
   contact_person?: string | null;
   contact_phone?: string | null;
+  address_number?: string | null;
+  city_code?: string | null;
   active: boolean;
   created_at?: string;
 };
@@ -32,8 +34,8 @@ export type ClientMutationInput = Omit<Client, "id" | "created_at">;
 export type ClientsPage = { clients: Client[]; total: number; page: number; pageSize: number; totalPages: number };
 
 const fallbackClients: Client[] = [
-  { id: "demo-client-1", corporate_name: "Mercado 3 Irmãos Ltda", cnpj: "12.345.678/0001-90", state_registration: "", address: "Rua das Flores, 120", neighborhood: "Centro", notes: "", city: "Joinville", state: "SC", zip_code: "89201-000", email: "contato@mercado3irmaos.com.br", phone: "(47) 99999-9999", profile_id: "demo-profile-1", unit: "JOINVILLE SC", unit_id: "unit-joinville", active: true },
-  { id: "demo-client-2", corporate_name: "Hotel Praia Norte", cnpj: "23.456.789/0001-01", state_registration: "", address: "Av. Atlântica, 80", neighborhood: "Praia", notes: "", city: "Joinville", state: "SC", zip_code: "89210-000", email: "compras@hotelpraianorte.com.br", phone: "(47) 98888-8888", profile_id: "demo-profile-2", unit: "JOINVILLE SC", unit_id: "unit-joinville", active: true }
+  { id: "demo-client-1", corporate_name: "Mercado 3 Irmãos Ltda", cnpj: "12.345.678/0001-90", state_registration: "", address: "Rua das Flores, 120", neighborhood: "Centro", notes: "", city: "Joinville", state: "SC", zip_code: "89201-000", email: "contato@mercado3irmaos.com.br", phone: "(47) 99999-9999", profile_id: "demo-profile-1", unit: "JOINVILLE SC", unit_id: "unit-joinville", address_number: "120", city_code: null, active: true },
+  { id: "demo-client-2", corporate_name: "Hotel Praia Norte", cnpj: "23.456.789/0001-01", state_registration: "", address: "Av. Atlântica, 80", neighborhood: "Praia", notes: "", city: "Joinville", state: "SC", zip_code: "89210-000", email: "compras@hotelpraianorte.com.br", phone: "(47) 98888-8888", profile_id: "demo-profile-2", unit: "JOINVILLE SC", unit_id: "unit-joinville", address_number: "80", city_code: null, active: true }
 ];
 
 const clientsFeature = "o cadastro de clientes";

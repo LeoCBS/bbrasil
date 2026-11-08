@@ -109,6 +109,9 @@ export function OrderForm({
   // Observation
   const [observation, setObservation] = useState<string>(order?.observation || '');
 
+  // NFe Info
+  const [nfeInfo, setNfeInfo] = useState<string>(order?.nfe_info || '');
+
   // Currency display states
   const [unitPriceDisplay, setUnitPriceDisplay] = useState<string>('');
 
@@ -254,6 +257,7 @@ export function OrderForm({
         formData.append('items', JSON.stringify(orderItems));
         formData.append('total_amount', totalAmount.toString());
         formData.append('observation', observation);
+        formData.append('nfe_info', nfeInfo);
 
         await action(formData);
         setSuccessMessage(order ? 'Pedido atualizado com sucesso.' : 'Pedido criado com sucesso.');
@@ -359,7 +363,7 @@ export function OrderForm({
             <Label htmlFor="salesperson">Vendedor</Label>
             <select
               id="salesperson"
-              name="salesperson_id"
+              name="client_salesperson_id"
               value={selectedSalesperson?.id || ''}
               onChange={(e) => {
                 const selected = profiles.find(p => p.id === e.target.value);
@@ -588,6 +592,18 @@ export function OrderForm({
           onChange={(e) => setObservation(e.target.value)}
           placeholder="Observações sobre o pedido..."
           rows={3}
+        />
+      </div>
+
+      {/* NFe Info */}
+      <div className="grid gap-2">
+        <Label htmlFor="nfe_info">Informações Adicionais NFe (infCpl)</Label>
+        <Textarea
+          id="nfe_info"
+          value={nfeInfo}
+          onChange={(e) => setNfeInfo(e.target.value)}
+          placeholder="Informações complementares da NFe (ex: forma de pagamento, dados de entrega, etc.)..."
+          rows={2}
         />
       </div>
 

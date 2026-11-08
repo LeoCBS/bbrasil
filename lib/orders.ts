@@ -6,6 +6,7 @@ import { normalizeText } from "@/lib/text";
 import { createReceivableFromOrder } from "@/lib/receivables";
 import { getTaxRuleByNcm, getDefaultTaxRule, calculateItemTaxes } from "@/lib/tax-rules";
 import { getProduct } from "@/lib/products";
+import { generateNFeXml } from "@/lib/nfe-generator";
 
 export type OrderItem = {
   id: number;
@@ -42,6 +43,8 @@ export type Order = {
   observation?: string;
   total_amount: number;
   items?: OrderItem[];
+  nfe_xml?: string | null;
+  nfe_info?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -66,6 +69,7 @@ const fallbackOrders: Order[] = [
     unit_name: "JOINVILLE SC",
     observation: "Entregar pela manhã",
     total_amount: 1500.00,
+    nfe_xml: null,
     items: [
       {
         id: 1,
@@ -211,6 +215,19 @@ export async function createOrder(input: OrderMutationInput) {
     console.error('Erro ao criar conta a receber:', error);
     // Não falhar o pedido se a conta a receber falhar
   }
+
+  // Gerar XML da NFe automaticamente
+  try {
+    const nfeXml = await generateNFeXml(orderId);
+    const { error: xmlError } = await supabase.from("orders").update({ nfe_xml: nfeXml }).eq("id", orderId);
+    if (xmlError) {
+      console.error('Erro ao salvar XML da NFe:', xmlError);
+      // Não falhar o pedido se o XML falhar
+    }
+  } catch (error) {
+    console.error('Erro ao gerar XML da NFe:', error);
+    // Não falhar o pedido se o XML falhar
+  }
 }
 
 export async function updateOrder(id: number, input: OrderMutationInput) {
@@ -274,6 +291,19 @@ export async function updateOrder(id: number, input: OrderMutationInput) {
 
     const { error: itemsError } = await supabase.from("order_items").insert(itemsWithOrderId);
     if (itemsError) throw new Error(`Não foi possível atualizar os itens do pedido: ${itemsError.message}`);
+  }
+
+  // Regenerar XML da NFe automaticamente
+  try {
+    const nfeXml = await generateNFeXml(id);
+    const { error: xmlError } = await supabase.from("orders").update({ nfe_xml: nfeXml }).eq("id", id);
+    if (xmlError) {
+      console.error('Erro ao atualizar XML da NFe:', xmlError);
+      // Não falhar o pedido se o XML falhar
+    }
+  } catch (error) {
+    console.error('Erro ao regerar XML da NFe:', error);
+    // Não falhar o pedido se o XML falhar
   }
 }
 

@@ -3,6 +3,7 @@ import { getClient, type Client } from "./clients";
 import { getUnit, type Unit } from "./units";
 import { getProduct, type Product } from "./products";
 import { getActiveNFeTechnicalResponsible, type NFeTechnicalResponsible } from "./nfe-technical-responsible";
+import { signNFeXml } from "./nfe-signer";
 
 /**
  * Generate NFe XML from order data
@@ -172,7 +173,16 @@ ${order.items?.map((item, index) => generateItemXml(item, products[index], index
 	<!-- protNFe will be added during emission -->
 </nfeProc>`;
 
-  return xml;
+  // Sign the XML with digital certificate
+  try {
+    const signedXml = await signNFeXml(xml);
+    return signedXml;
+  } catch (error) {
+    console.error('Failed to sign NFe XML:', error);
+    // Return unsigned XML if signing fails
+    // This allows the system to continue working even without a certificate configured
+    return xml;
+  }
 }
 
 /**

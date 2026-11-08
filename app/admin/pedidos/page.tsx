@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, Download } from "lucide-react";
 import { requireAdminUser, getCurrentUserProfile } from "@/auth";
 import { getPaginatedOrders, type Order } from "@/lib/orders";
 import { Button } from "@/components/ui/button";
@@ -115,6 +115,13 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                           className="mr-3 text-slate-600 hover:text-brand-ink"
                         >
                           ✏️
+                        </Link>
+                        <Link
+                          href={`/api/orders/${order.id}/nfe-xml`}
+                          className="mr-3 text-slate-600 hover:text-brand-ink"
+                          title="Baixar XML NFe"
+                        >
+                          <Download className="h-4 w-4" />
                         </Link>
                         <DeleteOrderButton orderId={order.id} />
                       </td>

@@ -12,9 +12,17 @@ function UnitFields({ unit }: { unit?: Awaited<ReturnType<typeof getUnits>>[numb
     <>
       <Input name="name" required placeholder="Nome da unidade" defaultValue={unit?.name} />
       <Input name="address" placeholder="Endereço" defaultValue={unit?.address} />
+      <Input name="address_number" placeholder="Número" defaultValue={unit?.address_number || ''} />
+      <Input name="neighborhood" placeholder="Bairro" defaultValue={unit?.neighborhood || ''} />
+      <Input name="city" placeholder="Cidade" defaultValue={unit?.city || ''} />
+      <Input name="state" placeholder="Estado (UF)" defaultValue={unit?.state || ''} maxLength={2} />
+      <Input name="city_code" placeholder="Código do município (IBGE)" defaultValue={unit?.city_code || ''} />
       <Input name="phone" placeholder="Telefone" defaultValue={unit?.phone} />
       <Input name="whatsapp_number" placeholder="WhatsApp (somente números)" defaultValue={unit?.whatsapp_number} />
       <Input name="email" type="email" placeholder="E-mail" defaultValue={unit?.email} />
+      <Input name="cnpj" placeholder="CNPJ (para NFe)" defaultValue={unit?.cnpj || ''} />
+      <Input name="ie" placeholder="Inscrição Estadual (para NFe)" defaultValue={unit?.ie || ''} />
+      <Input name="process_version" placeholder="Versão do processo (para NFe)" defaultValue={unit?.process_version || '1.0'} />
       <label className="flex items-center gap-2 text-sm">
         <input name="active" type="checkbox" defaultChecked={unit?.active ?? true} /> Ativa
       </label>

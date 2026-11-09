@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import AdminHeader from "@/components/admin/admin-header";
+import { getNFeEnvironment, getNFeServiceUrls } from "@/lib/nfe-config";
 
 function NFeTechnicalResponsibleFields({ responsible }: { responsible?: Awaited<ReturnType<typeof getNFeTechnicalResponsibles>>[number] }) {
   return (
@@ -14,6 +15,7 @@ function NFeTechnicalResponsibleFields({ responsible }: { responsible?: Awaited<
       <Input name="contact_name" required placeholder="Nome do contato" defaultValue={responsible?.contact_name || ''} />
       <Input name="email" type="email" required placeholder="E-mail" defaultValue={responsible?.email || ''} />
       <Input name="phone" required placeholder="Telefone" defaultValue={responsible?.phone || ''} />
+      <Input name="authorization_url" type="url" required aria-label="URL oficial de autorização da NF-e" defaultValue={getNFeServiceUrls().authorization} />
       <label className="flex items-center gap-2 text-sm">
         <input name="active" type="checkbox" defaultChecked={responsible?.active ?? true} /> Ativo
       </label>
@@ -24,6 +26,7 @@ function NFeTechnicalResponsibleFields({ responsible }: { responsible?: Awaited<
 export default async function NFeTechnicalResponsiblePage() {
   const user = await requireAdminUser("/admin/responsavel-tecnico-nfe");
   const responsibles = await getNFeTechnicalResponsibles({ includeInactive: true });
+  const environmentLabel = getNFeEnvironment() === "production" ? "Produção" : "Homologação";
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -33,7 +36,7 @@ export default async function NFeTechnicalResponsiblePage() {
         <AdminSidebar current="responsavel-tecnico-nfe" />
         <section className="flex-1 p-4 md:p-8">
           <h1 className="text-3xl font-bold text-brand-ink">Responsável Técnico NFe</h1>
-          <p className="mt-1 text-slate-600">Gerencie os dados do responsável técnico para emissão de NFe.</p>
+          <p className="mt-1 text-slate-600">Gerencie os dados do responsável técnico para emissão de NFe. Ambiente configurado no servidor: {environmentLabel}.</p>
 
           <Card className="mt-6">
             <CardHeader>

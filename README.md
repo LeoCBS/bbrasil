@@ -2,6 +2,12 @@
 
 Projeto Next.js inspirado no prototipo fornecido, com Tailwind CSS, componentes no estilo shadcn/ui e painel admin para CRUD de produtos e categorias via Supabase.
 
+## Emissão de NF-e
+
+Configure `NFE_ENVIRONMENT` somente no backend (`homologation` por padrão; `production` para produção), além de `NFE_CERTIFICATE_PATH`, `NFE_CERTIFICATE_PASSWORD` e, opcionalmente, `NFE_REQUEST_TIMEOUT_MS`. Se o runtime não confiar na cadeia TLS publicada pela SEFAZ, configure também `NFE_CA_CERT_PATH` apontando para o bundle PEM oficial baixado do portal SVRS. O bundle é adicionado às CAs públicas do Node; a validação do certificado do servidor continua ativa. O cliente usa os endpoints oficiais da SVRS e ignora qualquer URL arbitrária enviada pelo navegador. A URL cadastrada no responsável técnico precisa corresponder ao ambiente do backend.
+
+Antes de usar o botão **Emitir NF-e**, aplique as migrations Supabase pendentes, incluindo `20261109000000_nfe_emission_audit.sql`. As tentativas, hashes das requisições SOAP e respostas da SEFAZ são registradas para auditoria. Em caso de timeout, a próxima ação consulta o protocolo e não retransmite enquanto o resultado continuar incerto.
+
 ## Rodando localmente
 
 ```bash

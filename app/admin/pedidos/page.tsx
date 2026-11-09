@@ -12,6 +12,7 @@ import { buildHref, parsePageParam } from "@/lib/pagination";
 import { formatCurrency } from "@/lib/format";
 import { DeleteOrderButton } from "@/components/admin/delete-order-button";
 import { QuotationConverter } from "@/components/quotation-converter";
+import { EmitNFeButton } from "@/components/admin/emit-nfe-button";
 
 const pageSize = 10;
 
@@ -70,26 +71,35 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           <QuotationConverter />
 
           <Card>
-            <CardContent className="p-0">
-              <table className="w-full table-fixed border-collapse">
+            <CardContent className="overflow-x-auto p-0">
+              <table className="w-full min-w-[1120px] table-fixed border-collapse">
+                <colgroup>
+                  <col className="w-[6%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[13%]" />
+                  <col className="w-[16%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[9%]" />
+                  <col className="w-[24%]" />
+                </colgroup>
                 <thead>
                   <tr className="bg-slate-50 text-left text-sm text-slate-600">
-                    <th className="w-[8%] p-4 whitespace-nowrap">ID</th>
-                    <th className="w-[18%] p-4 whitespace-nowrap">Cliente</th>
-                    <th className="w-[14%] p-4 whitespace-nowrap">CNPJ</th>
-                    <th className="w-[14%] p-4 whitespace-nowrap">Vendedor</th>
-                    <th className="w-[12%] p-4 whitespace-nowrap">Unidade</th>
-                    <th className="w-[12%] p-4 whitespace-nowrap">Total</th>
-                    <th className="w-[8%] p-4 text-right whitespace-nowrap">Ações</th>
+                    <th className="p-3 whitespace-nowrap">ID</th>
+                    <th className="p-3 whitespace-nowrap">Cliente</th>
+                    <th className="p-3 whitespace-nowrap">CNPJ</th>
+                    <th className="p-3 whitespace-nowrap">Vendedor</th>
+                    <th className="p-3 whitespace-nowrap">Unidade</th>
+                    <th className="p-3 whitespace-nowrap">Total</th>
+                    <th className="p-3 text-right whitespace-nowrap">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.map((order: Order) => (
                     <tr key={order.id} className="border-t">
-                      <td className="p-4 whitespace-nowrap">
+                      <td className="p-3 whitespace-nowrap">
                         #{order.id}
                       </td>
-                      <td className="p-4 overflow-hidden">
+                      <td className="overflow-hidden p-3">
                         <div
                           className="truncate whitespace-nowrap overflow-hidden cursor-help"
                           title={order.client_name}
@@ -97,33 +107,40 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                           {order.client_name}
                         </div>
                       </td>
-                      <td className="p-4 whitespace-nowrap">
+                      <td className="p-3 whitespace-nowrap">
                         {order.client_cnpj}
                       </td>
-                      <td className="p-4 whitespace-nowrap overflow-hidden">
+                      <td className="overflow-hidden p-3">
                         {order.client_salesperson_name || order.user_name || '-'}
                       </td>
-                      <td className="p-4 whitespace-nowrap">
+                      <td className="p-3 whitespace-nowrap">
                         {order.unit_name}
                       </td>
-                      <td className="p-4 whitespace-nowrap">
+                      <td className="p-3 whitespace-nowrap">
                         {formatCurrency(order.total_amount)}
                       </td>
-                      <td className="p-4 text-right whitespace-nowrap">
+                      <td className="p-3">
+                        <div className="flex flex-wrap items-center justify-end gap-2">
                         <Link
                           href={`/admin/pedidos/${order.id}/edit`}
-                          className="mr-3 text-slate-600 hover:text-brand-ink"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-brand-ink"
+                          title="Editar pedido"
+                          aria-label="Editar pedido"
                         >
                           ✏️
                         </Link>
-                        <Link
+                        <a
                           href={`/api/orders/${order.id}/nfe-xml`}
-                          className="mr-3 text-slate-600 hover:text-brand-ink"
+                          download
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-brand-ink"
                           title="Baixar XML NFe"
+                          aria-label="Baixar XML da NF-e"
                         >
                           <Download className="h-4 w-4" />
-                        </Link>
+                        </a>
+                        <EmitNFeButton orderId={order.id} />
                         <DeleteOrderButton orderId={order.id} />
+                        </div>
                       </td>
                     </tr>
                   ))}

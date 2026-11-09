@@ -4,6 +4,7 @@ import { getUnit, type Unit } from "./units";
 import { getProduct, type Product } from "./products";
 import { getActiveNFeTechnicalResponsible, type NFeTechnicalResponsible } from "./nfe-technical-responsible";
 import { signNFeXml } from "./nfe-signer";
+import { getNFeEnvironment, getNFeTpAmb } from "./nfe-config";
 
 /**
  * Generate NFe XML from order data
@@ -37,7 +38,7 @@ export async function generateNFeXml(orderId: number): Promise<string> {
   const clientAddress = parseAddress(client.address);
 
   // Generate NFe ID
-  const nfeId = generateNFeId(order.id, unit);
+  const nfeId = generateNFeId(order.id, unit, order.created_at || new Date());
 
   // Generate XML
   const xml = `<?xml version="1.0" encoding="utf-8"?>
@@ -57,11 +58,11 @@ export async function generateNFeXml(orderId: number): Promise<string> {
 				<dhSaiEnt>${formatDateTime(order.created_at || new Date())}</dhSaiEnt>
 				<tpNF>1</tpNF>
 				<idDest>1</idDest>
-				<cMunFG>${unitAddress.cityCode || 'FALTANTE'}</cMunFG>
+				<cMunFG>${esc(unit.city_code || unitAddress.cityCode) || 'FALTANTE'}</cMunFG>
 				<tpImp>1</tpImp>
 				<tpEmis>1</tpEmis>
-				<cDV>1</cDV>
-				<tpAmb>1</tpAmb>
+				<cDV>${nfeId.slice(-1)}</cDV>
+				<tpAmb>${getNFeTpAmb()}</tpAmb>
 				<finNFe>1</finNFe>
 				<indFinal>1</indFinal>
 				<indPres>1</indPres>
@@ -71,40 +72,40 @@ export async function generateNFeXml(orderId: number): Promise<string> {
 			</ide>
 			<emit>
 				<CNPJ>${formatCNPJ(unit.cnpj || 'FALTANTE')}</CNPJ>
-				<xNome>${unit.name}</xNome>
+				<xNome>${esc(unit.name)}</xNome>
 				<enderEmit>
-					<xLgr>${unitAddress.street || 'FALTANTE'}</xLgr>
-					<nro>${unit.address_number || unitAddress.number || 'FALTANTE'}</nro>
-					<xBairro>${unit.neighborhood || unitAddress.neighborhood || 'FALTANTE'}</xBairro>
-					<cMun>${unit.city_code || unitAddress.cityCode || 'FALTANTE'}</cMun>
-					<xMun>${unit.city || unitAddress.city || 'FALTANTE'}</xMun>
-					<UF>${unit.state || unitAddress.state || 'SC'}</UF>
+					<xLgr>${esc(unitAddress.street) || 'FALTANTE'}</xLgr>
+					<nro>${esc(unit.address_number || unitAddress.number) || 'FALTANTE'}</nro>
+					<xBairro>${esc(unit.neighborhood || unitAddress.neighborhood) || 'FALTANTE'}</xBairro>
+					<cMun>${esc(unit.city_code || unitAddress.cityCode) || 'FALTANTE'}</cMun>
+					<xMun>${esc(unit.city || unitAddress.city) || 'FALTANTE'}</xMun>
+					<UF>${esc(unit.state || unitAddress.state) || 'SC'}</UF>
 					<CEP>${formatCEP(unitAddress.zipCode || 'FALTANTE')}</CEP>
 					<cPais>1058</cPais>
 					<xPais>BRASIL</xPais>
 					<fone>${formatPhone(unit.phone || 'FALTANTE')}</fone>
 				</enderEmit>
-				<IE>${unit.ie || 'FALTANTE'}</IE>
+				<IE>${esc(unit.ie) || 'FALTANTE'}</IE>
 				<CRT>1</CRT>
 			</emit>
 			<dest>
 				<CNPJ>${formatCNPJ(client.cnpj)}</CNPJ>
-				<xNome>${client.corporate_name}</xNome>
+				<xNome>${getNFeEnvironment() === "homologation" ? "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL" : esc(client.corporate_name)}</xNome>
 				<enderDest>
-					<xLgr>${clientAddress.street || 'FALTANTE'}</xLgr>
-					<nro>${client.address_number || clientAddress.number || 'FALTANTE'}</nro>
-					<xBairro>${client.neighborhood || 'FALTANTE'}</xBairro>
-					<cMun>${client.city_code || clientAddress.cityCode || 'FALTANTE'}</cMun>
-					<xMun>${client.city || 'FALTANTE'}</xMun>
-					<UF>${client.state || 'SC'}</UF>
+					<xLgr>${esc(clientAddress.street) || 'FALTANTE'}</xLgr>
+					<nro>${esc(client.address_number || clientAddress.number) || 'FALTANTE'}</nro>
+					<xBairro>${esc(client.neighborhood) || 'FALTANTE'}</xBairro>
+					<cMun>${esc(client.city_code || clientAddress.cityCode) || 'FALTANTE'}</cMun>
+					<xMun>${esc(client.city) || 'FALTANTE'}</xMun>
+					<UF>${esc(client.state) || 'SC'}</UF>
 					<CEP>${formatCEP(client.zip_code || 'FALTANTE')}</CEP>
 					<cPais>1058</cPais>
 					<xPais>BRASIL</xPais>
 					<fone>${formatPhone(client.phone || 'FALTANTE')}</fone>
 				</enderDest>
 				<indIEDest>1</indIEDest>
-				<IE>${client.state_registration || 'FALTANTE'}</IE>
-				<email>${client.email || 'FALTANTE'}</email>
+				<IE>${esc(client.state_registration) || 'FALTANTE'}</IE>
+				<email>${esc(client.email) || 'FALTANTE'}</email>
 			</dest>
 ${order.items?.map((item, index) => generateItemXml(item, products[index], index + 1)).join('\n')}
 			<total>
@@ -159,12 +160,12 @@ ${order.items?.map((item, index) => generateItemXml(item, products[index], index
 				</detPag>
 			</pag>
 			<infAdic>
-				<infCpl>${order.nfe_info || 'FALTANTE'}</infCpl>
+				<infCpl>${esc(order.nfe_info) || 'FALTANTE'}</infCpl>
 			</infAdic>
 			<infRespTec>
 				<CNPJ>${formatCNPJ(technicalResponsible?.cnpj || 'FALTANTE')}</CNPJ>
-				<xContato>${technicalResponsible?.contact_name || 'FALTANTE'}</xContato>
-				<email>${technicalResponsible?.email || 'FALTANTE'}</email>
+				<xContato>${esc(technicalResponsible?.contact_name) || 'FALTANTE'}</xContato>
+				<email>${esc(technicalResponsible?.email) || 'FALTANTE'}</email>
 				<fone>${formatPhone(technicalResponsible?.phone || 'FALTANTE')}</fone>
 			</infRespTec>
 		</infNFe>
@@ -173,9 +174,14 @@ ${order.items?.map((item, index) => generateItemXml(item, products[index], index
 	<!-- protNFe will be added during emission -->
 </nfeProc>`;
 
+  // Compact the XML before signing: SEFAZ rejects whitespace between tags
+  // ("caracteres de edição ... entre as tags"). Canonicalization keeps
+  // inter-tag whitespace in the digest, so this must happen before signing.
+  const compactXml = xml.trim().replace(/>\s+</g, "><");
+
   // Sign the XML with digital certificate
   try {
-    const signedXml = await signNFeXml(xml);
+    const signedXml = await signNFeXml(compactXml);
     return signedXml;
   } catch (error) {
     console.error('Failed to sign NFe XML:', error);
@@ -197,17 +203,17 @@ function generateItemXml(item: OrderItem, product: Product | null, nItem: number
 
   return `			<det nItem="${nItem}">
 				<prod>
-					<cProd>${productCode}</cProd>
+					<cProd>${esc(productCode) || 'FALTANTE'}</cProd>
 					<cEAN>${productCean}</cEAN>
-					<xProd>${item.product_name}</xProd>
-					<NCM>${productNcm}</NCM>
+					<xProd>${esc(item.product_name)}</xProd>
+					<NCM>${esc(productNcm) || 'FALTANTE'}</NCM>
 					<CFOP>${item.cfop || 5102}</CFOP>
-					<uCom>${productUnit}</uCom>
+					<uCom>${esc(productUnit)}</uCom>
 					<qCom>${item.quantity.toFixed(2)}</qCom>
 					<vUnCom>${item.unit_price.toFixed(2)}</vUnCom>
 					<vProd>${item.total_price.toFixed(2)}</vProd>
 					<cEANTrib>${productCeanTrib}</cEANTrib>
-					<uTrib>${productUnit}</uTrib>
+					<uTrib>${esc(productUnit)}</uTrib>
 					<qTrib>${(item.qtrib || item.quantity).toFixed(2)}</qTrib>
 					<vUnTrib>${(item.v_un_trib || item.unit_price).toFixed(2)}</vUnTrib>
 					<indTot>${item.indtot || 1}</indTot>
@@ -241,6 +247,15 @@ function generateItemXml(item: OrderItem, product: Product | null, nItem: number
 				</imposto>
 				<vItem>${item.total_price.toFixed(2)}</vItem>
 			</det>`;
+}
+
+/**
+ * Escape and normalize a text value for XML: trims leading/trailing
+ * whitespace (rejected by SEFAZ) and escapes XML special characters.
+ */
+function esc(value: string | null | undefined): string {
+  return (value ?? "").replace(/\s+/g, " ").trim()
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 /**
@@ -286,7 +301,18 @@ function parseAddress(address: string): {
  */
 function formatDateTime(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toISOString().slice(0, 19) + '-03:00';
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(d);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}-03:00`;
 }
 
 /**
@@ -313,25 +339,49 @@ function formatPhone(phone: string): string {
 /**
  * Generate NFe ID
  */
-function generateNFeId(orderId: number, unit: Unit): string {
+function generateNFeId(orderId: number, unit: Unit, emissionDate: string | Date): string {
   const cUF = getUFCode(unit.state || 'SC');
   const cnpj = formatCNPJ(unit.cnpj || '00000000000000');
+  const emittedAt = formatDateTime(emissionDate);
+  const aamm = `${emittedAt.slice(2, 4)}${emittedAt.slice(5, 7)}`;
   const mod = '55';
-  const serie = '1';
+  const serie = '001';
   const nNF = String(orderId).padStart(9, '0');
   const tpEmis = '1';
   const cNF = generateCNF(orderId);
-  const cDV = '1';
 
-  const base = `${cUF}${cnpj}${mod}${serie}${nNF}${tpEmis}${cNF}`;
+  const base = `${cUF}${aamm}${cnpj}${mod}${serie}${nNF}${tpEmis}${cNF}`;
+  const weights = base.split('').reverse().map((_, index) => (index % 8) + 2);
+  const sum = [...base].reverse().reduce((total, digit, index) => total + Number(digit) * weights[index], 0);
+  const remainder = 11 - (sum % 11);
+  const cDV = remainder >= 10 ? 0 : remainder;
   return `NFe${base}${cDV}`;
 }
 
 /**
- * Generate CNF (random 8-digit code)
+ * Generate CNF (8-digit code for the access key).
+ * SEFAZ rule B03-10 (rejection 897): cNF must not equal nNF and must not
+ * match the forbidden patterns below. The value is derived deterministically
+ * from the order id so the access key stays stable for a given order.
  */
+export const FORBIDDEN_CNF = new Set([
+  "00000000", "11111111", "22222222", "33333333", "44444444", "55555555",
+  "66666666", "77777777", "88888888", "99999999", "12345678", "23456789",
+  "34567890", "45678901", "56789012", "67890123", "78901234", "89012345",
+  "90123456", "01234567"
+]);
+
 function generateCNF(orderId: number): string {
-  return String(orderId).padStart(8, '0').slice(-8);
+  const nNF = String(orderId).padStart(8, "0").slice(-8);
+  let hash = 0;
+  for (const ch of `nfe-cnf-${orderId}`) {
+    hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  }
+  let candidate = String(hash % 100000000).padStart(8, "0");
+  while (FORBIDDEN_CNF.has(candidate) || candidate === nNF || Number(candidate) === orderId) {
+    candidate = String((Number(candidate) + 1) % 100000000).padStart(8, "0");
+  }
+  return candidate;
 }
 
 /**
@@ -363,5 +413,12 @@ function calculateTotalTrib(items: OrderItem[]): string {
 function formatDueDate(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   d.setDate(d.getDate() + 30);
-  return d.toISOString().slice(0, 10);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(d);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
 }

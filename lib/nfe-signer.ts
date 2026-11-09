@@ -56,6 +56,9 @@ export async function signNFeXml(xml: string): Promise<string> {
 
     // Sign the XML
     const signedXml = signXml(xml, infNFeId, privateKey, certificate);
+    if (!validateNFeSignature(signedXml)) {
+      throw new Error('Generated NF-e XML signature could not be verified');
+    }
 
     return signedXml;
   } catch (error) {
@@ -166,13 +169,11 @@ function placeSignatureCorrectly(xml: string): string {
  */
 export function validateNFeSignature(xml: string): boolean {
   try {
-    // Check if XML has Signature element
-    if (!xml.includes('<Signature')) {
-      return false;
-    }
+    const signatureMatch = xml.match(/<(?:[\w.-]+:)?Signature\b[\s\S]*?<\/(?:[\w.-]+:)?Signature\s*>/);
+    if (!signatureMatch) return false;
 
-    const signedXml = new SignedXml();
-    signedXml.loadSignature(xml);
+    const signedXml = new SignedXml({ getCertFromKeyInfo: SignedXml.getCertFromKeyInfo });
+    signedXml.loadSignature(signatureMatch[0]);
     return signedXml.checkSignature(xml);
   } catch (error) {
     // Return false for unsigned or invalid XML without logging errors in tests

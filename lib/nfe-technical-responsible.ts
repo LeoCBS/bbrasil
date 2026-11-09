@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { unstable_noStore as noStore } from "next/cache";
 import { deleteRecord, getSupabase, insertRecord, updateRecord } from "@/lib/supabase";
+import { getNFeServiceUrls } from "@/lib/nfe-config";
 
 export type NFeTechnicalResponsible = {
   id: string;
@@ -8,6 +9,7 @@ export type NFeTechnicalResponsible = {
   contact_name: string;
   email: string;
   phone: string;
+  authorization_url?: string | null;
   active: boolean;
   created_at?: string;
   updated_at?: string;
@@ -49,11 +51,21 @@ export async function getActiveNFeTechnicalResponsible(): Promise<NFeTechnicalRe
 }
 
 export async function createNFeTechnicalResponsible(input: NFeTechnicalResponsibleInput) {
-  await insertRecord("nfe_technical_responsible", { ...input, id: randomUUID() }, nfeTechnicalResponsibleFeature);
+  const authorizationUrl = validateAuthorizationUrl(input.authorization_url);
+  await insertRecord("nfe_technical_responsible", { ...input, authorization_url: authorizationUrl, id: randomUUID() }, nfeTechnicalResponsibleFeature);
 }
 
 export async function updateNFeTechnicalResponsible(id: string, input: NFeTechnicalResponsibleInput) {
-  await updateRecord("nfe_technical_responsible", id, input, nfeTechnicalResponsibleFeature);
+  const authorizationUrl = validateAuthorizationUrl(input.authorization_url);
+  await updateRecord("nfe_technical_responsible", id, { ...input, authorization_url: authorizationUrl }, nfeTechnicalResponsibleFeature);
+}
+
+function validateAuthorizationUrl(value: string | null | undefined): string {
+  const officialUrl = getNFeServiceUrls().authorization;
+  if (value && value !== officialUrl) {
+    throw new Error("A URL de autorização precisa corresponder ao ambiente configurado no backend.");
+  }
+  return officialUrl;
 }
 
 export async function deleteNFeTechnicalResponsible(id: string) {

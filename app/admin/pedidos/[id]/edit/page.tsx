@@ -45,10 +45,10 @@ export default async function EditOrderPage({
             </div>
             <div className="flex gap-2">
               <Button asChild variant="outline">
-                <Link href={`/api/orders/${orderId}/nfe-xml`} download>
+                <a href={`/api/orders/${orderId}/nfe-xml`} download>
                   <Download className="mr-2 h-4 w-4" />
                   XML NFe
-                </Link>
+                </a>
               </Button>
               <Button asChild>
                 <Link href="/admin/pedidos">Voltar</Link>

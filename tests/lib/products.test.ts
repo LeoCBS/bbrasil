@@ -154,7 +154,7 @@ describe("getProducts with supabase", () => {
       ["unit_id", "unit-1"]
     ]);
     expect(stub.builder.callsFor("or")).toEqual([
-      ['name.ilike."%50\\%\\_a,b%",description.ilike."%50\\%\\_a,b%"']
+      ['name.ilike."%50\\%\\_a,b%",description.ilike."%50\\%\\_a,b%",code.ilike."%50\\%\\_a,b%"']
     ]);
   });
 

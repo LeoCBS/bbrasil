@@ -1,3 +1,4 @@
+import { File as NodeFile } from "node:buffer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -5,23 +6,19 @@ import { requireAdminUser } from "@/auth";
 import { createCategory, deleteCategory, updateCategory } from "@/lib/categories";
 import { createClient, deleteClient, updateClient } from "@/lib/clients";
 import { createProduct, deleteProduct, updateProduct } from "@/lib/products";
-import { createSalesperson, deleteSalesperson, updateSalesperson } from "@/lib/salespeople";
 import { createUnit, deleteUnit, updateUnit } from "@/lib/units";
 import {
   createCategoryAction,
   createClientAction,
   createProductAction,
-  createSalespersonAction,
   createUnitAction,
   deleteCategoryAction,
   deleteClientAction,
   deleteProductAction,
-  deleteSalespersonAction,
   deleteUnitAction,
   updateCategoryAction,
   updateClientAction,
   updateProductAction,
-  updateSalespersonAction,
   updateUnitAction
 } from "@/lib/actions";
 
@@ -35,11 +32,6 @@ vi.mock("@/lib/categories", () => ({
 }));
 vi.mock("@/lib/clients", () => ({ createClient: vi.fn(), updateClient: vi.fn(), deleteClient: vi.fn() }));
 vi.mock("@/lib/products", () => ({ createProduct: vi.fn(), updateProduct: vi.fn(), deleteProduct: vi.fn() }));
-vi.mock("@/lib/salespeople", () => ({
-  createSalesperson: vi.fn(),
-  updateSalesperson: vi.fn(),
-  deleteSalesperson: vi.fn()
-}));
 vi.mock("@/lib/units", () => ({ createUnit: vi.fn(), updateUnit: vi.fn(), deleteUnit: vi.fn() }));
 
 const VALID_CNPJ = "12.345.678/0001-95";
@@ -80,8 +72,13 @@ describe("product actions", () => {
         category_id: "cat-1",
         description: "Limpa tudo",
         size: "5L",
+        unit: "",
+        ncm: "",
+        stock: null,
         price: 1234.56,
         cost_price: 999.9,
+        cean: "SEM GTIN",
+        cean_trib: "SEM GTIN",
         active: true,
         image_url: "https://cdn/img.png"
       },
@@ -101,8 +98,13 @@ describe("product actions", () => {
         category_id: "",
         description: "",
         size: "",
+        unit: "",
+        ncm: "",
+        stock: null,
         price: null,
         cost_price: null,
+        cean: "SEM GTIN",
+        cean_trib: "SEM GTIN",
         active: false,
         image_url: ""
       },
@@ -118,8 +120,8 @@ describe("product actions", () => {
 
   it("forwards the uploaded image and the product id on update", async () => {
     const data = formData({ id: "p-1", name: "Detergente" });
-    const file = new File(["conteudo"], "foto.png", { type: "image/png" });
-    data.set("image_blob", file);
+    const file = new NodeFile(["conteudo"], "foto.png", { type: "image/png" });
+    data.set("image_blob", file as unknown as Blob);
 
     await updateProductAction(data);
 
@@ -202,33 +204,6 @@ describe("client actions", () => {
 
     expect(deleteClient).toHaveBeenCalledWith("c-1");
     expect(redirect).toHaveBeenCalledWith("/admin/clientes");
-  });
-});
-
-describe("salesperson actions", () => {
-  it("requires the name", async () => {
-    await expect(createSalespersonAction(formData({ name: "   " }))).rejects.toThrow("Informe o nome do vendedor.");
-    await expect(updateSalespersonAction(formData({ id: "s-1" }))).rejects.toThrow("Informe o nome do vendedor.");
-    expect(createSalesperson).not.toHaveBeenCalled();
-    expect(updateSalesperson).not.toHaveBeenCalled();
-  });
-
-  it("creates, updates and deletes salespeople", async () => {
-    await createSalespersonAction(formData({ name: " Ana ", email: " ana@test.com ", unit_id: "unit-1", active: "on" }));
-    expect(createSalesperson).toHaveBeenCalledWith({
-      name: "Ana",
-      email: "ana@test.com",
-      phone: "",
-      unit_id: "unit-1",
-      active: true
-    });
-
-    await updateSalespersonAction(formData({ id: "s-1", name: "Ana" }));
-    expect(updateSalesperson).toHaveBeenCalledWith("s-1", expect.objectContaining({ name: "Ana", active: false }));
-
-    await deleteSalespersonAction(formData({ id: "s-1" }));
-    expect(deleteSalesperson).toHaveBeenCalledWith("s-1");
-    expect(redirect).toHaveBeenCalledWith("/admin/vendedores");
   });
 });
 

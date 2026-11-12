@@ -11,6 +11,12 @@ vi.mock("@/lib/orders");
 vi.mock("@/lib/clients");
 vi.mock("@/lib/units");
 vi.mock("@/lib/products");
+vi.mock("@/lib/nfe-technical-responsible", () => ({
+  getActiveNFeTechnicalResponsible: vi.fn(async () => null)
+}));
+vi.mock("@/lib/nfe-signer", () => ({
+  signNFeXml: vi.fn(async (xml: string) => xml)
+}));
 
 const mockGetOrder = getOrder as unknown as ReturnType<typeof vi.fn>;
 const mockGetClient = getClient as unknown as ReturnType<typeof vi.fn>;
@@ -152,6 +158,7 @@ describe("generateNFeXml", () => {
   });
 
   it("includes client data in dest section", async () => {
+    vi.stubEnv("NFE_ENVIRONMENT", "production");
     mockGetOrder.mockResolvedValue(mockOrder);
     mockGetClient.mockResolvedValue(mockClient);
     mockGetUnit.mockResolvedValue(mockUnit);

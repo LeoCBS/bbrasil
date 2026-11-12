@@ -27,7 +27,7 @@ const clientInput: ClientMutationInput = {
   zip_code: "89201-000",
   email: "contato@padaria.com.br",
   phone: "(47) 90000-0000",
-  salesperson: "João da Silva",
+  profile_id: null,
   unit: "",
   unit_id: "unit-joinville",
   active: true
@@ -63,11 +63,10 @@ describe("getPaginatedClients without supabase", () => {
     expect(page.clients.map((client) => client.corporate_name)).toEqual(["Mercado 3 Irmãos Ltda"]);
   });
 
-  it("searches across cnpj, city, email and salesperson", async () => {
+  it("searches across cnpj, city and email", async () => {
     await expect(getPaginatedClients({ search: "23.456.789" })).resolves.toMatchObject({ total: 1 });
     await expect(getPaginatedClients({ search: "joinville" })).resolves.toMatchObject({ total: 2 });
     await expect(getPaginatedClients({ search: "hotelpraianorte" })).resolves.toMatchObject({ total: 1 });
-    await expect(getPaginatedClients({ search: "Maria Santos" })).resolves.toMatchObject({ total: 1 });
     await expect(getPaginatedClients({ search: "inexistente" })).resolves.toMatchObject({ total: 0, totalPages: 1 });
   });
 

@@ -7,6 +7,18 @@ import { join } from 'path';
 
 const execAsync = promisify(exec);
 
+type ExecError = Error & { stdout?: string; stderr?: string };
+
+async function runOpenSsl(command: string): Promise<{ stdout: string; stderr: string }> {
+  try {
+    return await execAsync(command);
+  } catch (error) {
+    const execError = error as ExecError;
+    const output = execError.stdout || execError.stderr || execError.message || "OpenSSL command failed";
+    throw new Error(output);
+  }
+}
+
 /**
  * Sign NFe XML with digital certificate
  * Following Brazilian fiscal standards for NFe 4.00
@@ -31,13 +43,13 @@ export async function signNFeXml(xml: string): Promise<string> {
 
   try {
     // Extract certificate from PFX using OpenSSL (same as bash script)
-    const certExtractResult = await execAsync(`openssl pkcs12 -in "${certPath}" -passin pass:"${certPassword}" -clcerts -nokeys -out "${certPemPath}" 2>&1`);
+    const certExtractResult = await runOpenSsl(`openssl pkcs12 -in "${certPath}" -passin pass:"${certPassword}" -clcerts -nokeys -out "${certPemPath}" 2>&1`);
     if (certExtractResult.stderr && certExtractResult.stderr.includes('error')) {
       throw new Error(`OpenSSL certificate extraction failed: ${certExtractResult.stderr}`);
     }
 
     // Extract private key from PFX using OpenSSL (same as bash script)
-    const keyExtractResult = await execAsync(`openssl pkcs12 -in "${certPath}" -passin pass:"${certPassword}" -nocerts -nodes -out "${keyPemPath}" 2>&1`);
+    const keyExtractResult = await runOpenSsl(`openssl pkcs12 -in "${certPath}" -passin pass:"${certPassword}" -nocerts -nodes -out "${keyPemPath}" 2>&1`);
     if (keyExtractResult.stderr && keyExtractResult.stderr.includes('error')) {
       throw new Error(`OpenSSL key extraction failed: ${keyExtractResult.stderr}`);
     }

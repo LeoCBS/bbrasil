@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 import { readFile } from "fs/promises";
 import https from "https";
 import { rootCertificates } from "tls";
+import { loadNFeCertificatePfx } from "@/lib/nfe-certificate";
 import { getNFeServiceUrls, getNFeTpAmb, type NFeEnvironment } from "@/lib/nfe-config";
 
 const NFE_NAMESPACE = "http://www.portalfiscal.inf.br/nfe";
@@ -106,7 +107,7 @@ export class SefazNfeClient {
     if (!certPath || !passphrase) {
       throw new Error("Configure NFE_CERTIFICATE_PATH e NFE_CERTIFICATE_PASSWORD no backend.");
     }
-    const pfx = await (this.certificatePromise ??= readFile(certPath));
+    const pfx = await (this.certificatePromise ??= loadNFeCertificatePfx());
     const caPath = process.env.NFE_CA_CERT_PATH;
     const ca = caPath ? await (this.sefazCaPromise ??= readFile(caPath)) : undefined;
     const url = new URL(endpoint);

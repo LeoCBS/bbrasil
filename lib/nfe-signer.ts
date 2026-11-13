@@ -4,6 +4,7 @@ import { SignedXml } from 'xml-crypto';
 import { writeFile, unlink, readFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { materializeNFeCertificateFile } from './nfe-certificate';
 
 const execAsync = promisify(exec);
 
@@ -25,12 +26,7 @@ async function runOpenSsl(command: string): Promise<{ stdout: string; stderr: st
  * Uses OpenSSL to extract key/cert from PFX (same approach as bash script)
  */
 export async function signNFeXml(xml: string): Promise<string> {
-  const certPath = process.env.NFE_CERTIFICATE_PATH;
   const certPassword = process.env.NFE_CERTIFICATE_PASSWORD;
-
-  if (!certPath) {
-    throw new Error('NFE_CERTIFICATE_PATH environment variable is not configured');
-  }
 
   if (!certPassword) {
     throw new Error('NFE_CERTIFICATE_PASSWORD environment variable is not configured');
@@ -40,8 +36,12 @@ export async function signNFeXml(xml: string): Promise<string> {
   const tempDir = tmpdir();
   const certPemPath = join(tempDir, `cert-${Date.now()}.pem`);
   const keyPemPath = join(tempDir, `key-${Date.now()}.pem`);
+  let pfxFile: { path: string; dispose: () => Promise<void> } | null = null;
 
   try {
+    pfxFile = await materializeNFeCertificateFile();
+    const certPath = pfxFile.path;
+
     // Extract certificate from PFX using OpenSSL (same as bash script)
     const certExtractResult = await runOpenSsl(`openssl pkcs12 -in "${certPath}" -passin pass:"${certPassword}" -clcerts -nokeys -out "${certPemPath}" 2>&1`);
     if (certExtractResult.stderr && certExtractResult.stderr.includes('error')) {
@@ -94,6 +94,7 @@ export async function signNFeXml(xml: string): Promise<string> {
   } finally {
     // Clean up temporary files
     try {
+      await pfxFile?.dispose();
       await Promise.all([
         unlink(certPemPath).catch(() => {}),
         unlink(keyPemPath).catch(() => {})

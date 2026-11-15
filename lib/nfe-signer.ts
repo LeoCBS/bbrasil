@@ -1,29 +1,13 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import { SignedXml } from 'xml-crypto';
-import { writeFile, unlink, readFile } from 'fs/promises';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { materializeNFeCertificateFile } from './nfe-certificate';
-
-const execAsync = promisify(exec);
-
-type ExecError = Error & { stdout?: string; stderr?: string };
-
-async function runOpenSsl(command: string): Promise<{ stdout: string; stderr: string }> {
-  try {
-    return await execAsync(command);
-  } catch (error) {
-    const execError = error as ExecError;
-    const output = execError.stdout || execError.stderr || execError.message || "OpenSSL command failed";
-    throw new Error(output);
-  }
-}
+import forge from 'node-forge';
+import { loadNFeCertificatePfx } from './nfe-certificate';
 
 /**
  * Sign NFe XML with digital certificate
  * Following Brazilian fiscal standards for NFe 4.00
- * Uses OpenSSL to extract key/cert from PFX (same approach as bash script)
+ * Parses the PFX certificate in pure JavaScript (node-forge) so it works
+ * on serverless runtimes where the openssl binary may be missing or
+ * incompatible with the system OpenSSL libraries (e.g. Vercel).
  */
 export async function signNFeXml(xml: string): Promise<string> {
   const certPassword = process.env.NFE_CERTIFICATE_PASSWORD;
@@ -32,33 +16,9 @@ export async function signNFeXml(xml: string): Promise<string> {
     throw new Error('NFE_CERTIFICATE_PASSWORD environment variable is not configured');
   }
 
-  // Create temporary directory for PEM files
-  const tempDir = tmpdir();
-  const certPemPath = join(tempDir, `cert-${Date.now()}.pem`);
-  const keyPemPath = join(tempDir, `key-${Date.now()}.pem`);
-  let pfxFile: { path: string; dispose: () => Promise<void> } | null = null;
-
   try {
-    pfxFile = await materializeNFeCertificateFile();
-    const certPath = pfxFile.path;
-
-    // Extract certificate from PFX using OpenSSL (same as bash script)
-    const certExtractResult = await runOpenSsl(`openssl pkcs12 -in "${certPath}" -passin pass:"${certPassword}" -clcerts -nokeys -out "${certPemPath}" 2>&1`);
-    if (certExtractResult.stderr && certExtractResult.stderr.includes('error')) {
-      throw new Error(`OpenSSL certificate extraction failed: ${certExtractResult.stderr}`);
-    }
-
-    // Extract private key from PFX using OpenSSL (same as bash script)
-    const keyExtractResult = await runOpenSsl(`openssl pkcs12 -in "${certPath}" -passin pass:"${certPassword}" -nocerts -nodes -out "${keyPemPath}" 2>&1`);
-    if (keyExtractResult.stderr && keyExtractResult.stderr.includes('error')) {
-      throw new Error(`OpenSSL key extraction failed: ${keyExtractResult.stderr}`);
-    }
-
-    // Read the extracted PEM files
-    const [certificate, privateKey] = await Promise.all([
-      readFile(certPemPath, 'utf-8'),
-      readFile(keyPemPath, 'utf-8')
-    ]);
+    const pfx = await loadNFeCertificatePfx();
+    const { privateKey, certificate } = extractPemCredentials(pfx, certPassword);
 
     // Parse XML to get the infNFe ID
     const infNFeId = extractInfNFeId(xml);
@@ -76,7 +36,7 @@ export async function signNFeXml(xml: string): Promise<string> {
   } catch (error) {
     if (error instanceof Error) {
       // Check for certificate-specific errors
-      if (error.message.includes('password') || error.message.includes('decrypt') || error.message.includes('bad decrypt')) {
+      if (error.message.includes('password') || error.message.includes('decrypt') || error.message.includes('bad decrypt') || error.message.includes('MAC')) {
         throw new Error('Invalid certificate password');
       }
       if (error.message.includes('expired') || error.message.includes('not valid')) {
@@ -85,24 +45,36 @@ export async function signNFeXml(xml: string): Promise<string> {
       if (error.message.includes('file') || error.message.includes('ENOENT') || error.message.includes('No such file')) {
         throw new Error('Certificate file not found');
       }
-      if (error.message.includes('command not found')) {
-        throw new Error('OpenSSL is not installed on the system');
-      }
       throw new Error(`Failed to sign NFe XML: ${error.message}`);
     }
     throw new Error('Failed to sign NFe XML: Unknown error');
-  } finally {
-    // Clean up temporary files
-    try {
-      await pfxFile?.dispose();
-      await Promise.all([
-        unlink(certPemPath).catch(() => {}),
-        unlink(keyPemPath).catch(() => {})
-      ]);
-    } catch (error) {
-      // Ignore cleanup errors
-    }
   }
+}
+
+/**
+ * Extract the PEM-encoded private key and certificate from a PFX/PKCS#12 file.
+ */
+function extractPemCredentials(pfx: Buffer, password: string): { privateKey: string; certificate: string } {
+  const asn1 = forge.asn1.fromDer(pfx.toString('binary'));
+  // pkcs12FromAsn1 decrypts the safe contents and key bags using the password
+  const p12 = forge.pkcs12.pkcs12FromAsn1(asn1, password);
+
+  const keyBagOid = forge.pki.oids.keyBag;
+  const shroudedKeyBagOid = forge.pki.oids.pkcs8ShroudedKeyBag;
+  const certBagOid = forge.pki.oids.certBag;
+
+  const bagsOf = (oid: string) => p12.getBags({ bagType: oid })[oid] ?? [];
+  const keyBag = bagsOf(keyBagOid)[0] ?? bagsOf(shroudedKeyBagOid)[0];
+  const certBag = bagsOf(certBagOid)[0];
+
+  if (!keyBag?.key || !certBag?.cert) {
+    throw new Error('PFX certificate does not contain a private key and certificate');
+  }
+
+  return {
+    privateKey: forge.pki.privateKeyToPem(keyBag.key as forge.pki.PrivateKey),
+    certificate: forge.pki.certificateToPem(certBag.cert),
+  };
 }
 
 /**

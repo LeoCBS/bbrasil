@@ -40,6 +40,7 @@ export default async function AdminUsersPage() {
       <th className="w-[20%] p-4 whitespace-nowrap">Nome</th>
       <th className="w-[20%] p-4 whitespace-nowrap">Unidade</th>
       <th className="w-[10%] p-4 whitespace-nowrap">Role</th>
+      <th className="w-[10%] p-4 whitespace-nowrap">Vendedor</th>
       <th className="w-[10%] p-4 whitespace-nowrap">Ativo</th>
       <th className="w-[20%] p-4 text-right whitespace-nowrap">Ações</th>
     </tr>
@@ -54,6 +55,7 @@ export default async function AdminUsersPage() {
         <td className="p-4 whitespace-nowrap overflow-hidden"><div className="truncate" title={p.name ?? ''}>{p.name ?? '-'}</div></td>
         <td className="p-4 whitespace-nowrap overflow-hidden"><div className="truncate" title={unitMap.get(p.unit_id ?? '') ?? (p.unit_id ?? '')}>{unitMap.get(p.unit_id ?? '') ?? (p.unit_id ?? '-')}</div></td>
         <td className="p-4 whitespace-nowrap">{p.role}</td>
+        <td className="p-4 whitespace-nowrap">{p.role === 'vendedor' ? (p.salesperson_type ?? '-') : '-'}</td>
         <td className="p-4 whitespace-nowrap">{p.active ? 'Sim' : 'Não'}</td>
         <td className="p-4 text-right whitespace-nowrap">
           <Link href={`/admin/usuarios/${p.id}/edit`} className="mr-3 text-slate-600 hover:text-brand-ink">✏️</Link>

@@ -106,7 +106,6 @@ describe("generateNFeXml", () => {
     ncm: "12345678",
     stock: 100,
     cost_price: 100.00,
-    price: 150.00,
     cean: "SEM GTIN",
     cean_trib: "SEM GTIN",
     image_blob: null,

@@ -8,6 +8,7 @@ export type Profile = {
   name?: string | null;
   unit_id?: string | null;
   role: 'admin' | 'vendedor';
+  salesperson_type?: 'interno' | 'externo' | null;
   active: boolean;
   created_at?: string;
 };

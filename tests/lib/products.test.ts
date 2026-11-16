@@ -26,7 +26,6 @@ const productInput: ProductMutationInput = {
   size: "5L",
   stock: 10,
   cost_price: 20,
-  price: 48.9,
   image_url: "",
   active: true
 };

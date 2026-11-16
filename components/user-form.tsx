@@ -21,6 +21,7 @@ export function UserForm({ user, units, action, submitLabel, submitIcon }: {
   const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [role, setRole] = useState<'admin' | 'vendedor'>(user?.role ?? 'vendedor');
   const [isPending] = React.useTransition();
 
   async function handleSubmit(formData: FormData) {
@@ -64,7 +65,7 @@ export function UserForm({ user, units, action, submitLabel, submitIcon }: {
       <div className="grid grid-cols-3 gap-4">
         <div className="grid gap-2">
           <Label htmlFor={`role-${user?.id ?? 'new'}`}>Role</Label>
-          <select id={`role-${user?.id ?? 'new'}`} name="role" defaultValue={user?.role ?? 'vendedor'} className="h-11 rounded-md border border-input bg-background px-3 text-sm">
+          <select id={`role-${user?.id ?? 'new'}`} name="role" value={role} onChange={(event) => setRole(event.target.value as 'admin' | 'vendedor')} className="h-11 rounded-md border border-input bg-background px-3 text-sm">
             <option value="vendedor">Vendedor</option>
             <option value="admin">Admin</option>
           </select>
@@ -82,6 +83,13 @@ export function UserForm({ user, units, action, submitLabel, submitIcon }: {
 
         <div className="grid gap-2" />
       </div>
+
+      {role === 'vendedor' ? <div className="grid gap-2">
+        <Label htmlFor={`salesperson_type-${user?.id ?? 'new'}`}>Tipo de vendedor</Label>
+        <select id={`salesperson_type-${user?.id ?? 'new'}`} name="salesperson_type" defaultValue={user?.salesperson_type ?? ''} className="h-11 rounded-md border border-input bg-background px-3 text-sm">
+          <option value="">Não se aplica</option><option value="interno">Interno</option><option value="externo">Externo</option>
+        </select>
+      </div> : null}
 
       <SubmitButton className="w-full" pendingLabel={user ? 'Salvando...' : 'Criando...'} forcePending={isPending}>
         {submitIcon} {submitLabel}

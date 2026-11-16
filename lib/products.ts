@@ -19,7 +19,7 @@ export type Product = {
   ncm?: string | null;
   stock?: number | null;
   cost_price?: number | null;
-  price: number | null;
+  preco_tabela?: number | null;
   cean?: string | null;
   cean_trib?: string | null;
   image_blob: string | null;
@@ -79,7 +79,6 @@ const fallbackProducts: Product[] = [
     category: "LIMPEZA E HIGIENE",
     description: "Alto rendimento para cozinhas, pisos lavaveis e manutencao diaria.",
     size: "5L",
-    price: 48.9,
     image_blob: null,
     image_mime_type: null,
     image_url: null,
@@ -94,7 +93,6 @@ const fallbackProducts: Product[] = [
     category: "LIMPEZA E HIGIENE",
     description: "Solucao pratica para superficies corporativas e ambientes de alto fluxo.",
     size: "750ml",
-    price: 18.5,
     image_blob: null,
     image_mime_type: null,
     image_url: null,
@@ -109,7 +107,6 @@ const fallbackProducts: Product[] = [
     category: "HIGIENE PESSOAL",
     description: "Formula concentrada para limpeza profunda e controle de odores.",
     size: "1L",
-    price: 24.9,
     image_blob: null,
     image_mime_type: null,
     image_url: null,
@@ -138,6 +135,7 @@ function normalizeProduct(product: ProductRecord): Product {
     unit: product.unit ?? null,
     stock: product.stock ?? null,
     cost_price: product.cost_price ?? null,
+    preco_tabela: product.preco_tabela ?? null,
     cean: product.cean ?? null,
     cean_trib: product.cean_trib ?? null,
     unit_name: relatedUnit?.name ?? "Unidade não definida",

@@ -15,6 +15,7 @@ function parseProfile(formData: FormData) {
     name: String(formData.get('name') ?? '').trim() || null,
     unit_id: String(formData.get('unit_id') ?? '').trim() || null,
     role: (String(formData.get('role') ?? 'vendedor') as 'admin' | 'vendedor'),
+    salesperson_type: (String(formData.get('salesperson_type') ?? '') === 'externo' ? 'externo' : String(formData.get('salesperson_type') ?? '') === 'interno' ? 'interno' : null) as 'interno' | 'externo' | null,
     active: parseBoolean(formData, 'active')
   };
 }

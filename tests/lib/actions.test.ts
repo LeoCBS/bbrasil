@@ -56,8 +56,8 @@ describe("product actions", () => {
         category_id: " cat-1 ",
         description: " Limpa tudo ",
         size: " 5L ",
-        price: "R$ 1.234,56",
         cost_price: "999,90",
+        preco_tabela: "1.499,90",
         active: "on",
         image_url: "https://cdn/img.png"
       })
@@ -75,8 +75,8 @@ describe("product actions", () => {
         unit: "",
         ncm: "",
         stock: null,
-        price: 1234.56,
         cost_price: 999.9,
+        preco_tabela: 1499.9,
         cean: "SEM GTIN",
         cean_trib: "SEM GTIN",
         active: true,
@@ -101,8 +101,8 @@ describe("product actions", () => {
         unit: "",
         ncm: "",
         stock: null,
-        price: null,
         cost_price: null,
+        preco_tabela: null,
         cean: "SEM GTIN",
         cean_trib: "SEM GTIN",
         active: false,
@@ -112,10 +112,11 @@ describe("product actions", () => {
     );
   });
 
-  it("returns null for a blank price and for values without digits", async () => {
-    await createProductAction(formData({ price: "   ", cost_price: "abc" }));
+  it("does not send the legacy sale price when saving a product", async () => {
+    await createProductAction(formData({ price: "123,45", cost_price: "abc", preco_tabela: "200,00" }));
 
-    expect(createProduct).toHaveBeenCalledWith(expect.objectContaining({ price: null, cost_price: null }), "");
+    expect(createProduct).toHaveBeenCalledWith(expect.objectContaining({ cost_price: null, preco_tabela: 200 }), "");
+    expect(vi.mocked(createProduct).mock.calls[0][0]).not.toHaveProperty('price');
   });
 
   it("forwards the uploaded image and the product id on update", async () => {

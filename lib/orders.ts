@@ -7,6 +7,7 @@ import { createReceivableFromOrder } from "@/lib/receivables";
 import { getTaxRuleByNcm, getDefaultTaxRule, calculateItemTaxes } from "@/lib/tax-rules";
 import { getProduct } from "@/lib/products";
 import { generateNFeXml } from "@/lib/nfe-generator";
+import { createOrderCommissions } from "@/lib/commissions";
 
 export type OrderItem = {
   id: number;
@@ -208,6 +209,8 @@ export async function createOrder(input: OrderMutationInput) {
     if (itemsError) throw new Error(`Não foi possível criar os itens do pedido: ${itemsError.message}`);
   }
 
+  await createOrderCommissions(orderId, orderData.client_salesperson_id, orderData.client_salesperson_name);
+
   // Criar conta a receber automaticamente
   try {
     await createReceivableFromOrder(orderId, orderData);
@@ -292,6 +295,10 @@ export async function updateOrder(id: number, input: OrderMutationInput) {
     const { error: itemsError } = await supabase.from("order_items").insert(itemsWithOrderId);
     if (itemsError) throw new Error(`Não foi possível atualizar os itens do pedido: ${itemsError.message}`);
   }
+
+  const { error: clearCommissionsError } = await supabase.from('commissions').delete().eq('order_id', id);
+  if (clearCommissionsError) throw new Error(`Não foi possível atualizar as comissões: ${clearCommissionsError.message}`);
+  await createOrderCommissions(id, orderData.client_salesperson_id, orderData.client_salesperson_name);
 
   // Regenerar XML da NFe automaticamente
   try {

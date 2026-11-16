@@ -67,13 +67,13 @@ export function ProductForm({
   const [isPending, startTransition] = useTransition();
 
   // display states for masked currency inputs
-  const [priceDisplay, setPriceDisplay] = useState<string>(() => formatCurrency(product?.price));
   const [costPriceDisplay, setCostPriceDisplay] = useState<string>(() => formatCurrency(product?.cost_price));
+  const [tablePriceDisplay, setTablePriceDisplay] = useState<string>(() => formatCurrency(product?.preco_tabela));
 
   // keep displays in sync if product prop changes
   useEffect(() => {
-    setPriceDisplay(formatCurrency(product?.price));
     setCostPriceDisplay(formatCurrency(product?.cost_price));
+    setTablePriceDisplay(formatCurrency(product?.preco_tabela));
   }, [product]);
 
 
@@ -124,7 +124,6 @@ export function ProductForm({
         if (!product) {
           formRef.current?.reset();
           // keep masked displays empty after reset
-          setPriceDisplay('');
           setCostPriceDisplay('');
         }
 
@@ -227,7 +226,7 @@ export function ProductForm({
         <Textarea id={`description-${product?.id ?? 'new'}`} name="description" defaultValue={product?.description} required />
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className="grid gap-2">
           <Label htmlFor={`unit-short-${product?.id ?? 'new'}`}>UN</Label>
           <select
@@ -264,6 +263,10 @@ export function ProductForm({
             placeholder="R$ 0,00"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCurrencyInputChange(e, setCostPriceDisplay)}
           />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor={`preco_tabela-${product?.id ?? 'new'}`}>Preço de tabela</Label>
+          <Input id={`preco_tabela-${product?.id ?? 'new'}`} name="preco_tabela" type="text" value={tablePriceDisplay} placeholder="R$ 0,00" onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCurrencyInputChange(e, setTablePriceDisplay)} />
         </div>
         
       </div>

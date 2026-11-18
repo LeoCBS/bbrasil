@@ -2,14 +2,14 @@ import { unstable_noStore as noStore } from "next/cache";
 import { getSupabase } from "@/lib/supabase";
 
 export type CommissionRule = { id: string; name: string; min_difference_percent: number; max_difference_percent: number | null; commission_percent: number; category_id: string | null; active: boolean; category_name?: string | null };
-export type CommissionRecord = { id: string; order_id: number; order_item_id: number; salesperson_id: string; salesperson_name: string; product_name: string; category_name: string | null; quantity: number; sale_amount: number; base_amount: number; commission_percent: number; commission_amount: number; created_at: string };
+export type CommissionRecord = { id: string; order_id: number; order_item_id: number; salesperson_id: string; salesperson_name: string; product_name: string; category_name: string | null; quantity: number; sale_amount: number; base_amount: number; commission_percent: number; commission_amount: number; rule_id: string | null; created_at: string };
 
 type CommissionRuleRow = CommissionRule & { categories?: { name: string | null } | null };
 type OrderItemRow = { id: number; product_id: string | number | null; product_name: string; quantity: number | string; unit_price: number | string; total_price: number | string | null };
-type ProductRow = { id: string | number; category_id: string | null; preco_tabela: number | string | null };
+type ProductRow = { id: string | number; category_id: string | null; cost_price: number | string | null };
 
-export function calculateCommission(saleAmount: number, tablePrice: number, quantity: number, commissionPercent: number) {
-  const baseAmount = Math.round((saleAmount - tablePrice * quantity) * 100) / 100;
+export function calculateCommission(saleAmount: number, costPrice: number, quantity: number, commissionPercent: number) {
+  const baseAmount = Math.round((saleAmount - costPrice * quantity) * 100) / 100;
   return { baseAmount, commissionAmount: Math.round(baseAmount * commissionPercent) / 100 };
 }
 
@@ -59,6 +59,12 @@ export async function getCommissionRecords(salespersonId?: string): Promise<Comm
   const { data, error } = await query; if (error) throw new Error(error.message); return (data ?? []) as CommissionRecord[];
 }
 
+export async function deleteCommissionRecord(id: string) {
+  const db = getSupabase(); if (!db) throw new Error('Supabase not configured');
+  const { error } = await db.from('commissions').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
 export async function createOrderCommissions(orderId: number, salespersonId?: string | null, salespersonName?: string | null) {
   if (!salespersonId) return;
   const db = getSupabase(); if (!db) return;
@@ -68,19 +74,20 @@ export async function createOrderCommissions(orderId: number, salespersonId?: st
   ]);
   if (itemsError) throw new Error(itemsError.message); if (rulesError) throw new Error(rulesError.message);
   const productIds = [...new Set((items ?? []).map((item: OrderItemRow) => item.product_id).filter((id): id is string | number => id !== null))];
-  const { data: products, error: productsError } = productIds.length ? await db.from('products').select('id, category_id, preco_tabela').in('id', productIds) : { data: [], error: null };
+  const { data: products, error: productsError } = productIds.length ? await db.from('products').select('id, category_id, cost_price').in('id', productIds) : { data: [], error: null };
   if (productsError) throw new Error(productsError.message);
   const productMap = new Map((products ?? []).map((p: ProductRow) => [p.id, p]));
   const rows = (items ?? []).flatMap((item: OrderItemRow) => {
     const product = item.product_id === null ? undefined : productMap.get(item.product_id);
-    if (product?.preco_tabela == null) return [];
+    if (product?.cost_price == null) return [];
     const quantity = Number(item.quantity);
     const sale = Number(item.total_price ?? quantity * Number(item.unit_price));
-    const tablePrice = Number(product?.preco_tabela ?? 0);
-    const differencePercent = calculatePriceDifferencePercent(Number(item.unit_price), tablePrice);
+    const costPrice = Number(product.cost_price);
+    if (!Number.isFinite(costPrice) || costPrice < 0) return [];
+    const differencePercent = calculatePriceDifferencePercent(Number(item.unit_price), costPrice);
     const rule = selectCommissionRule((rules ?? []) as CommissionRule[], product?.category_id ?? null, differencePercent);
     if (!rule) return [];
-    const { baseAmount, commissionAmount } = calculateCommission(sale, tablePrice, quantity, Number(rule.commission_percent));
+    const { baseAmount, commissionAmount } = calculateCommission(sale, costPrice, quantity, Number(rule.commission_percent));
     return [{ order_id: orderId, order_item_id: item.id, salesperson_id: salespersonId, salesperson_name: salespersonName || salespersonId, product_name: item.product_name, category_name: null, quantity, sale_amount: sale, base_amount: baseAmount, commission_percent: rule.commission_percent, commission_amount: commissionAmount, rule_id: rule.id }];
   });
   if (rows.length) { const { error } = await db.from('commissions').insert(rows); if (error) throw new Error(error.message); }

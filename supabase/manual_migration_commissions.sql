@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS public.commission_rules;
 
 CREATE TABLE public.commission_rules (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
+  name text NOT NULL UNIQUE,
   min_difference_percent numeric(9,4) NOT NULL DEFAULT 0,
   max_difference_percent numeric(9,4),
   commission_percent numeric(7,4) NOT NULL CHECK (commission_percent >= 0 AND commission_percent <= 100),

@@ -409,6 +409,9 @@ export function OrderForm({
                   onClick={() => {
                     setSelectedProduct(product);
                     setProductSearch(product.name);
+                    const suggestedPrice = product.preco_tabela ?? 0;
+                    setNewItemPrice(suggestedPrice);
+                    setNewItemPriceDisplay(formatCurrency(suggestedPrice));
                     setShowProductDropdown(false);
                   }}
                   className="px-4 py-2 hover:bg-slate-50 cursor-pointer"

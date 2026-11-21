@@ -25,6 +25,9 @@ export async function emitNFeForOrder(orderId: number): Promise<EmitNFeResult> {
   const supabase = requireSupabase("a emissão de NF-e");
   const order = await getOrder(orderId);
   if (!order) throw new Error("Pedido não encontrado.");
+  if (order.status === "finalized") {
+    return { status: "authorized", message: "Este pedido já foi finalizado com NF-e autorizada.", environment };
+  }
 
   const responsible = await getActiveNFeTechnicalResponsible();
   if (!responsible) throw new Error("Cadastre e ative um responsável técnico para emitir NF-e.");

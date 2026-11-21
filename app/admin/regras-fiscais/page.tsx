@@ -6,7 +6,7 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import AdminHeader from "@/components/admin/admin-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { deleteTaxRuleAction as deleteAction } from "@/lib/actions";
+import { deleteTaxRuleAction as deleteAction, invalidateIbptCacheAction } from "@/lib/actions";
 import { buildHref, parsePageParam } from "@/lib/pagination";
 
 const pageSize = 10;
@@ -35,9 +35,14 @@ export default async function TaxRulesPage({ searchParams }: Props) {
               <h1 className="text-3xl font-bold text-brand-ink">Regras Fiscais</h1>
               <p className="mt-1 text-slate-600">Gerencie as configurações fiscais para NF-e.</p>
             </div>
-            <Button asChild>
-              <Link href="/admin/regras-fiscais/novo">+ Nova regra</Link>
-            </Button>
+            <div className="flex gap-2">
+              <form action={invalidateIbptCacheAction}>
+                <Button type="submit" variant="outline">Invalidar cache IBPT</Button>
+              </form>
+              <Button asChild>
+                <Link href="/admin/regras-fiscais/novo">+ Nova regra</Link>
+              </Button>
+            </div>
           </div>
 
           <form className="mb-4 flex gap-3" action="/admin/regras-fiscais">

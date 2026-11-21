@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { LoaderCircle } from "lucide-react";
 import { emitNFeOrderAction } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ type DialogState =
   | { state: "sending" }
   | { state: "result"; result: Omit<EmitNFeResult, "environment"> & { environment: EmitNFeResult["environment"] | "unknown" } };
 
-export function EmitNFeButton({ orderId }: { orderId: number }) {
+export function EmitNFeButton({ orderId, disabled = false }: { orderId: number; disabled?: boolean }) {
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const sending = dialog?.state === "sending";
 
@@ -50,8 +51,8 @@ export function EmitNFeButton({ orderId }: { orderId: number }) {
 
   return (
     <>
-      <Button type="button" size="sm" disabled={sending} onClick={() => void emit()}>
-        {sending ? "Enviando…" : "Emitir NF-e"}
+      <Button type="button" size="icon" variant="outline" title={disabled ? "NF-e já emitida" : "Emitir NF-e"} aria-label={disabled ? "NF-e já emitida" : "Emitir NF-e"} disabled={sending || disabled} onClick={() => void emit()}>
+        {sending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Image src="/nf-e.png" alt="" width={28} height={28} className="h-7 w-7 rounded-full" />}
       </Button>
       {dialog && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/55 p-4" role="presentation">

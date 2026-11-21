@@ -16,9 +16,9 @@ export async function GET(
       return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
     }
 
-    // Check if order already has NFe XML
-    if (order.nfe_xml) {
-      // Return existing XML
+    // Notas já autorizadas são imutáveis; pedidos em aberto geram XML novo
+    // para refletir a tabela IBPT atual e preencher itens antigos.
+    if (order.status === "finalized" && order.nfe_xml) {
       return new NextResponse(order.nfe_xml, {
         headers: {
           'Content-Type': 'application/xml',
@@ -27,7 +27,7 @@ export async function GET(
       });
     }
 
-    // Generate new XML
+    // Generate (or refresh) XML for a draft order.
     const nfeXml = await generateNFeXml(orderId);
 
     // Save to database

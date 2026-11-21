@@ -5,6 +5,8 @@ import { getProduct, type Product } from "./products";
 import { getActiveNFeTechnicalResponsible, type NFeTechnicalResponsible } from "./nfe-technical-responsible";
 import { signNFeXml } from "./nfe-signer";
 import { getNFeEnvironment, getNFeTpAmb } from "./nfe-config";
+import { getIbptRates, calculateIbptAmounts } from "./ibpt";
+import { getSupabase } from "./supabase";
 
 /**
  * Generate NFe XML from order data
@@ -33,6 +35,35 @@ export async function generateNFeXml(orderId: number): Promise<string> {
 
   // Parse unit address
   const unitAddress = parseAddress(unit.address);
+
+  // O vTotTrib é a carga aproximada do IBPT, separada dos grupos PIS/COFINS.
+  // Recalcular na geração também corrige pedidos antigos quando o cache já existe.
+  const itemsWithIbpt = await Promise.all((order.items ?? []).map(async (item, index) => {
+    const product = products[index];
+    if (!product?.ncm || !unit.state || !unit.cnpj) return item;
+    try {
+      const rates = await getIbptRates({
+        uf: unit.state,
+        ncm: product.ncm,
+        cnpj: unit.cnpj,
+        descricao: product.name || item.product_name,
+        unidade: product.unit,
+        gtin: product.cean,
+        codigoInterno: product.code
+      });
+      const taxes = calculateIbptAmounts(rates, item.total_price);
+      const updatedItem = { ...item, v_tot_trib: taxes.v_tot_trib };
+      const supabase = getSupabase();
+      if (supabase && item.id) {
+        const { error } = await supabase.from("order_items").update({ v_tot_trib: taxes.v_tot_trib }).eq("id", item.id);
+        if (error) console.error("Não foi possível salvar vTotTrib do item:", error.message);
+      }
+      return updatedItem;
+    } catch (error) {
+      console.error(`Não foi possível calcular tributos IBPT para o item ${item.product_name}:`, error);
+      return item;
+    }
+  }));
 
   // Parse client address
   const clientAddress = parseAddress(client.address);
@@ -107,7 +138,7 @@ export async function generateNFeXml(orderId: number): Promise<string> {
 				<IE>${esc(client.state_registration) || 'FALTANTE'}</IE>
 				<email>${esc(client.email) || 'FALTANTE'}</email>
 			</dest>
-${order.items?.map((item, index) => generateItemXml(item, products[index], index + 1)).join('\n')}
+${itemsWithIbpt.map((item, index) => generateItemXml(item, products[index], index + 1)).join('\n')}
 			<total>
 				<ICMSTot>
 					<vBC>0.00</vBC>
@@ -129,7 +160,7 @@ ${order.items?.map((item, index) => generateItemXml(item, products[index], index
 					<vCOFINS>0.00</vCOFINS>
 					<vOutro>0.00</vOutro>
 					<vNF>${order.total_amount.toFixed(2)}</vNF>
-					<vTotTrib>${calculateTotalTrib(order.items || [])}</vTotTrib>
+					<vTotTrib>${calculateTotalTrib(itemsWithIbpt)}</vTotTrib>
 				</ICMSTot>
 			</total>
 			<transp>

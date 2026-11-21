@@ -7,7 +7,7 @@ import { createCategory, deleteCategory, updateCategory, type CategoryMutationIn
 import { createProduct, deleteProduct, updateProduct, type ProductMutationInput } from "@/lib/products";
 import { createClient, deleteClient, updateClient, type ClientMutationInput } from "@/lib/clients";
 import { createUnit, deleteUnit, updateUnit, type UnitInput } from "@/lib/units";
-import { createOrder, deleteOrder, updateOrder, type OrderMutationInput } from "@/lib/orders";
+import { createOrder, deleteOrder, getOrder, setOrderNfeStatus, updateOrder, type OrderMutationInput } from "@/lib/orders";
 import { createQuotation, deleteQuotation, updateQuotation, convertQuotationToOrder, type QuotationMutationInput } from "@/lib/quotations";
 import { createReceivable, deleteReceivable, updateReceivable, markAsPaid as markReceivableAsPaid, type ReceivableMutationInput } from "@/lib/receivables";
 import { createPayable, deletePayable, updatePayable, markAsPaid as markPayableAsPaid, type PayableMutationInput } from "@/lib/payables";
@@ -17,6 +17,7 @@ import { emitNFeForOrder, type EmitNFeResult } from "@/lib/nfe-emission";
 import { getNFeEnvironment } from "@/lib/nfe-config";
 import { checkboxField, currencyField, digitsField, numberField, textField } from "@/lib/form-data";
 import { isValidCnpj } from "@/lib/format";
+import { invalidateIbptCache } from "@/lib/ibpt";
 
 const catalogPaths = ["/", "/produtos", "/admin/produtos"];
 const categoryPaths = [...catalogPaths, "/admin/categorias"];
@@ -503,6 +504,12 @@ export async function deleteTaxRuleAction(formData: FormData) {
   redirect("/admin/regras-fiscais");
 }
 
+export async function invalidateIbptCacheAction() {
+  await requireAdminUser("/admin/regras-fiscais");
+  await invalidateIbptCache();
+  revalidatePath("/admin/regras-fiscais");
+}
+
 function parseNFeTechnicalResponsible(formData: FormData): NFeTechnicalResponsibleInput {
   return {
     cnpj: textField(formData, "cnpj"),
@@ -545,7 +552,16 @@ export async function emitNFeOrderAction(orderId: number): Promise<EmitNFeResult
 
   try {
     await requireAdminUser("/admin/pedidos");
-    return await emitNFeForOrder(orderId);
+    const order = await getOrder(orderId);
+    if (!order) throw new Error("Pedido não encontrado.");
+    if (order.status === "finalized") {
+      return { status: "authorized", message: "Este pedido já foi finalizado com NF-e autorizada.", environment };
+    }
+    const result = await emitNFeForOrder(orderId);
+    if (result.status === "authorized") await setOrderNfeStatus(orderId, "finalized");
+    else if (result.status !== "processing") await setOrderNfeStatus(orderId, "nfeerror");
+    revalidate(orderPaths);
+    return result;
   } catch (error) {
     if (isNextControlFlowError(error)) throw error;
     const message = error instanceof Error ? error.message : "Erro desconhecido ao emitir NF-e.";
@@ -553,6 +569,12 @@ export async function emitNFeOrderAction(orderId: number): Promise<EmitNFeResult
     const status = /URL|NFE_ENVIRONMENT|responsável|responsavel|cadastre|certificado|assinatura|xml|configure/i.test(message)
       ? "configuration_error"
       : "communication_error";
+    try {
+      await setOrderNfeStatus(orderId, "nfeerror");
+      revalidate(orderPaths);
+    } catch (statusError) {
+      console.error("Falha ao atualizar status do pedido após erro de NF-e:", statusError);
+    }
     return { status, message, environment };
   }
 }

@@ -46,6 +46,7 @@ export type Order = {
   items?: OrderItem[];
   nfe_xml?: string | null;
   nfe_info?: string | null;
+  status?: "pending" | "finalized" | "nfeerror";
   created_at?: string;
   updated_at?: string;
 };
@@ -201,7 +202,8 @@ export async function createOrder(input: OrderMutationInput) {
         tax_rule_id: taxRuleId,
         v_pis: taxCalculation.v_pis,
         v_cofins: taxCalculation.v_cofins,
-        v_tot_trib: taxCalculation.v_tot_trib
+        // vTotTrib do XML deve vir da carga aproximada IBPT, calculada ao gerar a NF-e.
+        v_tot_trib: 0
       };
     }));
 
@@ -236,6 +238,10 @@ export async function createOrder(input: OrderMutationInput) {
 export async function updateOrder(id: number, input: OrderMutationInput) {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase not configured');
+
+  const current = await getOrder(id);
+  if (!current) throw new Error("Pedido não encontrado.");
+  if (current.status === "finalized") throw new Error("Pedidos finalizados não podem ser editados.");
 
   const { items, ...orderData } = input;
 
@@ -288,7 +294,8 @@ export async function updateOrder(id: number, input: OrderMutationInput) {
         tax_rule_id: taxRuleId,
         v_pis: taxCalculation.v_pis,
         v_cofins: taxCalculation.v_cofins,
-        v_tot_trib: taxCalculation.v_tot_trib
+        // vTotTrib do XML deve vir da carga aproximada IBPT, calculada ao gerar a NF-e.
+        v_tot_trib: 0
       };
     }));
 
@@ -318,7 +325,18 @@ export async function deleteOrder(id: number) {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase not configured');
 
+  const current = await getOrder(id);
+  if (!current) throw new Error("Pedido não encontrado.");
+  if (current.status === "finalized") throw new Error("Pedidos finalizados não podem ser removidos.");
+
   // Deletar o pedido (os itens serão deletados em cascade pelo trigger)
   const { error } = await supabase.from("orders").delete().eq("id", id);
   if (error) throw new Error(`Não foi possível deletar o pedido: ${error.message}`);
+}
+
+export async function setOrderNfeStatus(id: number, status: "finalized" | "nfeerror") {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error("Supabase not configured");
+  const { error } = await supabase.from("orders").update({ status }).eq("id", id);
+  if (error) throw new Error(`Não foi possível atualizar o status do pedido: ${error.message}`);
 }

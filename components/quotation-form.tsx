@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency, formatCurrencyFromCents } from '@/lib/format';
 import { onlyDigits } from '@/lib/text';
 import { Search, Trash2, Edit2 } from 'lucide-react';
+import { LinkPending } from '@/components/ui/link-pending';
 
 interface QuotationFormItem {
   id: number;
@@ -693,7 +694,7 @@ export function QuotationForm({
               href={`/admin/pedidos/${orderId}/edit`}
               className="text-blue-600 hover:text-blue-700 text-sm"
             >
-              Ver pedido
+              <LinkPending>Ver pedido</LinkPending>
             </Link>
           </div>
         </div>

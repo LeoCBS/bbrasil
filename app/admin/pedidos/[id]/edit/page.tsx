@@ -9,6 +9,7 @@ import { updateOrderAction } from "@/lib/actions";
 import { OrderForm } from "@/components/order-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 import { Download } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/format";
@@ -53,7 +54,7 @@ export default async function EditOrderPage({
                 </a>
               </Button>
               <Button asChild>
-                <Link href="/admin/pedidos">Voltar</Link>
+                <Link href="/admin/pedidos"><LinkPending>Voltar</LinkPending></Link>
               </Button>
             </div>
           </div>

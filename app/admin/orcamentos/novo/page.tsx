@@ -9,6 +9,7 @@ import { createQuotationAction } from "@/lib/actions";
 import { QuotationForm } from "@/components/quotation-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 export default async function NewQuotationPage() {
   const user = await requireAdminUser("/admin/orcamentos");
@@ -36,7 +37,7 @@ export default async function NewQuotationPage() {
               <p className="mt-1 text-slate-600">Crie um novo orçamento{userUnit ? ` para ${userUnit.name}` : ''}.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/orcamentos">Voltar</Link>
+              <Link href="/admin/orcamentos"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

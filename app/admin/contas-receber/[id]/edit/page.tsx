@@ -6,6 +6,7 @@ import { ReceivableForm } from "@/components/receivable-form";
 import { updateReceivableAction } from "@/lib/actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 export default async function EditReceivablePage({
   params,
@@ -35,7 +36,7 @@ export default async function EditReceivablePage({
               <p className="mt-1 text-slate-600">Edite a conta a receber selecionada.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/contas-receber">Voltar</Link>
+              <Link href="/admin/contas-receber"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

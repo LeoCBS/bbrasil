@@ -7,6 +7,7 @@ import type { Order } from "@/lib/orders";
 import { formatCurrency } from "@/lib/format";
 import { DeleteOrderButton } from "@/components/admin/delete-order-button";
 import { EmitNFeButton } from "@/components/admin/emit-nfe-button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 const headers = ["ID", "Cliente", "CNPJ", "Vendedor", "Unidade", "Total", "Status", "Atualizado em", "Ações"];
 const initialWidths = [6, 18, 13, 16, 14, 9, 10, 14, 13];
@@ -60,7 +61,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
             <td className="p-3 whitespace-nowrap text-sm text-slate-600">{order.updated_at ? new Date(order.updated_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—"}</td>
             <td className="p-3 whitespace-nowrap">
               <div className="flex flex-nowrap items-center justify-end gap-1">
-                <Link href={`/admin/pedidos/${order.id}/edit`} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-brand-ink" title={order.status === "finalized" ? "Visualizar pedido" : "Editar pedido"} aria-label={order.status === "finalized" ? "Visualizar pedido" : "Editar pedido"}>{order.status === "finalized" ? <Eye className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}</Link>
+                <Link href={`/admin/pedidos/${order.id}/edit`} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-brand-ink" title={order.status === "finalized" ? "Visualizar pedido" : "Editar pedido"} aria-label={order.status === "finalized" ? "Visualizar pedido" : "Editar pedido"}><LinkPending>{order.status === "finalized" ? <Eye className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}</LinkPending></Link>
                 <a href={`/api/orders/${order.id}/nfe-xml`} download className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-brand-ink" title="Baixar XML NFe" aria-label="Baixar XML da NF-e"><Download className="h-4 w-4" /></a>
                 <EmitNFeButton orderId={order.id} disabled={order.status === "finalized"} />
                 {order.status !== "finalized" && <DeleteOrderButton orderId={order.id} />}

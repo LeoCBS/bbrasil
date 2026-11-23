@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Loader2 } from 'lucide-react';
 import { convertQuotationToOrderAction } from '@/lib/actions';
 
 interface ConvertQuotationButtonProps {
@@ -70,7 +70,7 @@ export function ConvertQuotationButton({ quotationId, size = 'icon' }: ConvertQu
           className="text-green-600 hover:text-green-700 disabled:opacity-50 transition-colors p-1 rounded hover:bg-green-50"
           title="Converter em pedido"
         >
-          {converting ? '...' : <ShoppingCart className="h-5 w-5" />}
+          {converting ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />}
         </button>
       </form>
     </div>

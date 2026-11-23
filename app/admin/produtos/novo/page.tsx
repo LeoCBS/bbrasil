@@ -7,6 +7,7 @@ import { createProductAction } from "@/lib/actions";
 import { ProductForm } from "@/components/product-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 export default async function NewProductPage() {
   const user = await requireAdminUser("/admin/produtos");
@@ -25,7 +26,7 @@ export default async function NewProductPage() {
               <p className="mt-1 text-slate-600">Crie um novo produto para o catálogo.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/produtos">Voltar</Link>
+              <Link href="/admin/produtos"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

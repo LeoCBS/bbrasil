@@ -1,6 +1,7 @@
 'use client';
 
 import { useFormStatus } from 'react-dom';
+import { Loader2 } from 'lucide-react';
 import { deleteReceivableAction } from '@/lib/actions';
 
 export function DeleteReceivableButton({ receivableId }: { receivableId: number }) {
@@ -20,7 +21,7 @@ export function DeleteReceivableButton({ receivableId }: { receivableId: number 
         className="text-destructive"
         disabled={pending}
       >
-        {pending ? '...' : '🗑️'}
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : '🗑️'}
       </button>
     </form>
   );

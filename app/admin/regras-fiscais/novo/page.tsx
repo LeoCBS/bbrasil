@@ -3,6 +3,7 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { requireAdminUser } from "@/auth";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 import TaxRuleForm from "@/components/admin/tax-rule-form";
 import { createTaxRuleAction } from "@/lib/actions";
 
@@ -21,7 +22,7 @@ export default async function NewTaxRulePage() {
               <p className="mt-1 text-slate-600">Crie uma nova regra fiscal para NF-e.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/regras-fiscais">Voltar</Link>
+              <Link href="/admin/regras-fiscais"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

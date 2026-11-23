@@ -12,6 +12,7 @@ import { buildHref, parsePageParam } from "@/lib/pagination";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { MarkAsPaidButton } from "@/components/admin/mark-as-paid-button";
 import { DeleteReceivableButton } from "@/components/admin/delete-receivable-button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 const pageSize = 10;
 
@@ -76,7 +77,7 @@ export default async function AdminReceivablesPage({ searchParams }: AdminReceiv
               <p className="mt-1 text-slate-600">Listagem de contas a receber{unitId ? ` da unidade` : ''}</p>
             </div>
             <Button asChild>
-              <Link href="/admin/contas-receber/novo">+ Nova conta</Link>
+              <Link href="/admin/contas-receber/novo"><LinkPending>+ Nova conta</LinkPending></Link>
             </Button>
           </div>
 
@@ -162,7 +163,7 @@ export default async function AdminReceivablesPage({ searchParams }: AdminReceiv
                           href={`/admin/contas-receber/${receivable.id}/edit`}
                           className="mr-3 text-slate-600 hover:text-brand-ink"
                         >
-                          ✏️
+                          <LinkPending>✏️</LinkPending>
                         </Link>
                         {receivable.status === 'pending' && (
                           <span className="mr-3">

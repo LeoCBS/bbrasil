@@ -1,6 +1,7 @@
 'use client';
 
 import { useFormStatus } from 'react-dom';
+import { Loader2 } from 'lucide-react';
 import { deleteOrderAction } from '@/lib/actions';
 
 export function DeleteOrderButton({ orderId }: { orderId: number }) {
@@ -20,7 +21,7 @@ export function DeleteOrderButton({ orderId }: { orderId: number }) {
         className="text-destructive"
         disabled={pending}
       >
-        {pending ? '...' : '🗑️'}
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : '🗑️'}
       </button>
     </form>
   );

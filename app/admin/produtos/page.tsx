@@ -12,6 +12,7 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { buildHref, parsePageParam } from "@/lib/pagination";
 import { formatMarginPercent } from "@/lib/format";
+import { LinkPending } from "@/components/ui/link-pending";
 
 const pageSize = 10;
 
@@ -46,7 +47,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
               <p className="mt-1 text-slate-600">Listagem de produtos</p>
             </div>
             <Button asChild>
-              <Link href="/admin/produtos/novo">+ Novo produto</Link>
+              <Link href="/admin/produtos/novo"><LinkPending>+ Novo produto</LinkPending></Link>
             </Button>
           </div>
 
@@ -119,7 +120,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
             href={`/admin/produtos/${p.id}/edit`}
             className="mr-3 text-slate-600 hover:text-brand-ink"
           >
-            ✏️
+            <LinkPending>✏️</LinkPending>
           </Link>
 
           <form action={deleteProductAction} className="inline-block">

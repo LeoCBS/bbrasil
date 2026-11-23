@@ -6,6 +6,7 @@ import { PayableForm } from "@/components/payable-form";
 import { createPayableAction } from "@/lib/actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 export default async function NewPayablePage() {
   const user = await requireAdminUser("/admin/contas-pagar");
@@ -26,7 +27,7 @@ export default async function NewPayablePage() {
               <p className="mt-1 text-slate-600">Crie uma nova conta a pagar{userUnit ? ` para ${userUnit.name}` : ''}.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/contas-pagar">Voltar</Link>
+              <Link href="/admin/contas-pagar"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

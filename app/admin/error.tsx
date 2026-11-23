@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { AlertCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 export default function AdminError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function AdminError({ error, reset }: { error: Error & { digest?:
             <RotateCcw className="h-4 w-4" /> Tentar novamente
           </Button>
           <Button asChild variant="outline">
-            <Link href="/admin/produtos">Voltar ao admin</Link>
+            <Link href="/admin/produtos"><LinkPending>Voltar ao admin</LinkPending></Link>
           </Button>
         </div>
       </div>

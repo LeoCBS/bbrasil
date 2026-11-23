@@ -7,6 +7,7 @@ import { PayableForm } from "@/components/payable-form";
 import { updatePayableAction } from "@/lib/actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 export default async function EditPayablePage({
   params,
@@ -39,7 +40,7 @@ export default async function EditPayablePage({
               <p className="mt-1 text-slate-600">Edite a conta a pagar selecionada.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/contas-pagar">Voltar</Link>
+              <Link href="/admin/contas-pagar"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

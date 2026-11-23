@@ -8,6 +8,7 @@ import { updateProductAction } from "@/lib/actions";
 import { ProductForm } from "@/components/product-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 export default async function EditProductPage({
   params,
@@ -40,7 +41,7 @@ export default async function EditProductPage({
               <p className="mt-1 text-slate-600">Edite o produto selecionado.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/produtos">Voltar</Link>
+              <Link href="/admin/produtos"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

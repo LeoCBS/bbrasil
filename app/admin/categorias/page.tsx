@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { deleteCategoryAction as deleteAction } from "@/lib/actions";
 import { buildHref, parsePageParam } from "@/lib/pagination";
+import { LinkPending } from "@/components/ui/link-pending";
 
 const pageSize = 10;
 
@@ -36,7 +37,7 @@ export default async function CategoriesPage({ searchParams }: Props) {
               <p className="mt-1 text-slate-600">Gerencie categorias do catálogo.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/categorias/novo">+ Nova categoria</Link>
+              <Link href="/admin/categorias/novo"><LinkPending>+ Nova categoria</LinkPending></Link>
             </Button>
           </div>
 
@@ -69,7 +70,7 @@ export default async function CategoriesPage({ searchParams }: Props) {
                       <td className="p-4">{cat.active ? "Sim" : "Não"}</td>
                       <td className="p-4 text-right">
                         <Link href={`/admin/categorias/${cat.id}/edit`} className="inline-flex items-center gap-2 mr-2 text-slate-600 hover:text-brand-ink">
-                          <Pen className="h-4 w-4" /> Editar
+                          <LinkPending><Pen className="h-4 w-4" /> Editar</LinkPending>
                         </Link>
                         <form action={deleteAction} className="inline-block">
                           <input type="hidden" name="id" value={cat.id} />

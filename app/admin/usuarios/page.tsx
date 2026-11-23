@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { deleteProfileAction } from "@/lib/user-actions";
 import { getUnits } from "@/lib/units";
+import { LinkPending } from "@/components/ui/link-pending";
 
 export default async function AdminUsersPage() {
   const user = await requireAdminUser();
@@ -26,7 +27,7 @@ export default async function AdminUsersPage() {
               <p className="mt-1 text-slate-600">Gerenciar perfis de usuários</p>
             </div>
             <Button asChild>
-              <Link href="/admin/usuarios/novo">+ Novo usuário</Link>
+              <Link href="/admin/usuarios/novo"><LinkPending>+ Novo usuário</LinkPending></Link>
             </Button>
           </div>
 
@@ -58,7 +59,7 @@ export default async function AdminUsersPage() {
         <td className="p-4 whitespace-nowrap">{p.role === 'vendedor' ? (p.salesperson_type ?? '-') : '-'}</td>
         <td className="p-4 whitespace-nowrap">{p.active ? 'Sim' : 'Não'}</td>
         <td className="p-4 text-right whitespace-nowrap">
-          <Link href={`/admin/usuarios/${p.id}/edit`} className="mr-3 text-slate-600 hover:text-brand-ink">✏️</Link>
+          <Link href={`/admin/usuarios/${p.id}/edit`} className="mr-3 text-slate-600 hover:text-brand-ink"><LinkPending>✏️</LinkPending></Link>
 
           <form action={deleteProfileAction} className="inline-block">
             <input type="hidden" name="id" value={p.id} />

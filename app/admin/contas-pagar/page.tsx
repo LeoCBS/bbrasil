@@ -12,6 +12,7 @@ import { buildHref, parsePageParam } from "@/lib/pagination";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { MarkAsPaidButton } from "@/components/admin/mark-as-paid-button";
 import { DeletePayableButton } from "@/components/admin/delete-payable-button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 const pageSize = 10;
 
@@ -76,7 +77,7 @@ export default async function AdminPayablesPage({ searchParams }: AdminPayablesP
               <p className="mt-1 text-slate-600">Listagem de contas a pagar{unitId ? ` da unidade` : ''}</p>
             </div>
             <Button asChild>
-              <Link href="/admin/contas-pagar/novo">+ Nova conta</Link>
+              <Link href="/admin/contas-pagar/novo"><LinkPending>+ Nova conta</LinkPending></Link>
             </Button>
           </div>
 
@@ -158,7 +159,7 @@ export default async function AdminPayablesPage({ searchParams }: AdminPayablesP
                           href={`/admin/contas-pagar/${payable.id}/edit`}
                           className="mr-3 text-slate-600 hover:text-brand-ink"
                         >
-                          ✏️
+                          <LinkPending>✏️</LinkPending>
                         </Link>
                         {payable.status === 'pending' && (
                           <span className="mr-3">

@@ -6,6 +6,7 @@ import { createProfileAction } from "@/lib/user-actions";
 import { UserForm } from "@/components/user-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 export default async function NewUserPage() {
   const user = await requireAdminUser("/admin/usuarios");
@@ -23,7 +24,7 @@ export default async function NewUserPage() {
               <p className="mt-1 text-slate-600">Crie um novo perfil de usuário.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/usuarios">Voltar</Link>
+              <Link href="/admin/usuarios"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

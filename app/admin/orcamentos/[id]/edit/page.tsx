@@ -9,6 +9,7 @@ import { updateQuotationAction } from "@/lib/actions";
 import { QuotationForm } from "@/components/quotation-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 import { ConvertQuotationButton } from "@/components/admin/convert-quotation-button";
 import { ExportQuotationButton } from "@/components/admin/export-quotation-button";
 
@@ -48,7 +49,7 @@ export default async function EditQuotationPage({
               <ExportQuotationButton quotation={quotation} size="default" />
               <ConvertQuotationButton quotationId={quotation.id} size="default" />
               <Button asChild>
-                <Link href="/admin/orcamentos">Voltar</Link>
+                <Link href="/admin/orcamentos"><LinkPending>Voltar</LinkPending></Link>
               </Button>
             </div>
           </div>

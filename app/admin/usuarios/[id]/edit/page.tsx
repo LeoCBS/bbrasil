@@ -7,6 +7,7 @@ import { updateProfileAction } from "@/lib/user-actions";
 import { UserForm } from "@/components/user-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 type Props = {
   params: Promise<{
@@ -33,7 +34,7 @@ export default async function EditUserPage({ params }: Props) {
               <p className="mt-1 text-slate-600">Altere o perfil do usuário.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/usuarios">Voltar</Link>
+              <Link href="/admin/usuarios"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

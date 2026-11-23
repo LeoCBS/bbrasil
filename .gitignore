@@ -32,3 +32,6 @@ next-env.d.ts
 NFE.md
 nfe-example.xml
 *.pfx
+supabase/import/ncm-propostos.csv
+supabase/import/update-ncm-produtos.sql
+

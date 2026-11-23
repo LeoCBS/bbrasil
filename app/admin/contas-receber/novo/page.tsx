@@ -6,6 +6,7 @@ import { ReceivableForm } from "@/components/receivable-form";
 import { createReceivableAction } from "@/lib/actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 export default async function NewReceivablePage() {
   const user = await requireAdminUser("/admin/contas-receber");
@@ -26,7 +27,7 @@ export default async function NewReceivablePage() {
               <p className="mt-1 text-slate-600">Crie uma nova conta a receber{userUnit ? ` para ${userUnit.name}` : ''}.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/contas-receber">Voltar</Link>
+              <Link href="/admin/contas-receber"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

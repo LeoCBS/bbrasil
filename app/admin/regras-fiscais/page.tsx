@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { deleteTaxRuleAction as deleteAction, invalidateIbptCacheAction } from "@/lib/actions";
 import { buildHref, parsePageParam } from "@/lib/pagination";
+import { LinkPending } from "@/components/ui/link-pending";
 
 const pageSize = 10;
 
@@ -40,7 +41,7 @@ export default async function TaxRulesPage({ searchParams }: Props) {
                 <Button type="submit" variant="outline">Invalidar cache IBPT</Button>
               </form>
               <Button asChild>
-                <Link href="/admin/regras-fiscais/novo">+ Nova regra</Link>
+                <Link href="/admin/regras-fiscais/novo"><LinkPending>+ Nova regra</LinkPending></Link>
               </Button>
             </div>
           </div>
@@ -95,7 +96,7 @@ export default async function TaxRulesPage({ searchParams }: Props) {
                           href={`/admin/regras-fiscais/${rule.id}/edit`}
                           className="inline-flex items-center gap-2 mr-2 text-slate-600 hover:text-brand-ink"
                         >
-                          <Pen className="h-4 w-4" /> Editar
+                          <LinkPending><Pen className="h-4 w-4" /> Editar</LinkPending>
                         </Link>
                         <form action={deleteAction} className="inline-block">
                           <input type="hidden" name="id" value={rule.id} />

@@ -3,6 +3,7 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { requireAdminUser } from "@/auth";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 import CategoryForm from "@/components/admin/category-form";
 import { createCategoryAction } from "@/lib/actions";
 
@@ -21,7 +22,7 @@ export default async function NewCategoryPage() {
               <p className="mt-1 text-slate-600">Crie uma nova categoria para o catálogo.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/categorias">Voltar</Link>
+              <Link href="/admin/categorias"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

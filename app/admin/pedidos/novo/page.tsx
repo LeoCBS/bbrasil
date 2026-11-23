@@ -9,6 +9,7 @@ import { createOrderAction } from "@/lib/actions";
 import { OrderForm } from "@/components/order-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 export default async function NewOrderPage() {
   const user = await requireAdminUser("/admin/pedidos");
@@ -36,7 +37,7 @@ export default async function NewOrderPage() {
               <p className="mt-1 text-slate-600">Crie um novo pedido{userUnit ? ` para ${userUnit.name}` : ''}.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/pedidos">Voltar</Link>
+              <Link href="/admin/pedidos"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

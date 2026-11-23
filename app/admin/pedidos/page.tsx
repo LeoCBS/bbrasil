@@ -11,6 +11,7 @@ import { AdminPagination } from "@/components/admin/admin-pagination";
 import { buildHref, parsePageParam } from "@/lib/pagination";
 import { QuotationConverter } from "@/components/quotation-converter";
 import { OrdersTable } from "@/components/admin/orders-table";
+import { LinkPending } from "@/components/ui/link-pending";
 
 const pageSize = 10;
 
@@ -51,7 +52,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
               <p className="mt-1 text-slate-600">Listagem de pedidos{unitId ? ` da unidade` : ''}</p>
             </div>
             <Button asChild>
-              <Link href="/admin/pedidos/novo">+ Novo pedido</Link>
+              <Link href="/admin/pedidos/novo"><LinkPending>+ Novo pedido</LinkPending></Link>
             </Button>
           </div>
 

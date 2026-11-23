@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BarChart3, Boxes, Building2, FileText, Package, Settings, ShoppingCart, Users, UserRound, Sparkles, DollarSign, MapPin, Calendar, History, ClipboardCheck, FileBarChart, Receipt, UserCog, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LinkPending } from "@/components/ui/link-pending";
 
 const sections = [
   {
@@ -92,7 +93,7 @@ export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | 
                     </div>
                   ) : (
                     <Link key={item.label} href={item.href} className={className}>
-                      <Icon className="h-4 w-4" /> <span>{item.label}</span>
+                      <LinkPending><Icon className="h-4 w-4" /> <span>{item.label}</span></LinkPending>
                     </Link>
                   );
                 })}
@@ -114,7 +115,7 @@ export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | 
                 </div>
               ) : (
                 <Link key={item.label} href={item.href} className={className}>
-                  <Icon className="h-4 w-4" /> <span>{item.label}</span>
+                  <LinkPending><Icon className="h-4 w-4" /> <span>{item.label}</span></LinkPending>
                 </Link>
               );
             })}

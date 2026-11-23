@@ -12,6 +12,7 @@ import { buildHref, parsePageParam } from "@/lib/pagination";
 import { formatCurrency } from "@/lib/format";
 import { DeleteQuotationButton } from "@/components/admin/delete-quotation-button";
 import { ConvertQuotationButton } from "@/components/admin/convert-quotation-button";
+import { LinkPending } from "@/components/ui/link-pending";
 
 const pageSize = 10;
 
@@ -69,7 +70,7 @@ export default async function AdminQuotationsPage({ searchParams }: AdminQuotati
               <p className="mt-1 text-slate-600">Listagem de orçamentos{unitId ? ` da unidade` : ''}</p>
             </div>
             <Button asChild>
-              <Link href="/admin/orcamentos/novo">+ Novo orçamento</Link>
+              <Link href="/admin/orcamentos/novo"><LinkPending>+ Novo orçamento</LinkPending></Link>
             </Button>
           </div>
 
@@ -154,7 +155,7 @@ export default async function AdminQuotationsPage({ searchParams }: AdminQuotati
                           href={`/admin/orcamentos/${quotation.id}/edit`}
                           className="mr-3 text-slate-600 hover:text-brand-ink"
                         >
-                          ✏️
+                          <LinkPending>✏️</LinkPending>
                         </Link>
                         <span className="mr-3 inline-flex items-center justify-center">
                           <ConvertQuotationButton quotationId={quotation.id} size="icon" />

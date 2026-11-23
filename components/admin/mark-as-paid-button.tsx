@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 import { markAsPaidReceivableAction, markAsPaidPayableAction } from '@/lib/actions';
 
 interface MarkAsPaidButtonProps {
@@ -54,7 +54,7 @@ export function MarkAsPaidButton({ type, id }: MarkAsPaidButtonProps) {
           className="text-green-600 hover:text-green-700 disabled:opacity-50 transition-colors p-1 rounded hover:bg-green-50"
           title={loading ? 'Processando...' : 'Marcar como pago'}
         >
-          {loading ? '...' : <CheckCircle className="h-5 w-5" />}
+          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle className="h-5 w-5" />}
         </button>
       </form>
     </div>

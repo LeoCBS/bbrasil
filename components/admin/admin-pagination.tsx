@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { pageWindow } from "@/lib/pagination";
+import { LinkPending } from "@/components/ui/link-pending";
 
 export function AdminPagination({
   page,
@@ -24,7 +25,7 @@ export function AdminPagination({
       <div className="flex items-center gap-2">
         <Button asChild variant="outline" size={arrowSize} disabled={page <= 1}>
           <Link href={hrefFor(page - 1)}>
-            <ArrowLeft className="h-4 w-4" />
+            <LinkPending><ArrowLeft className="h-4 w-4" /></LinkPending>
           </Link>
         </Button>
 
@@ -37,7 +38,7 @@ export function AdminPagination({
             ) : (
               <Button asChild size="sm" key={item} variant={item === page ? "default" : "ghost"}>
                 <Link href={hrefFor(item)} className={item === page ? "font-semibold" : undefined}>
-                  {item}
+                  <LinkPending>{item}</LinkPending>
                 </Link>
               </Button>
             )
@@ -46,7 +47,7 @@ export function AdminPagination({
 
         <Button asChild variant="outline" size={arrowSize} disabled={page >= totalPages}>
           <Link href={hrefFor(page + 1)}>
-            <ArrowRight className="h-4 w-4" />
+            <LinkPending><ArrowRight className="h-4 w-4" /></LinkPending>
           </Link>
         </Button>
       </div>

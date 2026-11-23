@@ -4,6 +4,7 @@ import { requireAdminUser } from "@/auth";
 import { getCategories } from "@/lib/categories";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LinkPending } from "@/components/ui/link-pending";
 import CategoryForm from "@/components/admin/category-form";
 import { updateCategoryAction } from "@/lib/actions";
 
@@ -35,7 +36,7 @@ export default async function EditCategoryPage({
               <p className="mt-1 text-slate-600">Edite a categoria selecionada.</p>
             </div>
             <Button asChild>
-              <Link href="/admin/categorias">Voltar</Link>
+              <Link href="/admin/categorias"><LinkPending>Voltar</LinkPending></Link>
             </Button>
           </div>
 

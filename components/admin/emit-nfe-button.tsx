@@ -51,7 +51,7 @@ export function EmitNFeButton({ orderId, disabled = false }: { orderId: number; 
 
   return (
     <>
-      <Button type="button" size="icon" variant="outline" title={disabled ? "NF-e já emitida" : "Emitir NF-e"} aria-label={disabled ? "NF-e já emitida" : "Emitir NF-e"} disabled={sending || disabled} onClick={() => void emit()}>
+      <Button type="button" size="icon" variant="outline" title={disabled ? "NF-e já emitida" : "Emitir NF-e"} aria-label={disabled ? "NF-e já emitida" : "Emitir NF-e"} disabled={sending || disabled} onClick={() => void emit()} className="h-9 w-9 shrink-0 p-0">
         {sending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Image src="/nf-e.png" alt="" width={28} height={28} className="h-7 w-7 rounded-full" />}
       </Button>
       {dialog && (
@@ -86,13 +86,13 @@ export function EmitNFeButton({ orderId, disabled = false }: { orderId: number; 
               </div>
             ) : result ? (
               <>
-                <p className="mt-5 text-slate-800">{result.message}</p>
+                <p className="mt-5 min-w-0 whitespace-pre-wrap text-slate-800 [overflow-wrap:anywhere]">{result.message}</p>
                 {(result.cStat || result.reason || result.protocol || result.receipt) && (
-                  <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
+                  <dl className="mt-4 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
                     {result.cStat && <><dt className="font-medium text-slate-600">cStat</dt><dd>{result.cStat}</dd></>}
-                    {result.reason && <><dt className="font-medium text-slate-600">Motivo SEFAZ</dt><dd>{result.reason}</dd></>}
-                    {result.protocol && <><dt className="font-medium text-slate-600">Protocolo</dt><dd className="break-all">{result.protocol}</dd></>}
-                    {result.receipt && <><dt className="font-medium text-slate-600">Recibo</dt><dd className="break-all">{result.receipt}</dd></>}
+                    {result.reason && <><dt className="font-medium text-slate-600">Motivo SEFAZ</dt><dd className="min-w-0 whitespace-pre-wrap [overflow-wrap:anywhere]">{result.reason}</dd></>}
+                    {result.protocol && <><dt className="font-medium text-slate-600">Protocolo</dt><dd className="whitespace-pre-wrap break-all">{result.protocol}</dd></>}
+                    {result.receipt && <><dt className="font-medium text-slate-600">Recibo</dt><dd className="whitespace-pre-wrap break-all">{result.receipt}</dd></>}
                   </dl>
                 )}
               </>

@@ -71,7 +71,6 @@ export default async function EditOrderPage({
                   <div><div className="text-sm text-slate-500">Unidade</div><div className="font-medium">{order.unit_name}</div></div>
                   <div><div className="text-sm text-slate-500">Vendedor</div><div className="font-medium">{order.client_salesperson_name || order.user_name || "—"}</div></div>
                 </div>
-                {order.observation && <div><div className="text-sm text-slate-500">Observação</div><p>{order.observation}</p></div>}
                 {order.nfe_info && <div><div className="text-sm text-slate-500">Informações da NF-e</div><p>{order.nfe_info}</p></div>}
                 <div>
                   <h2 className="mb-3 font-semibold text-brand-ink">Produtos</h2>

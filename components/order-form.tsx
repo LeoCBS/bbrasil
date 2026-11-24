@@ -24,11 +24,13 @@ interface OrderFormItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  discount_amount?: number;
   cfop?: number;
   indtot?: number;
   qtrib?: number;
   v_un_trib?: number;
   tax_rule_id?: string | null;
+  discount_percent?: number;
 }
 
 export function OrderForm({
@@ -86,11 +88,13 @@ export function OrderForm({
       quantity: item.quantity,
       unit_price: item.unit_price,
       total_price: item.total_price,
+      discount_amount: item.discount_amount || 0,
       cfop: item.cfop,
       indtot: item.indtot,
       qtrib: item.qtrib,
       v_un_trib: item.v_un_trib,
-      tax_rule_id: item.tax_rule_id
+      tax_rule_id: item.tax_rule_id,
+      discount_percent: item.discount_percent || 0
     })) || []
   );
 
@@ -106,11 +110,9 @@ export function OrderForm({
   // Editing item
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
 
-  // Observation
-  const [observation, setObservation] = useState<string>(order?.observation || '');
-
   // NFe Info
   const [nfeInfo, setNfeInfo] = useState<string>(order?.nfe_info || '');
+  const [newItemDiscount, setNewItemDiscount] = useState<number>(0);
 
   // Currency display states
   const [unitPriceDisplay, setUnitPriceDisplay] = useState<string>('');
@@ -159,6 +161,8 @@ export function OrderForm({
   }
 
   function handleAddProduct(product: Product) {
+    const subtotal = newItemPrice * newItemQuantity;
+    const discountAmount = Math.round(subtotal * newItemDiscount) / 100;
     const newItem: OrderFormItem = {
       id: Date.now(), // ID temporário para o frontend
       product_id: product.id,
@@ -166,7 +170,9 @@ export function OrderForm({
       product_code: product.code || undefined,
       quantity: newItemQuantity,
       unit_price: newItemPrice,
-      total_price: newItemPrice * newItemQuantity,
+      total_price: subtotal - discountAmount,
+      discount_amount: discountAmount,
+      discount_percent: newItemDiscount,
       cfop: 5102,
       indtot: 1,
       qtrib: newItemQuantity,
@@ -178,6 +184,7 @@ export function OrderForm({
     setNewItemQuantity(1);
     setNewItemPrice(0);
     setNewItemPriceDisplay('');
+    setNewItemDiscount(0);
     setShowProductDropdown(false);
   }
 
@@ -193,10 +200,13 @@ export function OrderForm({
 
   function handleSaveItem(index: number) {
     const item = orderItems[index];
+    const subtotal = item.quantity * item.unit_price;
+    const discountAmount = Math.round(subtotal * (item.discount_percent || 0)) / 100;
     const updatedItems = [...orderItems];
     updatedItems[index] = {
       ...item,
-      total_price: item.quantity * item.unit_price
+      discount_amount: discountAmount,
+      total_price: subtotal - discountAmount
     };
     setOrderItems(updatedItems);
     setEditingItemIndex(null);
@@ -209,24 +219,30 @@ export function OrderForm({
 
   function handleQuantityChange(index: number, quantity: number) {
     const item = orderItems[index];
+    const subtotal = quantity * item.unit_price;
+    const discountAmount = Math.round(subtotal * (item.discount_percent || 0)) / 100;
     const updatedItems = [...orderItems];
     updatedItems[index] = {
       ...item,
       quantity,
       qtrib: quantity,
-      total_price: quantity * item.unit_price
+      discount_amount: discountAmount,
+      total_price: subtotal - discountAmount
     };
     setOrderItems(updatedItems);
   }
 
   function handleUnitPriceChange(index: number, price: number) {
     const item = orderItems[index];
+    const subtotal = item.quantity * price;
+    const discountAmount = Math.round(subtotal * (item.discount_percent || 0)) / 100;
     const updatedItems = [...orderItems];
     updatedItems[index] = {
       ...item,
       unit_price: price,
       v_un_trib: price,
-      total_price: item.quantity * price
+      discount_amount: discountAmount,
+      total_price: subtotal - discountAmount
     };
     setOrderItems(updatedItems);
   }
@@ -256,7 +272,6 @@ export function OrderForm({
         formData.append('client_salesperson_name', selectedSalesperson?.name || selectedSalesperson?.email || '');
         formData.append('items', JSON.stringify(orderItems));
         formData.append('total_amount', totalAmount.toString());
-        formData.append('observation', observation);
         formData.append('nfe_info', nfeInfo);
 
         await action(formData);
@@ -267,7 +282,6 @@ export function OrderForm({
           setOrderItems([]);
           setSelectedClient(null);
           setClientSearch('');
-          setObservation('');
         }
 
         router.refresh();
@@ -306,6 +320,13 @@ export function OrderForm({
       {(userEmail || order?.user_email) && <input type="hidden" name="user_email" value={userEmail || order?.user_email || ''} />}
       {userUnitId && <input type="hidden" name="unit_id" value={userUnitId} />}
       {userUnitName && <input type="hidden" name="unit_name" value={userUnitName} />}
+
+      <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-2"><Label htmlFor="commercial_status">Status</Label><select id="commercial_status" name="commercial_status" defaultValue={order?.commercial_status || "orcamento"} className="h-11 rounded-md border border-input bg-background px-3 text-sm"><option value="orcamento">Orçamento</option><option value="pedido">Pedido</option><option value="faturado">Faturado</option></select></div>
+        <div className="grid gap-2"><Label htmlFor="valid_until">Válido até</Label><Input id="valid_until" name="valid_until" type="date" defaultValue={order?.valid_until || new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10)} /></div>
+        <div className="grid gap-2"><Label htmlFor="payment_terms">Condições de pagamento</Label><Input id="payment_terms" name="payment_terms" defaultValue={order?.payment_terms || "Boleto"} /></div>
+        <div className="grid gap-2"><Label htmlFor="delivery_days">Prazo de entrega</Label><select id="delivery_days" name="delivery_days" defaultValue={String(order?.delivery_days ?? 2)} className="h-11 rounded-md border border-input bg-background px-3 text-sm">{[1,2,3,5,7,10,15,20,30].map(days => <option key={days} value={days}>{days} dias</option>)}</select></div>
+      </div>
 
       {/* Client Selection */}
       <div className="grid gap-2">
@@ -452,6 +473,7 @@ export function OrderForm({
                   className="mt-1"
                 />
               </div>
+      <div className="w-28"><Label htmlFor="new_discount" className="text-sm">Desconto %</Label><Input id="new_discount" type="number" min="0" max="30" step="0.01" value={newItemDiscount} onChange={e => setNewItemDiscount(Math.min(30, Math.max(0, Number(e.target.value) || 0)))} className="mt-1" /></div>
               <Button
                 type="button"
                 onClick={() => selectedProduct && handleAddProduct(selectedProduct)}
@@ -468,6 +490,7 @@ export function OrderForm({
                   setNewItemQuantity(1);
                   setNewItemPrice(0);
                   setNewItemPriceDisplay('');
+                  setNewItemDiscount(0);
                 }}
                 className="mt-5"
               >
@@ -486,6 +509,8 @@ export function OrderForm({
                   <th className="text-left p-3 text-sm font-medium">Produto</th>
                   <th className="text-right p-3 text-sm font-medium w-24">Qtd</th>
                   <th className="text-right p-3 text-sm font-medium w-32">VL. Unit</th>
+                  <th className="text-right p-3 text-sm font-medium w-24">Desc. %</th>
+                  <th className="text-right p-3 text-sm font-medium w-32">Desconto</th>
                   <th className="text-right p-3 text-sm font-medium w-32">Total</th>
                   <th className="text-right p-3 text-sm font-medium w-20">Ações</th>
                 </tr>
@@ -525,6 +550,10 @@ export function OrderForm({
                         formatCurrency(item.unit_price)
                       )}
                     </td>
+                    <td className="p-3 text-right font-medium">
+                      {item.discount_percent || 0}%
+                    </td>
+                    <td className="p-3 text-right font-medium">{formatCurrency(item.discount_amount || 0)}</td>
                     <td className="p-3 text-right font-medium">
                       {formatCurrency(item.total_price)}
                     </td>
@@ -584,18 +613,6 @@ export function OrderForm({
             </div>
           </div>
         )}
-      </div>
-
-      {/* Observation */}
-      <div className="grid gap-2">
-        <Label htmlFor="observation">Observação</Label>
-        <Textarea
-          id="observation"
-          value={observation}
-          onChange={(e) => setObservation(e.target.value)}
-          placeholder="Observações sobre o pedido..."
-          rows={3}
-        />
       </div>
 
       {/* NFe Info */}

@@ -35,6 +35,7 @@ vi.mock("@/lib/products", () => ({ createProduct: vi.fn(), updateProduct: vi.fn(
 vi.mock("@/lib/units", () => ({ createUnit: vi.fn(), updateUnit: vi.fn(), deleteUnit: vi.fn() }));
 
 const VALID_CNPJ = "12.345.678/0001-95";
+const VALID_CPF = "529.982.247-25";
 
 function formData(entries: Record<string, string>) {
   const data = new FormData();
@@ -182,8 +183,8 @@ describe("client actions", () => {
     ["repeated digits", "11.111.111/1111-11"],
     ["wrong first check digit", "12.345.678/0001-05"],
     ["wrong second check digit", "12.345.678/0001-91"]
-  ])("rejects an invalid cnpj (%s)", async (_name, cnpj) => {
-    await expect(createClientAction(formData({ cnpj }))).rejects.toThrow("Informe um CNPJ válido.");
+  ])("rejects an invalid cnpj or cpf (%s)", async (_name, cnpj) => {
+    await expect(createClientAction(formData({ cnpj }))).rejects.toThrow("Informe um CPF ou CNPJ válido.");
     expect(createClient).not.toHaveBeenCalled();
   });
 
@@ -193,8 +194,14 @@ describe("client actions", () => {
     expect(createClient).toHaveBeenCalled();
   });
 
+  it("accepts a valid cpf", async () => {
+    await createClientAction(formData({ cnpj: VALID_CPF }));
+
+    expect(createClient).toHaveBeenCalledWith(expect.objectContaining({ cnpj: VALID_CPF }));
+  });
+
   it("validates the cnpj before updating", async () => {
-    await expect(updateClientAction(formData({ id: "c-1", cnpj: "123" }))).rejects.toThrow("Informe um CNPJ válido.");
+    await expect(updateClientAction(formData({ id: "c-1", cnpj: "123" }))).rejects.toThrow("Informe um CPF ou CNPJ válido.");
 
     await updateClientAction(formData({ id: "c-1", cnpj: VALID_CNPJ }));
     expect(updateClient).toHaveBeenCalledWith("c-1", expect.objectContaining({ cnpj: VALID_CNPJ }));

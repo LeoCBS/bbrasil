@@ -18,6 +18,8 @@ export type OrderItem = {
   quantity: number;
   unit_price: number;
   total_price: number;
+  discount_percent?: number;
+  discount_amount?: number;
   cfop?: number;
   indtot?: number;
   qtrib?: number;
@@ -41,11 +43,14 @@ export type Order = {
   client_salesperson_name?: string;
   unit_id: string;
   unit_name: string;
-  observation?: string;
   total_amount: number;
   items?: OrderItem[];
   nfe_xml?: string | null;
   nfe_info?: string | null;
+  commercial_status?: "orcamento" | "pedido" | "faturado";
+  valid_until?: string;
+  payment_terms?: string;
+  delivery_days?: number;
   status?: "pending" | "finalized" | "nfeerror";
   created_at?: string;
   updated_at?: string;
@@ -69,7 +74,7 @@ const fallbackOrders: Order[] = [
     client_salesperson_name: "João da Silva",
     unit_id: "unit-joinville",
     unit_name: "JOINVILLE SC",
-    observation: "Entregar pela manhã",
+    commercial_status: "pedido",
     total_amount: 1500.00,
     nfe_xml: null,
     items: [
@@ -97,30 +102,31 @@ const fallbackOrders: Order[] = [
 
 
 
-function matches(order: Order, search?: string, unitId?: string) {
+function matches(order: Order, search?: string, unitId?: string, status?: string) {
   const text = normalizeText(search ?? "");
-  const hasText = !text || [order.client_name, order.client_cnpj, order.unit_name].some((value) => normalizeText(value).includes(text));
+  const hasText = !text || [order.client_name, order.client_cnpj, order.unit_name, String(order.id)].some((value) => normalizeText(value).includes(text));
   const hasUnit = !unitId || order.unit_id === unitId;
-  return hasText && hasUnit;
+  const hasStatus = !status || order.commercial_status === status;
+  return hasText && hasUnit && hasStatus;
 }
 
-function paginateFallbackOrders(page: number, pageSize: number, search?: string, unitId?: string): OrdersPage {
-  const { items, ...rest } = paginate(fallbackOrders.filter((order) => matches(order, search, unitId)), page, pageSize);
-  return { orders: items, ...rest };
-}
-
-export async function getPaginatedOrders({ search, unitId, page = 1, pageSize = 10 }: { search?: string; unitId?: string; page?: number; pageSize?: number } = {}): Promise<OrdersPage> {
+export async function getPaginatedOrders({ search, unitId, status, page = 1, pageSize = 10 }: { search?: string; unitId?: string; status?: string; page?: number; pageSize?: number } = {}): Promise<OrdersPage> {
   noStore();
   const supabase = getSupabase();
   const { page: safePage, pageSize: safePageSize, from, to } = pageRange(page, pageSize);
-  if (!supabase) return paginateFallbackOrders(page, pageSize, search, unitId);
+  if (!supabase) {
+    const filtered = fallbackOrders.filter((order) => matches(order, search, unitId, status));
+    const { items, ...rest } = paginate(filtered, page, pageSize);
+    return { orders: items, ...rest };
+  }
   
   let query = supabase.from("orders").select("*", { count: "exact" }).order("created_at", { ascending: false });
   
   if (unitId) query = query.eq("unit_id", unitId);
+  if (status) query = query.eq("commercial_status", status);
   if (search?.trim()) {
     const pattern = buildIlikePattern(search.trim());
-    query = query.or(`client_name.ilike.${pattern},client_cnpj.ilike.${pattern},unit_name.ilike.${pattern}`);
+    query = query.or(`client_name.ilike.${pattern},client_cnpj.ilike.${pattern},unit_name.ilike.${pattern},id.eq.${Number(search.trim()) || -1}`);
   }
   
   const { data, error, count } = await query.range(from, to);
@@ -154,6 +160,7 @@ export async function createOrder(input: OrderMutationInput) {
   if (!supabase) throw new Error('Supabase not configured');
 
   const { items, ...orderData } = input;
+  orderData.commercial_status = orderData.commercial_status || "orcamento";
 
   // Criar o pedido principal (o ID será gerado automaticamente pelo banco)
   const { data: orderResult, error: orderError } = await supabase.from("orders").insert([orderData]).select('id').single();
@@ -211,18 +218,19 @@ export async function createOrder(input: OrderMutationInput) {
     if (itemsError) throw new Error(`Não foi possível criar os itens do pedido: ${itemsError.message}`);
   }
 
-  await createOrderCommissions(orderId, orderData.client_salesperson_id, orderData.client_salesperson_name);
+  if (orderData.commercial_status !== "orcamento") await createOrderCommissions(orderId, orderData.client_salesperson_id, orderData.client_salesperson_name);
 
   // Criar conta a receber automaticamente
   try {
-    await createReceivableFromOrder(orderId, orderData);
+    if (orderData.commercial_status !== "orcamento") await createReceivableFromOrder(orderId, orderData);
   } catch (error) {
     console.error('Erro ao criar conta a receber:', error);
     // Não falhar o pedido se a conta a receber falhar
   }
 
-  // Gerar XML da NFe automaticamente
+  // Gerar XML da NF-e apenas depois que o orçamento virar pedido.
   try {
+    if (orderData.commercial_status === "orcamento") return;
     const nfeXml = await generateNFeXml(orderId);
     const { error: xmlError } = await supabase.from("orders").update({ nfe_xml: nfeXml }).eq("id", orderId);
     if (xmlError) {
@@ -244,6 +252,7 @@ export async function updateOrder(id: number, input: OrderMutationInput) {
   if (current.status === "finalized") throw new Error("Pedidos finalizados não podem ser editados.");
 
   const { items, ...orderData } = input;
+  orderData.commercial_status = orderData.commercial_status || current.commercial_status || "orcamento";
 
   // Atualizar o pedido principal
   const { error: orderError } = await supabase.from("orders").update(orderData).eq("id", id);
@@ -337,6 +346,13 @@ export async function deleteOrder(id: number) {
 export async function setOrderNfeStatus(id: number, status: "finalized" | "nfeerror") {
   const supabase = getSupabase();
   if (!supabase) throw new Error("Supabase not configured");
-  const { error } = await supabase.from("orders").update({ status }).eq("id", id);
+  const { error } = await supabase.from("orders").update({ status, ...(status === "finalized" ? { commercial_status: "faturado" } : {}) }).eq("id", id);
   if (error) throw new Error(`Não foi possível atualizar o status do pedido: ${error.message}`);
+}
+
+export async function convertOrderToOrder(id: number) {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error("Supabase not configured");
+  const { error } = await supabase.from("orders").update({ commercial_status: "pedido" }).eq("id", id).eq("commercial_status", "orcamento");
+  if (error) throw new Error(`Não foi possível converter o orçamento: ${error.message}`);
 }

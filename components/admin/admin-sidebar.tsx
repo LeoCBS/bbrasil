@@ -19,7 +19,6 @@ const sections = [
   {
     title: "Operações",
     items: [
-      { label: "Orçamentos", href: "/admin/orcamentos", icon: FileText, disabled: false },
       { label: "Pedidos", href: "/admin/pedidos", icon: ShoppingCart, disabled: false },
       { label: "Estoque", href: "/admin/produtos", icon: Boxes, disabled: true }
     ]
@@ -68,7 +67,7 @@ const footerItems = [
   { label: "Configurações", href: "/admin/produtos", icon: Settings, disabled: true }
 ];
 
-export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "comissoes" | "pedidos" | "orcamentos" | "contas-receber" | "contas-pagar" | "logistica" | "regras-fiscais" | "responsavel-tecnico-nfe" | "auditoria-ibpt" | "auditoria-emissoes" | "auditoria-chamadas" }) {
+export function AdminSidebar({ current }: { current: "dashboard" | "produtos" | "clientes" | "unidades" | "categorias" | "usuarios" | "comissoes" | "pedidos" | "contas-receber" | "contas-pagar" | "logistica" | "regras-fiscais" | "responsavel-tecnico-nfe" | "auditoria-ibpt" | "auditoria-emissoes" | "auditoria-chamadas" }) {
   return (
     <aside className="p-4 lg:w-64 lg:shrink-0">
       <div className="rounded-lg border bg-white p-3">

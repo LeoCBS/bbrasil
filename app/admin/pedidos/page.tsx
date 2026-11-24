@@ -9,7 +9,6 @@ import AdminHeader from "@/components/admin/admin-header";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { buildHref, parsePageParam } from "@/lib/pagination";
-import { QuotationConverter } from "@/components/quotation-converter";
 import { OrdersTable } from "@/components/admin/orders-table";
 import { LinkPending } from "@/components/ui/link-pending";
 
@@ -18,6 +17,7 @@ const pageSize = 10;
 type AdminOrdersPageProps = {
   searchParams?: Promise<{
     busca?: string;
+    status?: string;
     page?: string;
   }>;
 };
@@ -27,8 +27,9 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   const userProfile = await getCurrentUserProfile();
   const params = await searchParams;
   const search = params?.busca?.trim();
+  const status = params?.status?.trim();
   const page = parsePageParam(params?.page);
-  const hrefFor = (target: number) => buildHref("/admin/pedidos", { busca: search }, target);
+  const hrefFor = (target: number) => buildHref("/admin/pedidos", { busca: search, status }, target);
 
   // Filter by user's unit if user has a unit_id
   const unitId = userProfile?.unit_id || undefined;
@@ -37,6 +38,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
     page, 
     pageSize, 
     search,
+    status,
     unitId 
   });
 
@@ -63,11 +65,9 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                 <Input name="busca" defaultValue={search ?? ""} placeholder="Buscar pedido..." className="pl-10" />
               </div>
             </div>
+            <select name="status" defaultValue={status || ""} className="h-11 rounded-md border border-input bg-background px-3 text-sm"><option value="">Todos os status</option><option value="orcamento">Orçamento</option><option value="pedido">Pedido</option><option value="faturado">Faturado</option></select>
             <Button type="submit">Pesquisar</Button>
           </form>
-
-          {/* Converter orçamento em pedido */}
-          <QuotationConverter />
 
           <Card>
             <CardContent className="overflow-x-auto p-0">

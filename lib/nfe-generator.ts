@@ -68,8 +68,19 @@ export async function generateNFeXml(orderId: number): Promise<string> {
   // Parse client address
   const clientAddress = parseAddress(client.address);
 
+  const clientDoc = formatCNPJ(client.cnpj);
+  const clientIsCpf = clientDoc.length === 11;
+
   // Generate NFe ID
   const nfeId = generateNFeId(order.id, unit, order.created_at || new Date());
+  const discountForItem = (item: OrderItem) => item.discount_amount ?? roundNfeMoney(
+    item.unit_price * item.quantity * (item.discount_percent || 0) / 100
+  );
+  const productsGrossTotal = roundNfeMoney(itemsWithIbpt.reduce(
+    (sum, item) => sum + roundNfeMoney(item.unit_price * item.quantity), 0
+  ));
+  const discountTotal = roundNfeMoney(itemsWithIbpt.reduce((sum, item) => sum + discountForItem(item), 0));
+  const invoiceTotal = roundNfeMoney(productsGrossTotal - discountTotal);
 
   // Generate XML
   const xml = `<?xml version="1.0" encoding="utf-8"?>
@@ -120,7 +131,7 @@ export async function generateNFeXml(orderId: number): Promise<string> {
 				<CRT>1</CRT>
 			</emit>
 			<dest>
-				<CNPJ>${formatCNPJ(client.cnpj)}</CNPJ>
+				${clientIsCpf ? `<CPF>${clientDoc}</CPF>` : `<CNPJ>${clientDoc}</CNPJ>`}
 				<xNome>${getNFeEnvironment() === "homologation" ? "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL" : esc(client.corporate_name)}</xNome>
 				<enderDest>
 					<xLgr>${esc(clientAddress.street) || 'FALTANTE'}</xLgr>
@@ -134,11 +145,11 @@ export async function generateNFeXml(orderId: number): Promise<string> {
 					<xPais>BRASIL</xPais>
 					<fone>${formatPhone(client.phone || 'FALTANTE')}</fone>
 				</enderDest>
-				<indIEDest>1</indIEDest>
-				<IE>${esc(client.state_registration) || 'FALTANTE'}</IE>
+				<indIEDest>${clientIsCpf ? 9 : 1}</indIEDest>
+				${clientIsCpf ? "" : `<IE>${esc(client.state_registration) || 'FALTANTE'}</IE>`}
 				<email>${esc(client.email) || 'FALTANTE'}</email>
 			</dest>
-${itemsWithIbpt.map((item, index) => generateItemXml(item, products[index], index + 1)).join('\n')}
+${itemsWithIbpt.map((item, index) => generateItemXml(item, products[index], index + 1, discountForItem(item))).join('\n')}
 			<total>
 				<ICMSTot>
 					<vBC>0.00</vBC>
@@ -149,17 +160,17 @@ ${itemsWithIbpt.map((item, index) => generateItemXml(item, products[index], inde
 					<vST>0.00</vST>
 					<vFCPST>0.00</vFCPST>
 					<vFCPSTRet>0.00</vFCPSTRet>
-					<vProd>${order.total_amount.toFixed(2)}</vProd>
+					<vProd>${productsGrossTotal.toFixed(2)}</vProd>
 					<vFrete>0.00</vFrete>
 					<vSeg>0.00</vSeg>
-					<vDesc>0.00</vDesc>
+					<vDesc>${discountTotal.toFixed(2)}</vDesc>
 					<vII>0.00</vII>
 					<vIPI>0.00</vIPI>
 					<vIPIDevol>0.00</vIPIDevol>
 					<vPIS>0.00</vPIS>
 					<vCOFINS>0.00</vCOFINS>
 					<vOutro>0.00</vOutro>
-					<vNF>${order.total_amount.toFixed(2)}</vNF>
+					<vNF>${invoiceTotal.toFixed(2)}</vNF>
 					<vTotTrib>${calculateTotalTrib(itemsWithIbpt)}</vTotTrib>
 				</ICMSTot>
 			</total>
@@ -225,7 +236,7 @@ ${itemsWithIbpt.map((item, index) => generateItemXml(item, products[index], inde
 /**
  * Generate XML for a single order item
  */
-function generateItemXml(item: OrderItem, product: Product | null, nItem: number): string {
+function generateItemXml(item: OrderItem, product: Product | null, nItem: number, discountAmount: number): string {
   const productCode = item.product_code || product?.code || 'FALTANTE';
   const productNcm = product?.ncm || 'FALTANTE';
   const productUnit = product?.unit || 'UN';
@@ -242,11 +253,12 @@ function generateItemXml(item: OrderItem, product: Product | null, nItem: number
 					<uCom>${esc(productUnit)}</uCom>
 					<qCom>${item.quantity.toFixed(2)}</qCom>
 					<vUnCom>${item.unit_price.toFixed(2)}</vUnCom>
-					<vProd>${item.total_price.toFixed(2)}</vProd>
+					<vProd>${roundNfeMoney(item.unit_price * item.quantity).toFixed(2)}</vProd>
 					<cEANTrib>${productCeanTrib}</cEANTrib>
 					<uTrib>${esc(productUnit)}</uTrib>
 					<qTrib>${(item.qtrib || item.quantity).toFixed(2)}</qTrib>
 					<vUnTrib>${(item.v_un_trib || item.unit_price).toFixed(2)}</vUnTrib>
+					${discountAmount > 0 ? `<vDesc>${discountAmount.toFixed(2)}</vDesc>` : ""}
 					<indTot>${item.indtot || 1}</indTot>
 				</prod>
 				<imposto>
@@ -287,6 +299,10 @@ function generateItemXml(item: OrderItem, product: Product | null, nItem: number
 function esc(value: string | null | undefined): string {
   return (value ?? "").replace(/\s+/g, " ").trim()
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function roundNfeMoney(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 /**

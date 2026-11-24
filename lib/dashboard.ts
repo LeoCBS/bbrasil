@@ -568,12 +568,13 @@ export async function getKeyIndicators(unitId?: string): Promise<KeyIndicators> 
     const currentMonthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).toISOString();
     const currentMonthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).toISOString();
 
-    // Taxa de conversão: (pedidos / orçamentos) * 100
+    // Taxa de conversão calculada entre registros comerciais unificados.
     let ordersQuery = supabase
       .from("orders")
       .select("*", { count: "exact", head: true })
       .gte("created_at", currentMonthStart)
-      .lt("created_at", currentMonthEnd);
+      .lt("created_at", currentMonthEnd)
+      .eq("commercial_status", "pedido");
     
     if (unitId) {
       ordersQuery = ordersQuery.eq("unit_id", unitId);
@@ -581,19 +582,20 @@ export async function getKeyIndicators(unitId?: string): Promise<KeyIndicators> 
     
     const { count: ordersCount } = await ordersQuery;
 
-    let quotationsQuery = supabase
-      .from("quotations")
+    let budgetsQuery = supabase
+      .from("orders")
       .select("*", { count: "exact", head: true })
       .gte("created_at", currentMonthStart)
-      .lt("created_at", currentMonthEnd);
+      .lt("created_at", currentMonthEnd)
+      .eq("commercial_status", "orcamento");
     
     if (unitId) {
-      quotationsQuery = quotationsQuery.eq("unit_id", unitId);
+      budgetsQuery = budgetsQuery.eq("unit_id", unitId);
     }
     
-    const { count: quotationsCount } = await quotationsQuery;
+    const { count: budgetCount } = await budgetsQuery;
 
-    const conversionRate = (quotationsCount || 0) > 0 ? ((ordersCount || 0) / (quotationsCount || 0)) * 100 : 0;
+    const conversionRate = (budgetCount || 0) > 0 ? ((ordersCount || 0) / (budgetCount || 0)) * 100 : 0;
 
     // Inadimplência: (contas vencidas não pagas / total) * 100
     let overdueReceivablesQuery = supabase

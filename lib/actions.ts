@@ -7,8 +7,7 @@ import { createCategory, deleteCategory, updateCategory, type CategoryMutationIn
 import { createProduct, deleteProduct, updateProduct, type ProductMutationInput } from "@/lib/products";
 import { createClient, deleteClient, updateClient, type ClientMutationInput } from "@/lib/clients";
 import { createUnit, deleteUnit, updateUnit, type UnitInput } from "@/lib/units";
-import { createOrder, deleteOrder, getOrder, setOrderNfeStatus, updateOrder, type OrderMutationInput } from "@/lib/orders";
-import { createQuotation, deleteQuotation, updateQuotation, convertQuotationToOrder, type QuotationMutationInput } from "@/lib/quotations";
+import { createOrder, deleteOrder, getOrder, setOrderNfeStatus, updateOrder, convertOrderToOrder, type OrderMutationInput } from "@/lib/orders";
 import { createReceivable, deleteReceivable, updateReceivable, markAsPaid as markReceivableAsPaid, type ReceivableMutationInput } from "@/lib/receivables";
 import { createPayable, deletePayable, updatePayable, markAsPaid as markPayableAsPaid, type PayableMutationInput } from "@/lib/payables";
 import { createTaxRule, deleteTaxRule, updateTaxRule, type TaxRuleMutationInput } from "@/lib/tax-rules";
@@ -16,14 +15,17 @@ import { createNFeTechnicalResponsible, updateNFeTechnicalResponsible, deleteNFe
 import { emitNFeForOrder, type EmitNFeResult } from "@/lib/nfe-emission";
 import { getNFeEnvironment } from "@/lib/nfe-config";
 import { checkboxField, currencyField, digitsField, numberField, textField } from "@/lib/form-data";
-import { isValidCnpj } from "@/lib/format";
+import { isValidDocument } from "@/lib/format";
+import { lookupCep } from "@/lib/cep";
 import { invalidateIbptCache } from "@/lib/ibpt";
+import { onlyDigits } from "@/lib/text";
+import { createOrderCommissions } from "@/lib/commissions";
 
 const catalogPaths = ["/", "/produtos", "/admin/produtos"];
 const categoryPaths = [...catalogPaths, "/admin/categorias"];
 const unitPaths = ["/", "/produtos", "/admin/unidades"];
 const orderPaths = ["/admin/pedidos"];
-const quotationPaths = ["/admin/orcamentos"];
+const commissionPaths = ["/admin/comissoes"];
 const receivablePaths = ["/admin/contas-receber"];
 const payablePaths = ["/admin/contas-pagar"];
 const taxRulePaths = ["/admin/regras-fiscais"];
@@ -80,6 +82,8 @@ function parseClient(formData: FormData): ClientMutationInput {
     cnpj: textField(formData, "cnpj"),
     state_registration: textField(formData, "state_registration"),
     address: textField(formData, "address"),
+    address_number: textField(formData, "address_number"),
+    city_code: textField(formData, "city_code"),
     neighborhood: textField(formData, "neighborhood"),
     notes: textField(formData, "notes"),
     city: textField(formData, "city"),
@@ -90,7 +94,9 @@ function parseClient(formData: FormData): ClientMutationInput {
     profile_id: textField(formData, "profile_id"),
     unit: "",
     unit_id: textField(formData, "unit_id"),
-    active: checkboxField(formData, "active")
+    active: checkboxField(formData, "active"),
+    contact_person: textField(formData, "contact_person"),
+    contact_phone: textField(formData, "contact_phone")
   };
 }
 
@@ -113,14 +119,21 @@ function parseOrder(formData: FormData): OrderMutationInput {
   } catch {
     items = [];
   }
-
-  const totalAmountStr = String(formData.get("total_amount") ?? "0");
-  let totalAmount = 0;
-  try {
-    totalAmount = parseFloat(totalAmountStr) || 0;
-  } catch {
-    totalAmount = 0;
+  if (!Array.isArray(items)) throw new Error("Os itens do pedido são inválidos.");
+  if (items.some((item) => {
+    const discount = Number(item?.discount_percent ?? 0);
+    return !Number.isFinite(discount) || discount < 0 || discount > 30;
+  })) {
+    throw new Error("O desconto por produto deve estar entre 0% e 30%.");
   }
+  if (items.some((item) => !Number.isFinite(Number(item?.quantity)) || Number(item.quantity) <= 0 || !Number.isFinite(Number(item?.unit_price)) || Number(item.unit_price) < 0)) {
+    throw new Error("A quantidade e o preço unitário dos itens devem ser válidos.");
+  }
+  items = items.map((item) => {
+    const subtotal = Number(item.quantity) * Number(item.unit_price);
+    const discountAmount = Math.round(subtotal * Number(item.discount_percent ?? 0)) / 100;
+    return { ...item, discount_percent: Number(item.discount_percent ?? 0), discount_amount: discountAmount, total_price: subtotal - discountAmount };
+  });
 
   return {
     user_id: textField(formData, "user_id"),
@@ -133,8 +146,12 @@ function parseOrder(formData: FormData): OrderMutationInput {
     client_salesperson_name: textField(formData, "client_salesperson_name"),
     unit_id: textField(formData, "unit_id"),
     unit_name: textField(formData, "unit_name"),
-    observation: textField(formData, "observation"),
-    total_amount: totalAmount,
+    nfe_info: textField(formData, "nfe_info"),
+    commercial_status: textField(formData, "commercial_status", "orcamento") as OrderMutationInput["commercial_status"],
+    valid_until: textField(formData, "valid_until"),
+    payment_terms: textField(formData, "payment_terms", "Boleto"),
+    delivery_days: numberField(formData, "delivery_days", 2) ?? 2,
+    total_amount: items.reduce((sum, item) => sum + Number(item.total_price), 0),
     items
   };
 }
@@ -181,7 +198,7 @@ export async function deleteCategoryAction(formData: FormData) {
 export async function createClientAction(formData: FormData) {
   await requireAdminUser("/admin/clientes");
   const client = parseClient(formData);
-  if (!isValidCnpj(client.cnpj)) throw new Error("Informe um CNPJ válido.");
+  if (!isValidDocument(client.cnpj)) throw new Error("Informe um CPF ou CNPJ válido.");
   await createClient(client);
   revalidatePath("/admin/clientes");
 }
@@ -189,9 +206,16 @@ export async function createClientAction(formData: FormData) {
 export async function updateClientAction(formData: FormData) {
   await requireAdminUser("/admin/clientes");
   const client = parseClient(formData);
-  if (!isValidCnpj(client.cnpj)) throw new Error("Informe um CNPJ válido.");
+  if (!isValidDocument(client.cnpj)) throw new Error("Informe um CPF ou CNPJ válido.");
   await updateClient(idField(formData), client);
   revalidatePath("/admin/clientes");
+}
+
+export async function lookupCepAction(cep: string) {
+  await requireAdminUser("/admin/clientes");
+  const digits = onlyDigits(cep);
+  if (digits.length !== 8) return null;
+  return lookupCep(digits);
 }
 
 export async function deleteClientAction(formData: FormData) {
@@ -250,82 +274,10 @@ export async function deleteOrderAction(formData: FormData) {
   revalidate(orderPaths);
 }
 
-function parseQuotation(formData: FormData): QuotationMutationInput {
-  const itemsJson = String(formData.get("items") ?? "[]");
-  let items;
-  try {
-    items = JSON.parse(itemsJson);
-  } catch {
-    items = [];
-  }
-
-  const totalAmountStr = String(formData.get("total_amount") ?? "0");
-  let totalAmount = 0;
-  try {
-    totalAmount = parseFloat(totalAmountStr) || 0;
-  } catch {
-    totalAmount = 0;
-  }
-
-  return {
-    user_id: textField(formData, "user_id"),
-    user_name: textField(formData, "user_name"),
-    user_email: textField(formData, "user_email"),
-    client_id: textField(formData, "client_id"),
-    client_name: textField(formData, "client_name"),
-    client_cnpj: textField(formData, "client_cnpj"),
-    client_salesperson_id: textField(formData, "client_salesperson_id"),
-    client_salesperson_name: textField(formData, "client_salesperson_name"),
-    unit_id: textField(formData, "unit_id"),
-    unit_name: textField(formData, "unit_name"),
-    status: String(formData.get("status") ?? "pending") as 'pending' | 'approved' | 'rejected' | 'converted',
-    observation: textField(formData, "observation"),
-    total_amount: totalAmount,
-    valid_until: textField(formData, "valid_until"),
-    consultant: textField(formData, "consultant"),
-    payment_condition: textField(formData, "payment_condition"),
-    delivery_period: textField(formData, "delivery_period"),
-    additional_info: textField(formData, "additional_info"),
-    items
-  };
-}
-
-export async function createQuotationAction(formData: FormData) {
-  await requireAdminUser("/admin/orcamentos");
-  const quotation = parseQuotation(formData);
-  if (!quotation.client_id) throw new Error("Selecione um cliente para o orçamento.");
-  if (!quotation.unit_id) throw new Error("Informe a unidade do orçamento.");
-  if (!quotation.items || quotation.items.length === 0) throw new Error("Adicione pelo menos um produto ao orçamento.");
-  await createQuotation(quotation);
-  revalidate(quotationPaths);
-}
-
-export async function updateQuotationAction(formData: FormData) {
-  await requireAdminUser("/admin/orcamentos");
-  const quotation = parseQuotation(formData);
-  if (!quotation.client_id) throw new Error("Selecione um cliente para o orçamento.");
-  if (!quotation.unit_id) throw new Error("Informe a unidade do orçamento.");
-  if (!quotation.items || quotation.items.length === 0) throw new Error("Adicione pelo menos um produto ao orçamento.");
-  await updateQuotation(numericIdField(formData), quotation);
-  revalidate(quotationPaths);
-}
-
-export async function deleteQuotationAction(formData: FormData) {
-  await requireAdminUser("/admin/orcamentos");
-  await deleteQuotation(numericIdField(formData));
-  revalidate(quotationPaths);
-}
-
-export async function convertQuotationToOrderAction(formData: FormData) {
+export async function convertOrderToOrderAction(formData: FormData) {
   await requireAdminUser("/admin/pedidos");
-  const quotationId = numericIdField(formData);
-  if (!quotationId) throw new Error("ID do orçamento ausente");
-
-  const orderId = await convertQuotationToOrder(quotationId);
-  revalidate(quotationPaths);
+  await convertOrderToOrder(numericIdField(formData));
   revalidate(orderPaths);
-
-  return orderId;
 }
 
 function parseReceivable(formData: FormData): ReceivableMutationInput {
@@ -555,10 +507,24 @@ export async function emitNFeOrderAction(orderId: number): Promise<EmitNFeResult
     const order = await getOrder(orderId);
     if (!order) throw new Error("Pedido não encontrado.");
     if (order.status === "finalized") {
+      try {
+        await createOrderCommissions(orderId, order.client_salesperson_id, order.client_salesperson_name);
+        revalidate(commissionPaths);
+      } catch (error) {
+        console.error("NF-e já autorizada; não foi possível atualizar as comissões:", error);
+      }
       return { status: "authorized", message: "Este pedido já foi finalizado com NF-e autorizada.", environment };
     }
     const result = await emitNFeForOrder(orderId);
-    if (result.status === "authorized") await setOrderNfeStatus(orderId, "finalized");
+    if (result.status === "authorized") {
+      await setOrderNfeStatus(orderId, "finalized");
+      try {
+        await createOrderCommissions(orderId, order.client_salesperson_id, order.client_salesperson_name);
+        revalidate(commissionPaths);
+      } catch (error) {
+        console.error("NF-e autorizada; não foi possível gerar as comissões:", error);
+      }
+    }
     else if (result.status !== "processing") await setOrderNfeStatus(orderId, "nfeerror");
     revalidate(orderPaths);
     return result;

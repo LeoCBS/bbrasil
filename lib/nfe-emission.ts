@@ -44,7 +44,8 @@ export async function emitNFeForOrder(orderId: number): Promise<EmitNFeResult> {
     !validateNFeSignature(signedXml) ||
     !/\bId=["']NFe\d{44}["']/.test(signedXml) ||
     readTag(signedXml, "tpAmb") !== getNFeTpAmb(environment) ||
-    hasInvalidCnf(signedXml)
+    hasInvalidCnf(signedXml) ||
+    hasInvalidItemDiscountLayout(signedXml)
   ) {
     signedXml = await generateNFeXml(orderId);
     if (!validateNFeSignature(signedXml)) {
@@ -486,6 +487,16 @@ function hasInvalidCnf(xml: string): boolean {
   if (FORBIDDEN_CNF.has(cNF)) return true;
   if (nNF && (cNF === nNF.padStart(8, "0").slice(-8) || Number(cNF) === Number(nNF))) return true;
   return false;
+}
+
+function hasInvalidItemDiscountLayout(xml: string): boolean {
+  return [...xml.matchAll(/<prod>([\s\S]*?)<\/prod>/gi)].some(([, product]) => {
+    const discountTags = [...product.matchAll(/<vDesc\b/gi)];
+    if (discountTags.length > 1) return true;
+    if (discountTags.length === 0) return false;
+    const unitTributaryIndex = product.indexOf("<vUnTrib>");
+    return unitTributaryIndex < 0 || discountTags[0].index! < unitTributaryIndex;
+  });
 }
 
 function extractSignedNFe(xml: string): string {

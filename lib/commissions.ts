@@ -90,5 +90,8 @@ export async function createOrderCommissions(orderId: number, salespersonId?: st
     const { baseAmount, commissionAmount } = calculateCommission(sale, costPrice, quantity, Number(rule.commission_percent));
     return [{ order_id: orderId, order_item_id: item.id, salesperson_id: salespersonId, salesperson_name: salespersonName || salespersonId, product_name: item.product_name, category_name: null, quantity, sale_amount: sale, base_amount: baseAmount, commission_percent: rule.commission_percent, commission_amount: commissionAmount, rule_id: rule.id }];
   });
-  if (rows.length) { const { error } = await db.from('commissions').insert(rows); if (error) throw new Error(error.message); }
+  if (rows.length) {
+    const { error } = await db.from('commissions').upsert(rows, { onConflict: 'order_item_id', ignoreDuplicates: true });
+    if (error) throw new Error(error.message);
+  }
 }
